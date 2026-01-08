@@ -1,0 +1,14 @@
+{
+  "extends": ["stylelint-config-standard-scss", "stylelint-config-prettier-scss"],
+  "plugin": ["stylelint-scss"],
+  "rules": {
+    "block-no-empty": null,
+    "color-function-notation": "legacy",
+    "alpha-value-notation": null,
+    "shorthand-property-no-redundant-values": null,
+    "no-empty-source": null,
+    "scss/no-global-function-names": null,
+    "scss/dollar-variable-empty-line-before": null,
+    "scss/dollar-variable-pattern": null
+  }
+}
