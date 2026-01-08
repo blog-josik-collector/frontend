@@ -39,8 +39,8 @@ export default defineConfig([
       ...reactRefresh.configs.vite.rules,
       ...prettierConfig.rules,
 
-      // Prettier 규칙
-      'prettier/prettier': 'error',
+      // 일반적인 규칙
+      'no-undef': 'off',
 
       // Import 관련 규칙
       'import/first': 'error',
@@ -52,7 +52,24 @@ export default defineConfig([
 
       // Simple Import Sort 규칙
       'simple-import-sort/exports': 'error',
-      'simple-import-sort/imports': 'error',
+      'simple-import-sort/imports': [
+        'error',
+        {
+          groups: [
+            ['^node:'], // Node.js 내장 모듈
+            ['^react'], // React 관련 패키지
+            ['^\\w'], // 일반 패키지
+            ['^@\\w'], // @로 시작하는 패키지
+            ['^\\u0000'], // 사이드 이펙트 import
+            ['^\\.\\.(?!/?$)', '^\\.\\./?$'], // 부모 디렉토리 import
+            ['^\\./(?=.*/)(?!/?$)', '^\\.(?!/?$)', '^\\./?$'], // 현재 디렉토리 import
+            ['^.+\\.s?css$'], // 스타일 관련 import
+          ],
+        },
+      ],
+
+      // Prettier 규칙
+      'prettier/prettier': 'error',
     },
   },
 ]);
