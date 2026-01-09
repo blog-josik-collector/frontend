@@ -42,6 +42,9 @@ export default defineConfig([
       // 일반적인 규칙
       'no-undef': 'off',
 
+      // react-refresh 관련 규칙
+      'react-refresh/only-export-components': 'off',
+
       // Import 관련 규칙
       'import/first': 'error',
       'import/newline-after-import': 'error',
