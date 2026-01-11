@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "format": "prettier --cache --cache-location .cache/prettier --write .",
+    "format:check": "prettier --cache --cache-location .cache/prettier --check ."
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
