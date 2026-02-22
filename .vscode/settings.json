@@ -52,6 +52,6 @@
     "**/dist": true,
     "**/coverage": true
   },
-  "prettier.prettierPath": "./node_modules/.bin/prettier",
+  "prettier.prettierPath": "./node_modules/prettier",
   "prettier.enableDebugLogs": true,
 }

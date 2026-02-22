@@ -4,7 +4,6 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import importPlugin from 'eslint-plugin-import';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
-import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 import tseslint from 'typescript-eslint';
 import { defineConfig, globalIgnores } from 'eslint/config';
@@ -26,7 +25,6 @@ export default defineConfig([
       globals: globals.browser,
     },
     plugins: {
-      prettier,
       import: importPlugin,
       'simple-import-sort': simpleImportSort,
       'react-hooks': reactHooks,
@@ -41,6 +39,7 @@ export default defineConfig([
 
       // 일반적인 규칙
       'no-undef': 'off',
+      'no-unused-vars': 'warn',
 
       // react-refresh 관련 규칙
       'react-refresh/only-export-components': 'off',
@@ -63,16 +62,14 @@ export default defineConfig([
             ['^react'], // React 관련 패키지
             ['^\\w'], // 일반 패키지
             ['^@\\w'], // @로 시작하는 패키지
+            ['^\\./App'], // 현재 디렉토리 import
             ['^\\u0000'], // 사이드 이펙트 import
+            ['^\\./?$', '^\\.(?!/?$)', '^\\./(?=.*/)(?!/?$)'], // 현재 디렉토리 import
             ['^\\.\\.(?!/?$)', '^\\.\\./?$'], // 부모 디렉토리 import
-            ['^\\./(?=.*/)(?!/?$)', '^\\.(?!/?$)', '^\\./?$'], // 현재 디렉토리 import
             ['^.+\\.s?css$'], // 스타일 관련 import
           ],
         },
       ],
-
-      // Prettier 규칙
-      'prettier/prettier': 'error',
     },
   },
 ]);
