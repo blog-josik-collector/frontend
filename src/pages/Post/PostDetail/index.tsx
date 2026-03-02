@@ -187,6 +187,9 @@ const PostDetail = () => {
 
           <Separator />
 
+          <Button>본문으로 이동하기</Button>
+          <Separator />
+
           {/* 액션 버튼 */}
           <div className="flex items-center gap-4">
             <Button

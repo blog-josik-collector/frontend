@@ -2,16 +2,19 @@ import { Outlet } from '@tanstack/react-router';
 
 import AppBar from '../AppBar';
 
-const PageLayout: React.FC = () => {
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+
+const PageLayout = () => {
   return (
-    <div className="flex w-full justify-center">
-      <div className="flex w-full max-w-7xl flex-wrap items-center justify-center">
-        <AppBar />
-        <div className="w-full">
+    <SidebarProvider>
+      <AppBar />
+      <SidebarInset>
+        <main className="p-4">
+          <SidebarTrigger />
           <Outlet />
-        </div>
-      </div>
-    </div>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 };
 

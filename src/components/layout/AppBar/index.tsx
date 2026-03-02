@@ -2,14 +2,22 @@ import { Link, useLocation } from '@tanstack/react-router';
 
 import { Button } from '@/components/ui/button';
 import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from '@/components/ui/navigation-menu';
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar';
 
 interface RouteItem {
   path: string;
@@ -41,36 +49,6 @@ const routes: RouteItem[] = [
   },
 ];
 
-function ListItem({
-  title,
-  desc,
-  href,
-  isActive,
-  ...props
-}: React.ComponentPropsWithoutRef<'li'> & {
-  href: string;
-  desc: string;
-  isActive?: boolean;
-}) {
-  return (
-    <li {...props}>
-      <NavigationMenuLink asChild>
-        <Link
-          to={href}
-          className={`hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block space-y-1 rounded-md p-3 leading-none no-underline transition-colors outline-none select-none ${
-            isActive ? 'bg-accent text-accent-foreground' : ''
-          }`}
-        >
-          <div className="flex flex-col gap-1 text-sm">
-            <div className="leading-none font-medium">{title}</div>
-            {desc && <div className="text-muted-foreground line-clamp-2">{desc}</div>}
-          </div>
-        </Link>
-      </NavigationMenuLink>
-    </li>
-  );
-}
-
 const renderMenuItem = (route: RouteItem, currentPath: string) => {
   if (route.children && route.children.length > 0) {
     const hasActiveChild = route.children.some(
@@ -78,40 +56,34 @@ const renderMenuItem = (route: RouteItem, currentPath: string) => {
     );
 
     return (
-      <NavigationMenuItem key={route.path}>
-        <NavigationMenuTrigger className={hasActiveChild ? 'bg-accent text-accent-foreground' : ''}>
+      <SidebarMenuItem key={route.path}>
+        <SidebarMenuButton isActive={hasActiveChild ? true : undefined}>
           {route.label}
-        </NavigationMenuTrigger>
-        <NavigationMenuContent>
-          <ul className="w-48">
-            {route.children.map((child) => (
-              <ListItem
-                key={child.path}
-                href={child.path}
-                title={child.label}
-                desc={child.desc}
-                isActive={currentPath === child.path}
-              />
-            ))}
-          </ul>
-        </NavigationMenuContent>
-      </NavigationMenuItem>
+        </SidebarMenuButton>
+        <SidebarMenuSub>
+          {route.children.map((child) => (
+            <SidebarMenuSubItem key={child.path}>
+              <SidebarMenuSubButton
+                asChild
+                isActive={child.path === currentPath ? true : undefined}
+              >
+                <Link to={child.path}>{child.label}</Link>
+              </SidebarMenuSubButton>
+            </SidebarMenuSubItem>
+          ))}
+        </SidebarMenuSub>
+      </SidebarMenuItem>
     );
   }
 
   const isActive = currentPath === route.path;
 
   return (
-    <NavigationMenuItem key={route.path}>
-      <NavigationMenuLink
-        asChild
-        className={`${navigationMenuTriggerStyle()} ${
-          isActive ? 'bg-accent text-accent-foreground' : ''
-        }`}
-      >
+    <SidebarMenuItem key={route.path}>
+      <SidebarMenuButton asChild isActive={isActive ? true : undefined}>
         <Link to={route.path}>{route.label}</Link>
-      </NavigationMenuLink>
-    </NavigationMenuItem>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   );
 };
 
@@ -119,25 +91,33 @@ const MenuList = () => {
   const location = useLocation();
   const currentPath = location.pathname;
 
-  return (
-    <NavigationMenu>
-      <NavigationMenuList>
-        {routes.map((route) => renderMenuItem(route, currentPath))}
-      </NavigationMenuList>
-    </NavigationMenu>
-  );
+  return <SidebarMenu>{routes.map((route) => renderMenuItem(route, currentPath))}</SidebarMenu>;
 };
 
 const AppBar: React.FC = () => {
   return (
-    <div className="flex w-full items-center justify-between gap-4 p-4">
-      <div>dummy</div>
-      <MenuList />
-      <div>
-        <Button>Sign In</Button>
-        <Button>Sign up</Button>
-      </div>
-    </div>
+    <Sidebar>
+      <SidebarHeader>
+        <div className="px-3 py-2">
+          <h2 className="text-lg font-semibold">Navigation</h2>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <MenuList />
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter>
+        <div className="space-y-2 px-3 py-2">
+          <Button variant="outline" className="w-full">
+            Sign In
+          </Button>
+          <Button className="w-full">Sign Up</Button>
+        </div>
+      </SidebarFooter>
+    </Sidebar>
   );
 };
 
