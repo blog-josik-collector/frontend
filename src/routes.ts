@@ -1,27 +1,22 @@
 import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
 
 import PageLayout from './components/layout/PageLayout';
+import ManagementPostSetting from './pages/Management/PostSetting';
+import ManagementReportComment from './pages/Management/Report/Comment';
+import ManagementReportPost from './pages/Management/Report/Post';
+import MyFavorite from './pages/My/Favorite';
+import MyInfo from './pages/My/Info';
 import PostDetail from './pages/Post/PostDetail';
 import PostList from './pages/Post/PostList';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 
+// Root route with layout
 const rootRoute = createRootRoute({
   component: PageLayout,
 });
 
-const postRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/',
-  component: PostList,
-});
-
-const postDetailRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/post/$postId',
-  component: PostDetail,
-});
-
+// Auth routes
 const signInRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/signin',
@@ -34,6 +29,61 @@ const signUpRoute = createRoute({
   component: SignUp,
 });
 
-const routeTree = rootRoute.addChildren([postRoute, postDetailRoute, signInRoute, signUpRoute]);
+// Post routes
+const postRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/',
+  component: PostList,
+});
+
+const postDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/post/$postId',
+  component: PostDetail,
+});
+
+// My page routes (direct routing)
+const myInfoRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/my/info',
+  component: MyInfo,
+});
+
+const myFavoriteRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/my/favorite',
+  component: MyFavorite,
+});
+
+// Management routes (direct routing)
+const managementPostSettingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/management/post-setting',
+  component: ManagementPostSetting,
+});
+
+const managementReportPostRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/management/report/post',
+  component: ManagementReportPost,
+});
+
+const managementReportCommentRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/management/report/comment',
+  component: ManagementReportComment,
+});
+
+const routeTree = rootRoute.addChildren([
+  signInRoute,
+  signUpRoute,
+  postRoute,
+  postDetailRoute,
+  myInfoRoute,
+  myFavoriteRoute,
+  managementPostSettingRoute,
+  managementReportPostRoute,
+  managementReportCommentRoute,
+]);
 
 export const router = createRouter({ routeTree });
