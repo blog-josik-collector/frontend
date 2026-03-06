@@ -1,11 +1,11 @@
 import React from 'react';
 
-import { ArrowLeftIcon, ArrowRightIcon, BadgeCheckIcon, ChevronRightIcon } from 'lucide-react';
+import { ArrowLeftIcon, ArrowRightIcon, BadgeCheckIcon,  } from 'lucide-react';
 
 import { useNavigate } from '@tanstack/react-router';
 
 import { Button } from '@/components/ui/button';
-import { ButtonGroup, ButtonGroupSeparator, ButtonGroupText } from '@/components/ui/button-group';
+import { ButtonGroup, } from '@/components/ui/button-group';
 import {
   DropdownMenu,
   DropdownMenuContent,
