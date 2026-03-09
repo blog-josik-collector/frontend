@@ -4,6 +4,7 @@ import PageLayout from './components/layout/PageLayout';
 import ManagementPostSetting from './pages/Management/PostSetting';
 import ManagementReportComment from './pages/Management/Report/Comment';
 import ManagementReportPost from './pages/Management/Report/Post';
+import MyBookmark from './pages/My/Bookmark';
 import MyFavorite from './pages/My/Favorite';
 import MyInfo from './pages/My/Info';
 import PostDetail from './pages/Post/PostDetail';
@@ -42,7 +43,6 @@ const postDetailRoute = createRoute({
   component: PostDetail,
 });
 
-// My page routes (direct routing)
 const myInfoRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/my/info',
@@ -55,7 +55,12 @@ const myFavoriteRoute = createRoute({
   component: MyFavorite,
 });
 
-// Management routes (direct routing)
+const myBookmarkRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/my/bookmark',
+  component: MyBookmark,
+});
+
 const managementPostSettingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/management/post-setting',
@@ -81,9 +86,40 @@ const routeTree = rootRoute.addChildren([
   postDetailRoute,
   myInfoRoute,
   myFavoriteRoute,
+  myBookmarkRoute,
   managementPostSettingRoute,
   managementReportPostRoute,
   managementReportCommentRoute,
 ]);
 
 export const router = createRouter({ routeTree });
+
+// ─── Nav routes ──────────────────────────────────────────────────────────────
+
+export interface NavRoute {
+  path: string;
+  label: string;
+  children?: NavRoute[];
+}
+
+export const navRoutes: NavRoute[] = [
+  { path: '/', label: 'Home' },
+  {
+    path: '/my',
+    label: 'My',
+    children: [
+      { path: '/my/info', label: 'My Info' },
+      { path: '/my/favorite', label: 'My Favorite' },
+      { path: '/my/bookmark', label: 'My Bookmark' },
+    ],
+  },
+  {
+    path: '/management',
+    label: 'Management',
+    children: [
+      { path: '/management/report/post', label: 'Report Post' },
+      { path: '/management/report/comment', label: 'Report Comment' },
+      { path: '/management/post-setting', label: 'Post Setting' },
+    ],
+  },
+];

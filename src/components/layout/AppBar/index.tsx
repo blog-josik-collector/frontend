@@ -8,48 +8,16 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
-  SidebarInset,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarProvider,
-  SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { type NavRoute, navRoutes } from '@/routes';
 
-interface RouteItem {
-  path: string;
-  label: string;
-  desc: string;
-  children?: RouteItem[];
-}
-
-const routes: RouteItem[] = [
-  { path: '/', label: 'Home', desc: '' },
-  {
-    path: '/my',
-    label: 'My',
-    desc: '',
-    children: [
-      { path: '/my/info', label: 'My Info', desc: '' },
-      { path: '/my/favorite', label: 'My Favorite', desc: '' },
-    ],
-  },
-  {
-    path: '/management',
-    label: 'Management',
-    desc: '',
-    children: [
-      { path: '/management/report/post', label: 'Report Post', desc: '' },
-      { path: '/management/report/comment', label: 'Report Comment', desc: '' },
-      { path: '/management/post-setting', label: 'Post Setting', desc: '' },
-    ],
-  },
-];
-
-const renderMenuItem = (route: RouteItem, currentPath: string) => {
+const renderMenuItem = (route: NavRoute, currentPath: string) => {
   if (route.children && route.children.length > 0) {
     const hasActiveChild = route.children.some(
       (child) => currentPath === child.path || currentPath.startsWith(child.path + '/'),
@@ -91,7 +59,7 @@ const MenuList = () => {
   const location = useLocation();
   const currentPath = location.pathname;
 
-  return <SidebarMenu>{routes.map((route) => renderMenuItem(route, currentPath))}</SidebarMenu>;
+  return <SidebarMenu>{navRoutes.map((route) => renderMenuItem(route, currentPath))}</SidebarMenu>;
 };
 
 const AppBar: React.FC = () => {

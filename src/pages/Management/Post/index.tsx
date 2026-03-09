@@ -18,14 +18,12 @@ import {
 import { Input } from '@/components/ui/input';
 import {
   Item,
+  ItemActions,
   ItemContent,
   ItemDescription,
   ItemMedia,
   ItemTitle,
 } from '@/components/ui/item';
-
-const formatDate = (ts: number) =>
-  new Date(ts).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
 
 interface ItemCardProps {
   title: string;
@@ -40,8 +38,11 @@ const ItemCard: React.FC<ItemCardProps> = ({ title, updateTs, onClick }) => {
       </ItemMedia>
       <ItemContent>
         <ItemTitle>{title}</ItemTitle>
-        <ItemDescription>{formatDate(updateTs)}</ItemDescription>
+        <ItemDescription>{updateTs}</ItemDescription>
       </ItemContent>
+      <ItemActions>
+        <Button onClick={onClick}>수정</Button>
+      </ItemActions>
     </Item>
   );
 };
@@ -49,7 +50,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ title, updateTs, onClick }) => {
 const FILTER_OPTIONS = ['토스', '카카오', '네이버', '라인'] as const;
 type FilterOption = (typeof FILTER_OPTIONS)[number];
 
-const PostList = () => {
+const ManagementPost = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<FilterOption[]>([]);
@@ -169,4 +170,4 @@ const PostList = () => {
   );
 };
 
-export default PostList;
+export default ManagementPost;
