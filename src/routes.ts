@@ -1,7 +1,9 @@
+import type { JSX } from 'react';
+
 import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
 
 import PageLayout from './components/layout/PageLayout';
-import ManagementPostSetting from './pages/Management/PostSetting';
+import ManagementProviderSetting from './pages/Management/ProviderSetting';
 import ManagementReportComment from './pages/Management/Report/Comment';
 import ManagementReportPost from './pages/Management/Report/Post';
 import MyBookmark from './pages/My/Bookmark';
@@ -11,6 +13,40 @@ import PostDetail from './pages/Post/PostDetail';
 import PostList from './pages/Post/PostList';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
+
+export interface NavRoute {
+  path: string;
+  label: string;
+  children?: NavRoute[];
+}
+
+export const navRoutes: NavRoute[] = [
+  { path: '/', label: 'Home' },
+  {
+    path: '/my',
+    label: 'My',
+    children: [
+      { path: '/my/info', label: 'My Info' },
+      { path: '/my/favorite', label: 'My Favorite' },
+      { path: '/my/bookmark', label: 'My Bookmark' },
+    ],
+  },
+  {
+    path: '/management',
+    label: 'Management',
+    children: [
+      { path: '/management/report/post', label: 'Report Post' },
+      {
+        path: '/management/report/comment',
+        label: 'Report Comment',
+      },
+      {
+        path: '/management/provider-setting',
+        label: 'Provider Setting',
+      },
+    ],
+  },
+];
 
 // Root route with layout
 const rootRoute = createRootRoute({
@@ -61,10 +97,10 @@ const myBookmarkRoute = createRoute({
   component: MyBookmark,
 });
 
-const managementPostSettingRoute = createRoute({
+const managementProviderSettingRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/management/post-setting',
-  component: ManagementPostSetting,
+  path: '/management/provider-setting',
+  component: ManagementProviderSetting,
 });
 
 const managementReportPostRoute = createRoute({
@@ -87,39 +123,9 @@ const routeTree = rootRoute.addChildren([
   myInfoRoute,
   myFavoriteRoute,
   myBookmarkRoute,
-  managementPostSettingRoute,
+  managementProviderSettingRoute,
   managementReportPostRoute,
   managementReportCommentRoute,
 ]);
 
 export const router = createRouter({ routeTree });
-
-// ─── Nav routes ──────────────────────────────────────────────────────────────
-
-export interface NavRoute {
-  path: string;
-  label: string;
-  children?: NavRoute[];
-}
-
-export const navRoutes: NavRoute[] = [
-  { path: '/', label: 'Home' },
-  {
-    path: '/my',
-    label: 'My',
-    children: [
-      { path: '/my/info', label: 'My Info' },
-      { path: '/my/favorite', label: 'My Favorite' },
-      { path: '/my/bookmark', label: 'My Bookmark' },
-    ],
-  },
-  {
-    path: '/management',
-    label: 'Management',
-    children: [
-      { path: '/management/report/post', label: 'Report Post' },
-      { path: '/management/report/comment', label: 'Report Comment' },
-      { path: '/management/post-setting', label: 'Post Setting' },
-    ],
-  },
-];
