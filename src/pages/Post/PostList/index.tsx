@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { ArrowLeftIcon, ArrowRightIcon, BadgeCheckIcon, FilterIcon, SearchIcon, XIcon } from 'lucide-react';
+import { ArrowLeftIcon, ArrowRightIcon, BadgeCheckIcon, EyeIcon, FilterIcon, HeartIcon, SearchIcon, XIcon } from 'lucide-react';
 
 import { useNavigate } from '@tanstack/react-router';
 
@@ -18,6 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import {
   Item,
+  ItemActions,
   ItemContent,
   ItemDescription,
   ItemMedia,
@@ -30,9 +31,11 @@ const formatDate = (ts: number) =>
 interface ItemCardProps {
   title: string;
   updateTs: number;
+  likeCount: number;
+  viewCount: number;
   onClick: () => void;
 }
-const ItemCard: React.FC<ItemCardProps> = ({ title, updateTs, onClick }) => {
+const ItemCard: React.FC<ItemCardProps> = ({ title, updateTs, likeCount, viewCount, onClick }) => {
   return (
     <Item className="border-black-2 hover:cursor-pointer" onClick={onClick}>
       <ItemMedia variant="icon">
@@ -42,9 +45,27 @@ const ItemCard: React.FC<ItemCardProps> = ({ title, updateTs, onClick }) => {
         <ItemTitle>{title}</ItemTitle>
         <ItemDescription>{formatDate(updateTs)}</ItemDescription>
       </ItemContent>
+      <ItemActions className="text-muted-foreground">
+        <span className="flex items-center gap-1 text-xs">
+          <HeartIcon className="size-3.5" />
+          {likeCount.toLocaleString()}
+        </span>
+        <span className="flex items-center gap-1 text-xs">
+          <EyeIcon className="size-3.5" />
+          {viewCount.toLocaleString()}
+        </span>
+      </ItemActions>
     </Item>
   );
 };
+
+const MOCK_POSTS = Array.from({ length: 7 }, (_, i) => ({
+  id: i,
+  title: `Item ${i + 1}`,
+  updateTs: new Date().valueOf(),
+  likeCount: [312, 87, 1540, 56, 903, 210, 445][i],
+  viewCount: [8230, 1045, 9870, 340, 5610, 2780, 6120][i],
+}));
 
 const FILTER_OPTIONS = ['토스', '카카오', '네이버', '라인'] as const;
 type FilterOption = (typeof FILTER_OPTIONS)[number];
@@ -139,13 +160,15 @@ const PostList = () => {
         </div>
       )}
       <div className="flex flex-wrap gap-2">
-        {[1, 2, 3, 4, 5, 6, 7].map((_, index) => (
+        {MOCK_POSTS.map((post) => (
           <ItemCard
-            key={index}
-            title={`Item ${index + 1}`}
-            updateTs={new Date().valueOf()}
+            key={post.id}
+            title={post.title}
+            updateTs={post.updateTs}
+            likeCount={post.likeCount}
+            viewCount={post.viewCount}
             onClick={() => {
-              navigate({ to: '/post/$postId', params: { postId: index.toString() } });
+              navigate({ to: '/post/$postId', params: { postId: post.id.toString() } });
             }}
           />
         ))}
