@@ -1,4 +1,4 @@
-import { Link, useLocation } from '@tanstack/react-router';
+import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -63,6 +63,7 @@ const MenuList = () => {
 };
 
 const AppBar: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <Sidebar>
       <SidebarHeader>
@@ -79,10 +80,19 @@ const AppBar: React.FC = () => {
       </SidebarContent>
       <SidebarFooter>
         <div className="space-y-2 px-3 py-2">
-          <Button variant="outline" className="w-full">
+          <Button
+            variant="outline"
+            className="w-full hover:cursor-pointer"
+            onClick={() => navigate({ to: '/signin' })}
+          >
             Sign In
           </Button>
-          <Button className="w-full">Sign Up</Button>
+          <Button
+            className="w-full hover:cursor-pointer"
+            onClick={() => navigate({ to: '/signup' })}
+          >
+            Sign Up
+          </Button>
         </div>
       </SidebarFooter>
     </Sidebar>

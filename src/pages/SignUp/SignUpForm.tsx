@@ -39,7 +39,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
               <Field>
                 <Button type="submit">Create Account</Button>
                 <FieldDescription className="text-center">
-                  Already have an account? <a href="#">Sign in</a>
+                  Already have an account? <a href="/signin">Sign in</a>
                 </FieldDescription>
               </Field>
             </FieldGroup>

@@ -3,6 +3,7 @@ import type { JSX } from 'react';
 import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
 
 import PageLayout from './components/layout/PageLayout';
+import SignLayout from './components/layout/SignLayout';
 import ManagementProviderSetting from './pages/Management/ProviderSetting';
 import ManagementReportComment from './pages/Management/Report/Comment';
 import ManagementReportPost from './pages/Management/Report/Post';
@@ -48,84 +49,96 @@ export const navRoutes: NavRoute[] = [
   },
 ];
 
-// Root route with layout
-const rootRoute = createRootRoute({
-  component: PageLayout,
+const rootRoute = createRootRoute();
+
+// Sign layout route
+const signLayoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: 'sign-layout',
+  component: SignLayout,
 });
 
 // Auth routes
 const signInRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => signLayoutRoute,
   path: '/signin',
   component: SignIn,
 });
 
 const signUpRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => signLayoutRoute,
   path: '/signup',
   component: SignUp,
 });
 
+// Page layout route
+const pageLayoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: 'page-layout',
+  component: PageLayout,
+});
+
 // Post routes
 const postRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => pageLayoutRoute,
   path: '/',
   component: PostList,
 });
 
 const postDetailRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => pageLayoutRoute,
   path: '/post/$postId',
   component: PostDetail,
 });
 
 const myInfoRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => pageLayoutRoute,
   path: '/my/info',
   component: MyInfo,
 });
 
 const myFavoriteRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => pageLayoutRoute,
   path: '/my/favorite',
   component: MyFavorite,
 });
 
 const myBookmarkRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => pageLayoutRoute,
   path: '/my/bookmark',
   component: MyBookmark,
 });
 
 const managementProviderSettingRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => pageLayoutRoute,
   path: '/management/provider-setting',
   component: ManagementProviderSetting,
 });
 
 const managementReportPostRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => pageLayoutRoute,
   path: '/management/report/post',
   component: ManagementReportPost,
 });
 
 const managementReportCommentRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => pageLayoutRoute,
   path: '/management/report/comment',
   component: ManagementReportComment,
 });
 
 const routeTree = rootRoute.addChildren([
-  signInRoute,
-  signUpRoute,
-  postRoute,
-  postDetailRoute,
-  myInfoRoute,
-  myFavoriteRoute,
-  myBookmarkRoute,
-  managementProviderSettingRoute,
-  managementReportPostRoute,
-  managementReportCommentRoute,
+  signLayoutRoute.addChildren([signInRoute, signUpRoute]),
+  pageLayoutRoute.addChildren([
+    postRoute,
+    postDetailRoute,
+    myInfoRoute,
+    myFavoriteRoute,
+    myBookmarkRoute,
+    managementProviderSettingRoute,
+    managementReportPostRoute,
+    managementReportCommentRoute,
+  ]),
 ]);
 
 export const router = createRouter({ routeTree });
