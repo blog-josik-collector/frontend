@@ -9,6 +9,7 @@ import ManagementProviderSetting from './pages/Management/ProviderSetting';
 import ManagementReportComment from './pages/Management/Report/Comment';
 import ManagementReportPost from './pages/Management/Report/Post';
 import MyBookmark from './pages/My/Bookmark';
+import MyComment from './pages/My/Comment';
 import MyFavorite from './pages/My/Favorite';
 import MyInfo from './pages/My/Info';
 import PostDetail from './pages/Post/PostDetail';
@@ -31,6 +32,7 @@ export const navRoutes: NavRoute[] = [
       { path: '/my/info', label: 'My Info' },
       { path: '/my/favorite', label: 'My Favorite' },
       { path: '/my/bookmark', label: 'My Bookmark' },
+      { path: '/my/comment', label: 'My Comment' },
     ],
   },
   {
@@ -121,6 +123,12 @@ const myBookmarkRoute = createRoute({
   component: MyBookmark,
 });
 
+const myCommentRoute = createRoute({
+  getParentRoute: () => pageLayoutRoute,
+  path: '/my/comment',
+  component: MyComment,
+});
+
 const managementProviderSettingRoute = createRoute({
   getParentRoute: () => pageLayoutRoute,
   path: '/management/provider-setting',
@@ -154,6 +162,7 @@ const routeTree = rootRoute.addChildren([
     myInfoRoute,
     myFavoriteRoute,
     myBookmarkRoute,
+    myCommentRoute,
     managementProviderSettingRoute,
     managementReportPostRoute,
     managementReportCommentRoute,
