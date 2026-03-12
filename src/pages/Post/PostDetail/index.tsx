@@ -13,7 +13,7 @@ import {
   User,
 } from 'lucide-react';
 
-import { useParams } from '@tanstack/react-router';
+import { useLocation, useParams, useSearch } from '@tanstack/react-router';
 
 import {
   AlertDialog,
@@ -37,6 +37,7 @@ interface Comment {
   content: string;
   createdAt: string;
   likes: number;
+  replies?: Comment[];
 }
 
 interface PostData {
@@ -52,7 +53,8 @@ interface PostData {
 }
 
 const PostDetail = () => {
-  const { postId } = useParams({ from: '/post/$postId' });
+  const { search } = useLocation();
+  const postId = search['post-id'] || '';
 
   // Mock data - 실제로는 API를 통해 데이터를 가져와야 합니다
   const [post, setPost] = useState<PostData>({
@@ -77,6 +79,22 @@ const PostDetail = () => {
         content: '첫 번째 댓글입니다.',
         createdAt: '2024-03-01',
         likes: 5,
+        replies: [
+          {
+            id: '1-1',
+            author: '대댓글 작성자1',
+            content: '@댓글 작성자1 첫 번째 댓글에 대한 대댓글입니다.',
+            createdAt: '2024-03-02',
+            likes: 2,
+          },
+          {
+            id: '1-2',
+            author: '대댓글 작성자2',
+            content: '@댓글 작성자1 다른 대댓글입니다.',
+            createdAt: '2024-03-03',
+            likes: 1,
+          },
+        ],
       },
       {
         id: '2',
@@ -84,6 +102,7 @@ const PostDetail = () => {
         content: '두 번째 댓글입니다. 좋은 글이네요!',
         createdAt: '2024-03-02',
         likes: 3,
+        replies: [],
       },
     ],
   });
@@ -93,6 +112,8 @@ const PostDetail = () => {
   const [isReportMenuOpen, setIsReportMenuOpen] = useState(false);
   const [isOtherReportOpen, setIsOtherReportOpen] = useState(false);
   const [otherReportContent, setOtherReportContent] = useState('');
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState('');
 
   const handleLike = () => {
     setPost((prev) => ({
@@ -146,9 +167,35 @@ const PostDetail = () => {
         content: newComment,
         createdAt: new Date().toISOString().split('T')[0],
         likes: 0,
+        replies: [],
       };
       setComments((prev) => [comment, ...prev]);
       setNewComment('');
+    }
+  };
+
+  const handleReplySubmit = (e: React.FormEvent, parentId: string, parentAuthor: string) => {
+    e.preventDefault();
+    if (replyContent.trim()) {
+      const reply: Comment = {
+        id: `${parentId}-${Date.now()}`,
+        author: '현재 사용자',
+        content: `@${parentAuthor} ${replyContent}`,
+        createdAt: new Date().toISOString().split('T')[0],
+        likes: 0,
+        replies: [],
+      };
+
+      setComments((prev) =>
+        prev.map((comment) =>
+          comment.id === parentId
+            ? { ...comment, replies: [...(comment.replies || []), reply] }
+            : comment,
+        ),
+      );
+
+      setReplyContent('');
+      setReplyingTo(null);
     }
   };
 
@@ -159,6 +206,10 @@ const PostDetail = () => {
       ),
     );
   };
+
+  if (postId === '') {
+    return <div>포스트를 찾을 수 없습니다.</div>;
+  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
@@ -331,6 +382,19 @@ const PostDetail = () => {
                       </ButtonGroup>
                       <ButtonGroup>
                         <Button
+                          variant="ghost"
+                          size="xs"
+                          onClick={() =>
+                            setReplyingTo(replyingTo === comment.id ? null : comment.id)
+                          }
+                          className="flex items-center gap-1"
+                        >
+                          <MessageCircle className="size-3" />
+                          <span className="text-xs">답글</span>
+                        </Button>
+                      </ButtonGroup>
+                      <ButtonGroup>
+                        <Button
                           variant={
                             openCommentReportMenuIds.includes(comment.id) ? 'default' : 'ghost'
                           }
@@ -383,6 +447,171 @@ const PostDetail = () => {
                     </ButtonGroup>
                   </div>
                 </div>
+
+                {/* 대댓글 작성 폼 */}
+                {replyingTo === comment.id && (
+                  <div className="ml-11 space-y-2">
+                    <form
+                      onSubmit={(e) => handleReplySubmit(e, comment.id, comment.author)}
+                      className="flex gap-2"
+                    >
+                      <Input
+                        placeholder="대댓글을 작성하세요..."
+                        value={replyContent}
+                        onChange={(e) => setReplyContent(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button type="submit" disabled={!replyContent.trim()} size="sm">
+                        <Send className="size-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setReplyingTo(null);
+                          setReplyContent('');
+                        }}
+                      >
+                        취소
+                      </Button>
+                    </form>
+                  </div>
+                )}
+
+                {/* 대댓글 목록 */}
+                {comment.replies && comment.replies.length > 0 && (
+                  <div className="ml-11 space-y-3">
+                    {comment.replies.map((reply) => (
+                      <div key={reply.id} className="space-y-2">
+                        <div className="flex items-start gap-3">
+                          <div className="bg-muted flex h-6 w-6 items-center justify-center rounded-full">
+                            <User className="size-3" />
+                          </div>
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium">{reply.author}</span>
+                              <span className="text-muted-foreground text-xs">
+                                {reply.createdAt}
+                              </span>
+                            </div>
+                            <p className="text-xs">{reply.content}</p>
+                            <ButtonGroup>
+                              <ButtonGroup>
+                                <Button
+                                  variant="ghost"
+                                  size="xs"
+                                  onClick={() => handleCommentLike(reply.id)}
+                                  className="flex items-center gap-1"
+                                >
+                                  <Heart className="size-2" />
+                                  <span className="text-xs">{reply.likes}</span>
+                                </Button>
+                              </ButtonGroup>
+                              <ButtonGroup>
+                                <Button
+                                  variant="ghost"
+                                  size="xs"
+                                  onClick={() =>
+                                    setReplyingTo(replyingTo === reply.id ? null : reply.id)
+                                  }
+                                  className="flex items-center gap-1"
+                                >
+                                  <MessageCircle className="size-2" />
+                                  <span className="text-xs">답글</span>
+                                </Button>
+                              </ButtonGroup>
+                              <ButtonGroup>
+                                <Button
+                                  variant={
+                                    openCommentReportMenuIds.includes(reply.id)
+                                      ? 'default'
+                                      : 'ghost'
+                                  }
+                                  size="xs"
+                                  onClick={() => {
+                                    if (openCommentReportMenuIds.includes(reply.id)) {
+                                      setOpenCommentReportMenuIds(
+                                        openCommentReportMenuIds.filter((id) => id !== reply.id),
+                                      );
+                                    } else {
+                                      setOpenCommentReportMenuIds([
+                                        ...openCommentReportMenuIds,
+                                        reply.id,
+                                      ]);
+                                    }
+                                  }}
+                                  className="flex items-center gap-1"
+                                >
+                                  <Siren className="size-2" />
+                                </Button>
+                              </ButtonGroup>
+                              {openCommentReportMenuIds.includes(reply.id) && (
+                                <ButtonGroup>
+                                  <Button
+                                    variant="outline"
+                                    size="xs"
+                                    onClick={() => handleCommentReport('gov')}
+                                    className="flex items-center gap-1"
+                                  >
+                                    정치
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="xs"
+                                    onClick={() => handleCommentReport('sex')}
+                                    className="flex items-center gap-1"
+                                  >
+                                    성인
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="xs"
+                                    onClick={() => handleCommentReport('other')}
+                                    className="flex items-center gap-1"
+                                  >
+                                    기타
+                                  </Button>
+                                </ButtonGroup>
+                              )}
+                            </ButtonGroup>
+                          </div>
+                        </div>
+
+                        {/* 대댓글의 대댓글 작성 폼 */}
+                        {replyingTo === reply.id && (
+                          <div className="ml-9 space-y-2">
+                            <form
+                              onSubmit={(e) => handleReplySubmit(e, comment.id, reply.author)}
+                              className="flex gap-2"
+                            >
+                              <Input
+                                placeholder="대댓글을 작성하세요..."
+                                value={replyContent}
+                                onChange={(e) => setReplyContent(e.target.value)}
+                                className="flex-1"
+                              />
+                              <Button type="submit" disabled={!replyContent.trim()} size="sm">
+                                <Send className="size-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setReplyingTo(null);
+                                  setReplyContent('');
+                                }}
+                              >
+                                취소
+                              </Button>
+                            </form>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {comment.id !== comments[comments.length - 1].id && <Separator className="ml-11" />}
               </div>

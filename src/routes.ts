@@ -1,6 +1,7 @@
 import type { JSX } from 'react';
+import React from 'react';
 
-import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
+import { createRootRoute, createRoute, createRouter, useNavigate } from '@tanstack/react-router';
 
 import PageLayout from './components/layout/PageLayout';
 import SignLayout from './components/layout/SignLayout';
@@ -49,7 +50,18 @@ export const navRoutes: NavRoute[] = [
   },
 ];
 
-const rootRoute = createRootRoute();
+// NotFoundRedirect component
+const NotFoundRedirect = () => {
+  const navigate = useNavigate({ from: '*' });
+  React.useEffect(() => {
+    navigate({ to: '/', replace: true });
+  }, [navigate]);
+  return null;
+};
+
+const rootRoute = createRootRoute({
+  errorComponent: false,
+});
 
 // Sign layout route
 const signLayoutRoute = createRoute({
@@ -87,7 +99,7 @@ const postRoute = createRoute({
 
 const postDetailRoute = createRoute({
   getParentRoute: () => pageLayoutRoute,
-  path: '/post/$postId',
+  path: '/post',
   component: PostDetail,
 });
 
@@ -127,6 +139,13 @@ const managementReportCommentRoute = createRoute({
   component: ManagementReportComment,
 });
 
+// 404 catch-all route
+const notFoundRoute = createRoute({
+  getParentRoute: () => pageLayoutRoute,
+  path: '*',
+  component: NotFoundRedirect,
+});
+
 const routeTree = rootRoute.addChildren([
   signLayoutRoute.addChildren([signInRoute, signUpRoute]),
   pageLayoutRoute.addChildren([
@@ -138,6 +157,7 @@ const routeTree = rootRoute.addChildren([
     managementProviderSettingRoute,
     managementReportPostRoute,
     managementReportCommentRoute,
+    notFoundRoute,
   ]),
 ]);
 

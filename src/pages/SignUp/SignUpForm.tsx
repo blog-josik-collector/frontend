@@ -16,7 +16,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
           <form>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="name">Full Name</FieldLabel>
+                <FieldLabel htmlFor="name">Nick Name</FieldLabel>
                 <Input id="name" type="text" placeholder="John Doe" required />
               </Field>
               <Field>
