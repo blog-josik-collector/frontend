@@ -20,7 +20,7 @@ interface Provider {
   id: string;
   name: string;
   description?: string;
-  status: 'active' | 'inactive' | 'error';
+  status: 'active' | 'inactive';
   url: string;
   lastUpdated: string;
 }
@@ -68,7 +68,7 @@ const mockProviders: Provider[] = [
   {
     id: '3',
     name: 'Anthropic',
-    status: 'error',
+    status: 'inactive',
     url: 'https://api.anthropic.com/v1',
     lastUpdated: '2024-03-07 08:45:00',
   },
@@ -77,13 +77,13 @@ const mockProviders: Provider[] = [
 const statusColors = {
   active: 'bg-green-100 text-green-800',
   inactive: 'bg-gray-100 text-gray-800',
-  error: 'bg-red-100 text-red-800',
+  // error: 'bg-red-100 text-red-800',
 };
 
 const statusText = {
   active: '활성',
   inactive: '비활성',
-  error: '오류',
+  // error: '오류',
 };
 
 const ProviderSetting = () => {
@@ -107,7 +107,7 @@ const ProviderSetting = () => {
     setEditName(provider.name);
     setEditDescription(provider.description || '');
     setEditUrl(provider.url);
-    setEditStatus(provider.status === 'error' ? 'inactive' : provider.status);
+    setEditStatus(provider.status);
     setIsDialogOpen(true);
   };
 

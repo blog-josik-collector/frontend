@@ -44,7 +44,6 @@ interface PostData {
   id: string;
   title: string;
   content: string;
-  author: string;
   createdAt: string;
   likes: number;
   isLiked: boolean;
@@ -67,7 +66,6 @@ const PostDetail = () => {
 여러 줄에 걸쳐서 내용이 표시되며, 사용자가 작성한 전체 내용을 보여줍니다.
 
 이미지나 다른 미디어도 포함될 수 있습니다.`,
-    author: '작성자 이름',
     createdAt: '2024-03-01',
     likes: 42,
     isLiked: false,
@@ -221,10 +219,6 @@ const PostDetail = () => {
 
             <div className="text-muted-foreground flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <User className="size-4" />
-                <span>{post.author}</span>
-              </div>
-              <div className="flex items-center gap-2">
                 <Calendar className="size-4" />
                 <span>{post.createdAt}</span>
               </div>
@@ -373,17 +367,6 @@ const PostDetail = () => {
                         <Button
                           variant="ghost"
                           size="xs"
-                          onClick={() => handleCommentLike(comment.id)}
-                          className="flex items-center gap-1"
-                        >
-                          <Heart className="size-3" />
-                          <span className="text-xs">{comment.likes}</span>
-                        </Button>
-                      </ButtonGroup>
-                      <ButtonGroup>
-                        <Button
-                          variant="ghost"
-                          size="xs"
                           onClick={() =>
                             setReplyingTo(replyingTo === comment.id ? null : comment.id)
                           }
@@ -497,17 +480,6 @@ const PostDetail = () => {
                             </div>
                             <p className="text-xs">{reply.content}</p>
                             <ButtonGroup>
-                              <ButtonGroup>
-                                <Button
-                                  variant="ghost"
-                                  size="xs"
-                                  onClick={() => handleCommentLike(reply.id)}
-                                  className="flex items-center gap-1"
-                                >
-                                  <Heart className="size-2" />
-                                  <span className="text-xs">{reply.likes}</span>
-                                </Button>
-                              </ButtonGroup>
                               <ButtonGroup>
                                 <Button
                                   variant="ghost"

@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
 
-import { ArrowLeftIcon, ArrowRightIcon, BadgeCheckIcon, FilterIcon, SearchIcon, XIcon } from 'lucide-react';
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  BadgeCheckIcon,
+  FilterIcon,
+  SearchIcon,
+  XIcon,
+} from 'lucide-react';
 
 import { useNavigate } from '@tanstack/react-router';
 
 import { Button } from '@/components/ui/button';
-import { ButtonGroup, } from '@/components/ui/button-group';
+import { ButtonGroup } from '@/components/ui/button-group';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -57,21 +64,21 @@ const ManagementPost = () => {
 
   const toggleOption = (option: FilterOption) => {
     setSelected((prev) =>
-      prev.includes(option) ? prev.filter((o) => o !== option) : [...prev, option]
+      prev.includes(option) ? prev.filter((o) => o !== option) : [...prev, option],
     );
   };
 
   return (
     <div className="flex flex-col gap-4 p-4">
       {/* 통합 필터 */}
-      <div className="flex items-center rounded-xl border bg-background shadow-sm focus-within:ring-2 focus-within:ring-ring">
+      <div className="bg-background focus-within:ring-ring flex items-center rounded-xl border shadow-sm focus-within:ring-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <button className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 px-3 py-2 text-sm transition-colors">
               <FilterIcon className="size-4" />
               <span>필터</span>
               {selected.length > 0 && (
-                <span className="flex items-center justify-center size-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                <span className="bg-primary text-primary-foreground flex size-5 items-center justify-center rounded-full text-xs font-medium">
                   {selected.length}
                 </span>
               )}
@@ -95,7 +102,7 @@ const ManagementPost = () => {
               <>
                 <DropdownMenuSeparator />
                 <button
-                  className="w-full px-3 py-2 text-xs text-muted-foreground hover:text-foreground text-left transition-colors"
+                  className="text-muted-foreground hover:text-foreground w-full px-3 py-2 text-left text-xs transition-colors"
                   onClick={() => setSelected([])}
                 >
                   선택 초기화
@@ -104,19 +111,19 @@ const ManagementPost = () => {
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-        <div className="h-5 w-px bg-border mx-1" />
-        <span className="pl-2 text-muted-foreground">
+        <div className="bg-border mx-1 h-5 w-px" />
+        <span className="text-muted-foreground pl-2">
           <SearchIcon className="size-4" />
         </span>
         <Input
-          className="border-0 shadow-none focus-visible:ring-0 flex-1"
+          className="flex-1 border-0 shadow-none focus-visible:ring-0"
           placeholder="검색어를 입력하세요"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
         {search && (
           <button
-            className="pr-3 text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground pr-3"
             onClick={() => setSearch('')}
           >
             <XIcon className="size-4" />
@@ -129,7 +136,7 @@ const ManagementPost = () => {
           {selected.map((option) => (
             <span
               key={option}
-              className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2.5 py-0.5 text-xs font-medium"
+              className="bg-primary/10 text-primary inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
             >
               {option}
               <button onClick={() => toggleOption(option)} className="hover:opacity-70">
