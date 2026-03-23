@@ -1,4 +1,4 @@
-import { Navigate } from '@tanstack/react-router';
+import { Navigate } from 'react-router';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

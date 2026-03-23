@@ -9,7 +9,7 @@ import {
   XIcon,
 } from 'lucide-react';
 
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
@@ -153,7 +153,7 @@ const ManagementPost = () => {
             title={`Item ${index + 1}`}
             updateTs={new Date().valueOf()}
             onClick={() => {
-              navigate({ to: '/post/$postId', params: { postId: index.toString() } });
+              navigate({ pathname: '/post', search: `?post-id=${index}` });
             }}
           />
         ))}

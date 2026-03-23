@@ -1,6 +1,6 @@
 import { Trash2 } from 'lucide-react';
 
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate } from 'react-router';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Button } from '@/components/ui/button';
@@ -66,7 +66,7 @@ const MyComment = () => {
 
   const handleNavigateToPost = (postId: string) => {
     // 포스트로 이동하는 로직
-    navigate({ to: '/post', search: { 'post-id': postId } });
+    navigate({ pathname: '/post', search: `?post-id=${postId}` });
   };
 
   return (

@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from '@tanstack/react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -83,13 +83,13 @@ const AppBar: React.FC = () => {
           <Button
             variant="outline"
             className="w-full hover:cursor-pointer"
-            onClick={() => navigate({ to: '/signin' })}
+            onClick={() => navigate('/signin')}
           >
             Sign In
           </Button>
           <Button
             className="w-full hover:cursor-pointer"
-            onClick={() => navigate({ to: '/signup' })}
+            onClick={() => navigate('/signup')}
           >
             Sign Up
           </Button>

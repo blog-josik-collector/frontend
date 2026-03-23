@@ -11,7 +11,7 @@ import {
   XIcon,
 } from 'lucide-react';
 
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
@@ -177,7 +177,7 @@ const PostList = () => {
             likeCount={post.likeCount}
             viewCount={post.viewCount}
             onClick={() => {
-              navigate({ to: '/post', search: { 'post-id': post.id.toString() } });
+              navigate({ pathname: '/post', search: `?post-id=${post.id}` });
             }}
           />
         ))}

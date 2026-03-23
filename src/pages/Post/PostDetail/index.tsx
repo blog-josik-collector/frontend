@@ -13,7 +13,7 @@ import {
   User,
 } from 'lucide-react';
 
-import { useLocation, useParams, useSearch } from '@tanstack/react-router';
+import { useLocation } from 'react-router';
 
 import {
   AlertDialog,
@@ -52,8 +52,8 @@ interface PostData {
 }
 
 const PostDetail = () => {
-  const { search } = useLocation();
-  const postId = search['post-id'] || '';
+  const location = useLocation();
+  const postId = new URLSearchParams(location.search).get('post-id') ?? '';
 
   // Mock data - 실제로는 API를 통해 데이터를 가져와야 합니다
   const [post, setPost] = useState<PostData>({
