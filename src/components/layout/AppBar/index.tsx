@@ -26,19 +26,24 @@ const renderMenuItem = (route: NavRoute, currentPath: string) => {
     return (
       <SidebarMenuItem key={route.path}>
         <SidebarMenuButton isActive={hasActiveChild ? true : undefined}>
-          {route.label}
+          {route.component ? <Link to={route.path}>{route.label}</Link> : route.label}
         </SidebarMenuButton>
         <SidebarMenuSub>
-          {route.children.map((child) => (
-            <SidebarMenuSubItem key={child.path}>
-              <SidebarMenuSubButton
-                asChild
-                isActive={child.path === currentPath ? true : undefined}
-              >
-                <Link to={child.path}>{child.label}</Link>
-              </SidebarMenuSubButton>
-            </SidebarMenuSubItem>
-          ))}
+          {route.children.map((child) => {
+            if (child.hideMenu) {
+              return null;
+            }
+            return (
+              <SidebarMenuSubItem key={child.path}>
+                <SidebarMenuSubButton
+                  asChild
+                  isActive={child.path === currentPath ? true : undefined}
+                >
+                  <Link to={child.path}>{child.label}</Link>
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
+            );
+          })}
         </SidebarMenuSub>
       </SidebarMenuItem>
     );
@@ -87,10 +92,7 @@ const AppBar: React.FC = () => {
           >
             Sign In
           </Button>
-          <Button
-            className="w-full hover:cursor-pointer"
-            onClick={() => navigate('/signup')}
-          >
+          <Button className="w-full hover:cursor-pointer" onClick={() => navigate('/signup')}>
             Sign Up
           </Button>
         </div>

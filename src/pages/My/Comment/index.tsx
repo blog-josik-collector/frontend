@@ -1,6 +1,6 @@
-import { Trash2 } from 'lucide-react';
-
 import { useNavigate } from 'react-router';
+
+import { Trash2 } from 'lucide-react';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Button } from '@/components/ui/button';

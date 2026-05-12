@@ -6,10 +6,14 @@ import react from '@vitejs/plugin-react';
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    host: 'localhost',
+  },
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@mocks': path.resolve(__dirname, './mocks'),
     },
   },
 });

@@ -32,10 +32,14 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@mocks/*": [
+        "./mocks/*"
       ]
     }
   },
   "include": [
-    "src"
+    "src",
+    "mocks"
   ],
 }

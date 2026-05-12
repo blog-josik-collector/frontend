@@ -17,6 +17,7 @@ import SignUp from './pages/SignUp';
 export interface NavRoute {
   path: string;
   label: string;
+  hideMenu?: boolean;
   component?: React.ReactNode;
   children?: NavRoute[];
 }
@@ -26,7 +27,7 @@ export const navRoutes: NavRoute[] = [
     path: '/',
     label: 'Home',
     component: <PostList />,
-    children: [{ path: '/post', label: 'Post', component: <PostDetail /> }],
+    children: [{ path: '/post', label: 'Post', hideMenu: true, component: <PostDetail /> }],
   },
   {
     path: '/my',
