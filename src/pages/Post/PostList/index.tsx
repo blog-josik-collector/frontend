@@ -2,29 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import dayjs from 'dayjs';
-import {
-  ArrowLeftIcon,
-  ArrowRightIcon,
-  BadgeCheckIcon,
-  EyeIcon,
-  FilterIcon,
-  HeartIcon,
-  SearchIcon,
-  XIcon,
-} from 'lucide-react';
+import { ArrowLeftIcon, ArrowRightIcon, BadgeCheckIcon, EyeIcon, HeartIcon } from 'lucide-react';
+
+import PostingFilter, { type FilterOption } from './PostingFilter';
 
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import {
   Item,
   ItemActions,
@@ -35,6 +26,10 @@ import {
 } from '@/components/ui/item';
 import { usePostingStore } from '@/stores/posting/postingStore';
 
+const paginationOptions = [10, 20, 50, 100];
+const defaultPagination = paginationOptions[1];
+const pageBlockSize = 10;
+
 interface ItemCardProps {
   title: string;
   publishedAt: number;
@@ -42,6 +37,7 @@ interface ItemCardProps {
   viewCount: number;
   onClick: () => void;
 }
+
 const ItemCard: React.FC<ItemCardProps> = ({
   title,
   publishedAt,
@@ -72,104 +68,47 @@ const ItemCard: React.FC<ItemCardProps> = ({
   );
 };
 
-const FILTER_OPTIONS = ['토스', '카카오', '네이버', '라인'] as const;
-type FilterOption = (typeof FILTER_OPTIONS)[number];
-
 const PostList = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<FilterOption[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(defaultPagination);
   const { postings, fetchPostings } = usePostingStore();
 
-  useEffect(() => {
-    fetchPostings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const totalPages = Math.max(1, Math.ceil(postings.total / pageSize));
+  const currentBlockStart = Math.floor((page - 1) / pageBlockSize) * pageBlockSize + 1;
+  const pageNumbers = Array.from(
+    { length: Math.min(pageBlockSize, totalPages - currentBlockStart + 1) },
+    (_, index) => currentBlockStart + index,
+  );
 
-  const toggleOption = (option: FilterOption) => {
-    setSelected((prev) =>
-      prev.includes(option) ? prev.filter((o) => o !== option) : [...prev, option],
-    );
-  };
+  useEffect(() => {
+    fetchPostings({
+      page: page - 1,
+      size: pageSize,
+      title: search || undefined,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize, search]);
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      {/* 통합 필터 */}
-      <div className="bg-background focus-within:ring-ring flex items-center rounded-xl border shadow-sm focus-within:ring-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 px-3 py-2 text-sm transition-colors">
-              <FilterIcon className="size-4" />
-              <span>필터</span>
-              {selected.length > 0 && (
-                <span className="bg-primary text-primary-foreground flex size-5 items-center justify-center rounded-full text-xs font-medium">
-                  {selected.length}
-                </span>
-              )}
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-44" align="start">
-            <DropdownMenuLabel>카테고리 선택</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              {FILTER_OPTIONS.map((option) => (
-                <DropdownMenuCheckboxItem
-                  key={option}
-                  checked={selected.includes(option)}
-                  onCheckedChange={() => toggleOption(option)}
-                >
-                  {option}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuGroup>
-            {selected.length > 0 && (
-              <>
-                <DropdownMenuSeparator />
-                <button
-                  className="text-muted-foreground hover:text-foreground w-full px-3 py-2 text-left text-xs transition-colors"
-                  onClick={() => setSelected([])}
-                >
-                  선택 초기화
-                </button>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <div className="bg-border mx-1 h-5 w-px" />
-        <span className="text-muted-foreground pl-2">
-          <SearchIcon className="size-4" />
-        </span>
-        <Input
-          className="flex-1 border-0 shadow-none focus-visible:ring-0"
-          placeholder="검색어를 입력하세요"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        {search && (
-          <button
-            className="text-muted-foreground hover:text-foreground pr-3"
-            onClick={() => setSearch('')}
-          >
-            <XIcon className="size-4" />
-          </button>
-        )}
+      <PostingFilter
+        search={search}
+        onSearchChange={(value) => {
+          setSearch(value);
+          setPage(1);
+        }}
+        selected={selected}
+        onSelectedChange={(options) => {
+          setSelected(options);
+          setPage(1);
+        }}
+      />
+      <div className="text-muted-foreground text-sm">
+        총 {postings.total.toLocaleString()}개 · {totalPages} 페이지
       </div>
-      {/* 선택된 필터 태그 */}
-      {selected.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {selected.map((option) => (
-            <span
-              key={option}
-              className="bg-primary/10 text-primary inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
-            >
-              {option}
-              <button onClick={() => toggleOption(option)} className="hover:opacity-70">
-                <XIcon className="size-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
       <div className="flex flex-wrap gap-2">
         {postings.items.map((post) => (
           <ItemCard
@@ -184,20 +123,58 @@ const PostList = () => {
           />
         ))}
       </div>
-      <div className="flex justify-center">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div />
         <ButtonGroup aria-label="Button group">
-          <Button variant="secondary">
+          <Button
+            variant="secondary"
+            onClick={() => setPage(Math.max(1, page - 1))}
+            disabled={page === 1}
+          >
             <ArrowLeftIcon />
           </Button>
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((_, index) => (
-            <Button variant="secondary" key={index}>
-              {index + 1}
+          {pageNumbers.map((pageNumber) => (
+            <Button
+              key={pageNumber}
+              variant={pageNumber === page ? 'secondary' : 'outline'}
+              onClick={() => setPage(pageNumber)}
+            >
+              {pageNumber}
             </Button>
           ))}
-          <Button variant="secondary">
+          <Button
+            variant="secondary"
+            onClick={() => setPage(Math.min(totalPages, page + 1))}
+            disabled={page === totalPages}
+          >
             <ArrowRightIcon />
           </Button>
         </ButtonGroup>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              {pageSize}개
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>페이지당 항목</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={String(pageSize)}
+              onValueChange={(value) => {
+                const selectedSize = Number(value);
+                setPageSize(selectedSize);
+                setPage(1);
+              }}
+            >
+              {paginationOptions.map((option) => (
+                <DropdownMenuRadioItem key={option} value={String(option)}>
+                  {option}개
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

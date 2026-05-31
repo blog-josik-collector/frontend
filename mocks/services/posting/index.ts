@@ -16,8 +16,8 @@ const generateMockPostings = (count: number): PostingItemDto[] => {
       like_count: Math.floor(Math.random() * 1000),
       view_count: Math.floor(Math.random() * 10000),
       is_liked: Math.random() > 0.7,
-      is_bookmarted: Math.random() > 0.8,
-    } as SocialStatsDto,
+      is_bookmarked: Math.random() > 0.8,
+    } satisfies SocialStatsDto,
   }));
 };
 
@@ -53,7 +53,7 @@ export const postingsHandlers = [
     const paginatedPostings = allPostings.slice(startIndex, endIndex);
 
     const response = {
-      total: allPostings.length,
+      total: allPostings.length + 10,
       items: paginatedPostings,
     };
 

@@ -1,24 +1,25 @@
 import { create } from 'zustand';
 
-import { getPostings, type GetPostingsResponse } from '@/services/posting';
+import { getPostings, type GetPostingsParams, type GetPostingsResponse } from '@/services/posting';
 
 interface PostingStore {
   postings: GetPostingsResponse;
   loading: boolean;
   error: string | null;
-  fetchPostings: () => Promise<void>;
+  // eslint-disable-next-line no-unused-vars
+  fetchPostings: (params?: GetPostingsParams) => Promise<void>;
 }
 
 export const usePostingStore = create<PostingStore>((set) => ({
   postings: { total: 0, items: [] },
   loading: false,
   error: null,
-  fetchPostings: async () => {
+  fetchPostings: async (params: GetPostingsParams = {}) => {
     set({ loading: true, error: null });
     try {
-      const data = await getPostings();
+      const data = await getPostings(params);
       set({ postings: data, loading: false });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to fetch postings', loading: false });
     }
   },

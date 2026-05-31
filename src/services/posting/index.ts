@@ -7,7 +7,7 @@ export interface SocialStatsDto {
   like_count: number;
   view_count: number;
   is_liked: boolean;
-  is_bookmarted: boolean;
+  is_bookmarked: boolean;
 }
 
 export interface PostingItemDto {
@@ -63,7 +63,7 @@ const mapSocialStatsDtoToEntity = (dto: SocialStatsDto): SocialStats => ({
   likeCount: dto.like_count,
   viewCount: dto.view_count,
   isLiked: dto.is_liked,
-  isBookmarked: dto.is_bookmarted,
+  isBookmarked: dto.is_bookmarked,
 });
 
 const mapPostingItemDtoToEntity = (dto: PostingItemDto): PostingItem => ({
@@ -83,7 +83,14 @@ const mapGetPostingsResponseDtoToEntity = (dto: GetPostingsResponseDto): GetPost
 });
 
 // API 함수 - DTO로 받아서 Entity로 변환
-export const getPostings = async (params?: GetPostingsParams): Promise<GetPostingsResponse> => {
+export const getPostings = async (
+  params: GetPostingsParams = {
+    page: 0,
+    size: 10,
+    provider_id: undefined,
+    title: undefined,
+  },
+): Promise<GetPostingsResponse> => {
   const response = await api.get<GetPostingsResponseDto>('/api/v1/postings', { params });
   return mapGetPostingsResponseDtoToEntity(response.data);
 };
