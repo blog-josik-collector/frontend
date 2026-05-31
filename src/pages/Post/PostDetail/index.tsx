@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router';
 
 import {
   Bookmark,
@@ -12,8 +13,6 @@ import {
   Siren,
   User,
 } from 'lucide-react';
-
-import { useLocation } from 'react-router';
 
 import {
   AlertDialog,
