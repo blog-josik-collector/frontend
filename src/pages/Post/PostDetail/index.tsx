@@ -1,14 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 
 import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
   Bookmark,
   Calendar,
-  ChevronDown,
   ChevronRight,
+  ExternalLink,
+  Eye,
+  FileQuestion,
   Flag,
   Heart,
   MessageCircle,
+  RefreshCw,
   Send,
   Siren,
   User,
@@ -25,106 +30,103 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { ButtonGroup, ButtonGroupSeparator } from '@/components/ui/button-group';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ButtonGroup } from '@/components/ui/button-group';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { type PostingComment } from '@/services/posting';
+import {
+  usePostingBookmarkStore,
+  usePostingCommentStore,
+  usePostingDetailStore,
+  usePostingLikeStore,
+} from '@/stores/posting/postingStore';
 
-interface Comment {
-  id: string;
-  author: string;
-  content: string;
-  createdAt: string;
-  likes: number;
-  replies?: Comment[];
-}
-
-interface PostData {
-  id: string;
-  title: string;
-  content: string;
-  createdAt: string;
-  likes: number;
-  isLiked: boolean;
-  isBookmarked: boolean;
-  comments: Comment[];
-}
+const defaultPagination = 5;
+const pageBlockSize = 10;
 
 const PostDetail = () => {
   const location = useLocation();
   const postId = new URLSearchParams(location.search).get('post-id') ?? '';
 
-  // Mock data - 실제로는 API를 통해 데이터를 가져와야 합니다
-  const [post, setPost] = useState<PostData>({
-    id: postId,
-    title: '블로그 포스트 제목',
-    content: `여기는 블로그 포스트의 본문 내용입니다. 
-      
-이곳에 상세한 내용이 표시됩니다. 마크다운 형식이나 HTML 형식의 내용을 렌더링할 수 있습니다.
-
-여러 줄에 걸쳐서 내용이 표시되며, 사용자가 작성한 전체 내용을 보여줍니다.
-
-이미지나 다른 미디어도 포함될 수 있습니다.`,
-    createdAt: '2024-03-01',
-    likes: 42,
-    isLiked: false,
-    isBookmarked: false,
-    comments: [
-      {
-        id: '1',
-        author: '댓글 작성자1',
-        content: '첫 번째 댓글입니다.',
-        createdAt: '2024-03-01',
-        likes: 5,
-        replies: [
-          {
-            id: '1-1',
-            author: '대댓글 작성자1',
-            content: '@댓글 작성자1 첫 번째 댓글에 대한 대댓글입니다.',
-            createdAt: '2024-03-02',
-            likes: 2,
-          },
-          {
-            id: '1-2',
-            author: '대댓글 작성자2',
-            content: '@댓글 작성자1 다른 대댓글입니다.',
-            createdAt: '2024-03-03',
-            likes: 1,
-          },
-        ],
-      },
-      {
-        id: '2',
-        author: '댓글 작성자2',
-        content: '두 번째 댓글입니다. 좋은 글이네요!',
-        createdAt: '2024-03-02',
-        likes: 3,
-        replies: [],
-      },
-    ],
-  });
+  const {
+    postingDetailEntity,
+    error: postingDetailError,
+    fetchPostingDetail,
+  } = usePostingDetailStore();
+  const { postingComments, fetchPostingComments, createPostingComment } = usePostingCommentStore();
+  const {
+    loading: postingLikeLoading,
+    likePosting,
+    unlikePosting,
+  } = usePostingLikeStore();
+  const {
+    loading: postingBookmarkLoading,
+    createBookmark,
+    deleteBookmark,
+  } = usePostingBookmarkStore();
 
   const [newComment, setNewComment] = useState('');
-  const [comments, setComments] = useState(post.comments);
+  const [commentPage, setCommentPage] = useState(1);
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
+
+  const commentPageSize = defaultPagination;
+  const post = postingDetailEntity[postId] ?? null;
+  const comments = postingComments[postId]?.items ?? [];
+  const rootComments = comments.filter((comment) => !comment.parentCommentId);
+  const childCommentsByParentId = comments.reduce<Record<string, PostingComment[]>>(
+    (acc, comment) => {
+      if (comment.parentCommentId) {
+        acc[comment.parentCommentId] = [...(acc[comment.parentCommentId] ?? []), comment];
+      }
+
+      return acc;
+    },
+    {},
+  );
+  const selectedReplyComment = replyingToId
+    ? comments.find((comment) => comment.id === replyingToId)
+    : null;
+  const commentTotalCount = postingComments[postId]?.totalCount
+    ? parseInt(postingComments[postId].totalCount)
+    : 0;
+  const commentTotalPages = Math.max(1, Math.ceil(commentTotalCount / commentPageSize));
+  const commentCurrentBlockStart =
+    Math.floor((commentPage - 1) / pageBlockSize) * pageBlockSize + 1;
+  const commentPageNumbers = Array.from(
+    {
+      length: Math.min(pageBlockSize, commentTotalPages - commentCurrentBlockStart + 1),
+    },
+    (_, index) => commentCurrentBlockStart + index,
+  );
   const [isReportMenuOpen, setIsReportMenuOpen] = useState(false);
   const [isOtherReportOpen, setIsOtherReportOpen] = useState(false);
   const [otherReportContent, setOtherReportContent] = useState('');
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyContent, setReplyContent] = useState('');
+  const [openCommentReportMenuIds, setOpenCommentReportMenuIds] = useState<string[]>([]);
 
-  const handleLike = () => {
-    setPost((prev) => ({
-      ...prev,
-      isLiked: !prev.isLiked,
-      likes: prev.isLiked ? prev.likes - 1 : prev.likes + 1,
-    }));
+  const handleLike = async () => {
+    if (!post) return;
+
+    if (post.social.isLiked) {
+      await unlikePosting(post.id);
+    } else {
+      await likePosting(post.id);
+    }
+
+    fetchPostingDetail(post.id);
   };
 
-  const handleBookmark = () => {
-    setPost((prev) => ({
-      ...prev,
-      isBookmarked: !prev.isBookmarked,
-    }));
+  const handleBookmark = async () => {
+    if (!post) return;
+
+    if (post.social.isBookmarked) {
+      await deleteBookmark(post.id);
+    } else {
+      await createBookmark(post.id);
+    }
+
+    fetchPostingDetail(post.id);
   };
 
   const handleReport = (type: string) => {
@@ -145,8 +147,6 @@ const PostDetail = () => {
     }
   };
 
-  const [openCommentReportMenuIds, setOpenCommentReportMenuIds] = useState<string[]>([]);
-
   const handleCommentReport = (type: 'gov' | 'sex' | 'other') => {
     if (type === 'gov' || type === 'sex') {
       alert(`${type === 'gov' ? '정치' : '성인'} 신고가 접수되었습니다.`);
@@ -155,57 +155,104 @@ const PostDetail = () => {
     }
   };
 
-  const handleCommentSubmit = (e: React.FormEvent) => {
+  const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newComment.trim()) {
-      const comment: Comment = {
-        id: Date.now().toString(),
-        author: '현재 사용자',
-        content: newComment,
-        createdAt: new Date().toISOString().split('T')[0],
-        likes: 0,
-        replies: [],
-      };
-      setComments((prev) => [comment, ...prev]);
-      setNewComment('');
+    if (newComment.trim() && postId) {
+      try {
+        await createPostingComment(postId, {
+          content: newComment,
+          ...(replyingToId && { parent_comment_id: replyingToId }),
+        });
+        setNewComment('');
+        setReplyingToId(null);
+        if (commentPage !== 1) {
+          setCommentPage(1);
+        }
+        fetchPostingComments(postId, { page: 0, size: commentPageSize });
+      } catch {
+        alert('댓글 작성 실패');
+      }
     }
   };
 
-  const handleReplySubmit = (e: React.FormEvent, parentId: string, parentAuthor: string) => {
-    e.preventDefault();
-    if (replyContent.trim()) {
-      const reply: Comment = {
-        id: `${parentId}-${Date.now()}`,
-        author: '현재 사용자',
-        content: `@${parentAuthor} ${replyContent}`,
-        createdAt: new Date().toISOString().split('T')[0],
-        likes: 0,
-        replies: [],
-      };
-
-      setComments((prev) =>
-        prev.map((comment) =>
-          comment.id === parentId
-            ? { ...comment, replies: [...(comment.replies || []), reply] }
-            : comment,
-        ),
-      );
-
-      setReplyContent('');
-      setReplyingTo(null);
+  useEffect(() => {
+    if (postId && !postingDetailEntity[postId]) {
+      fetchPostingDetail(postId);
     }
-  };
+  }, [fetchPostingDetail, postId, postingDetailEntity]);
 
-  const handleCommentLike = (commentId: string) => {
-    setComments((prev) =>
-      prev.map((comment) =>
-        comment.id === commentId ? { ...comment, likes: comment.likes + 1 } : comment,
-      ),
-    );
+  useEffect(() => {
+    if (postId) {
+      fetchPostingComments(postId, { page: commentPage - 1, size: commentPageSize });
+    }
+  }, [commentPage, commentPageSize, fetchPostingComments, postId]);
+
+  const handleRetryPost = () => {
+    if (!postId) return;
+
+    fetchPostingDetail(postId);
   };
 
   if (postId === '') {
-    return <div>포스트를 찾을 수 없습니다.</div>;
+    return (
+      <div className="mx-auto max-w-4xl p-6">
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+            <FileQuestion className="text-muted-foreground size-10" />
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold">포스트를 찾을 수 없습니다.</h2>
+              <p className="text-muted-foreground text-sm">
+                유효한 포스트 주소로 다시 접근해주세요.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!post && !postingDetailError) {
+    return (
+      <div className="mx-auto max-w-4xl space-y-6 p-6">
+        <Card>
+          <CardHeader className="space-y-4">
+            <Skeleton className="h-8 w-2/3" />
+            <Skeleton className="h-4 w-40" />
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <Skeleton className="h-20 w-full" />
+            <Separator />
+            <div className="flex gap-3">
+              <Skeleton className="h-9 w-20" />
+              <Skeleton className="h-9 w-28" />
+              <Skeleton className="h-9 w-20" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!post) {
+    return (
+      <div className="mx-auto max-w-4xl p-6">
+        <Card>
+          <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
+            <FileQuestion className="text-muted-foreground size-10" />
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold">포스트를 불러오지 못했습니다.</h2>
+              <p className="text-muted-foreground text-sm">
+                {postingDetailError ?? '요청한 포스트가 없거나 일시적으로 접근할 수 없습니다.'}
+              </p>
+            </div>
+            <Button variant="outline" onClick={handleRetryPost} className="gap-2">
+              <RefreshCw className="size-4" />
+              다시 시도
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -215,11 +262,16 @@ const PostDetail = () => {
         <CardHeader>
           <div className="space-y-4">
             <CardTitle className="text-2xl font-bold">{post.title}</CardTitle>
+            {post.summary && <CardDescription>{post.summary}</CardDescription>}
 
             <div className="text-muted-foreground flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <Calendar className="size-4" />
-                <span>{post.createdAt}</span>
+                <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Eye className="size-4" />
+                <span>{post.social.viewCount.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -227,32 +279,39 @@ const PostDetail = () => {
 
         <CardContent className="space-y-6">
           {/* 본문 */}
-          <div className="prose prose-gray max-w-none whitespace-pre-wrap">{post.content}</div>
+          <div className="prose prose-gray max-w-none whitespace-pre-wrap">{post.summary}</div>
 
           <Separator />
 
-          <Button>본문으로 이동하기</Button>
+          <Button asChild>
+            <a href={post.url} target="_blank" rel="noreferrer" className="gap-2">
+              <ExternalLink className="size-4" href={post.url} />
+              본문으로 이동하기
+            </a>
+          </Button>
           <Separator />
 
           {/* 액션 버튼 */}
           <div className="flex items-center gap-4">
             <Button
-              variant={post.isLiked ? 'default' : 'outline'}
+              variant={post.social.isLiked ? 'default' : 'outline'}
               size="sm"
               onClick={handleLike}
+              disabled={postingLikeLoading}
               className="flex items-center gap-2"
             >
-              <Heart className={`size-4 ${post.isLiked ? 'fill-current' : ''}`} />
-              <span>{post.likes}</span>
+              <Heart className={`size-4 ${post.social.isLiked ? 'fill-current' : ''}`} />
+              <span>{post.social.likeCount}</span>
             </Button>
 
             <Button
-              variant={post.isBookmarked ? 'default' : 'outline'}
+              variant={post.social.isBookmarked ? 'default' : 'outline'}
               size="sm"
               onClick={handleBookmark}
+              disabled={postingBookmarkLoading}
               className="flex items-center gap-2"
             >
-              <Bookmark className={`size-4 ${post.isBookmarked ? 'fill-current' : ''}`} />
+              <Bookmark className={`size-4 ${post.social.isBookmarked ? 'fill-current' : ''}`} />
               <span>즐겨찾기</span>
             </Button>
 
@@ -323,16 +382,31 @@ const PostDetail = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MessageCircle className="size-5" />
-            댓글 ({comments.length})
+            댓글 ({commentTotalCount})
           </CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-6">
           {/* 댓글 작성 */}
           <form onSubmit={handleCommentSubmit} className="space-y-4">
+            {selectedReplyComment && (
+              <div className="bg-muted flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm">
+                <span className="min-w-0 truncate">
+                  {selectedReplyComment.userId}님에게 답글 작성 중
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setReplyingToId(null)}
+                >
+                  취소
+                </Button>
+              </div>
+            )}
             <div className="flex gap-2">
               <Input
-                placeholder="댓글을 작성하세요..."
+                placeholder={selectedReplyComment ? '답글을 작성하세요...' : '댓글을 작성하세요...'}
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 className="flex-1"
@@ -347,7 +421,7 @@ const PostDetail = () => {
 
           {/* 댓글 목록 */}
           <div className="space-y-4">
-            {comments.map((comment) => (
+            {rootComments.map((comment) => (
               <div key={comment.id} className="space-y-3">
                 <div className="flex items-start gap-3">
                   <div className="bg-muted flex h-8 w-8 items-center justify-center rounded-full">
@@ -356,18 +430,20 @@ const PostDetail = () => {
 
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{comment.author}</span>
-                      <span className="text-muted-foreground text-xs">{comment.createdAt}</span>
+                      <span className="text-sm font-medium">{comment.userId}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {new Date(comment.createdAt).toLocaleDateString()}
+                      </span>
                     </div>
 
                     <p className="text-sm">{comment.content}</p>
                     <ButtonGroup>
                       <ButtonGroup>
                         <Button
-                          variant="ghost"
+                          variant={replyingToId === comment.id ? 'secondary' : 'ghost'}
                           size="xs"
                           onClick={() =>
-                            setReplyingTo(replyingTo === comment.id ? null : comment.id)
+                            setReplyingToId(replyingToId === comment.id ? null : comment.id)
                           }
                           className="flex items-center gap-1"
                         >
@@ -430,170 +506,67 @@ const PostDetail = () => {
                   </div>
                 </div>
 
-                {/* 대댓글 작성 폼 */}
-                {replyingTo === comment.id && (
-                  <div className="ml-11 space-y-2">
-                    <form
-                      onSubmit={(e) => handleReplySubmit(e, comment.id, comment.author)}
-                      className="flex gap-2"
-                    >
-                      <Input
-                        placeholder="대댓글을 작성하세요..."
-                        value={replyContent}
-                        onChange={(e) => setReplyContent(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button type="submit" disabled={!replyContent.trim()} size="sm">
-                        <Send className="size-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setReplyingTo(null);
-                          setReplyContent('');
-                        }}
-                      >
-                        취소
-                      </Button>
-                    </form>
-                  </div>
-                )}
+                {(childCommentsByParentId[comment.id] ?? []).map((reply) => (
+                  <div key={reply.id} className="ml-11 flex items-start gap-3 rounded-md py-2">
+                    <div className="bg-muted flex h-7 w-7 items-center justify-center rounded-full">
+                      <User className="size-3.5" />
+                    </div>
 
-                {/* 대댓글 목록 */}
-                {comment.replies && comment.replies.length > 0 && (
-                  <div className="ml-11 space-y-3">
-                    {comment.replies.map((reply) => (
-                      <div key={reply.id} className="space-y-2">
-                        <div className="flex items-start gap-3">
-                          <div className="bg-muted flex h-6 w-6 items-center justify-center rounded-full">
-                            <User className="size-3" />
-                          </div>
-                          <div className="flex-1 space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-medium">{reply.author}</span>
-                              <span className="text-muted-foreground text-xs">
-                                {reply.createdAt}
-                              </span>
-                            </div>
-                            <p className="text-xs">{reply.content}</p>
-                            <ButtonGroup>
-                              <ButtonGroup>
-                                <Button
-                                  variant="ghost"
-                                  size="xs"
-                                  onClick={() =>
-                                    setReplyingTo(replyingTo === reply.id ? null : reply.id)
-                                  }
-                                  className="flex items-center gap-1"
-                                >
-                                  <MessageCircle className="size-2" />
-                                  <span className="text-xs">답글</span>
-                                </Button>
-                              </ButtonGroup>
-                              <ButtonGroup>
-                                <Button
-                                  variant={
-                                    openCommentReportMenuIds.includes(reply.id)
-                                      ? 'default'
-                                      : 'ghost'
-                                  }
-                                  size="xs"
-                                  onClick={() => {
-                                    if (openCommentReportMenuIds.includes(reply.id)) {
-                                      setOpenCommentReportMenuIds(
-                                        openCommentReportMenuIds.filter((id) => id !== reply.id),
-                                      );
-                                    } else {
-                                      setOpenCommentReportMenuIds([
-                                        ...openCommentReportMenuIds,
-                                        reply.id,
-                                      ]);
-                                    }
-                                  }}
-                                  className="flex items-center gap-1"
-                                >
-                                  <Siren className="size-2" />
-                                </Button>
-                              </ButtonGroup>
-                              {openCommentReportMenuIds.includes(reply.id) && (
-                                <ButtonGroup>
-                                  <Button
-                                    variant="outline"
-                                    size="xs"
-                                    onClick={() => handleCommentReport('gov')}
-                                    className="flex items-center gap-1"
-                                  >
-                                    정치
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="xs"
-                                    onClick={() => handleCommentReport('sex')}
-                                    className="flex items-center gap-1"
-                                  >
-                                    성인
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="xs"
-                                    onClick={() => handleCommentReport('other')}
-                                    className="flex items-center gap-1"
-                                  >
-                                    기타
-                                  </Button>
-                                </ButtonGroup>
-                              )}
-                            </ButtonGroup>
-                          </div>
-                        </div>
-
-                        {/* 대댓글의 대댓글 작성 폼 */}
-                        {replyingTo === reply.id && (
-                          <div className="ml-9 space-y-2">
-                            <form
-                              onSubmit={(e) => handleReplySubmit(e, comment.id, reply.author)}
-                              className="flex gap-2"
-                            >
-                              <Input
-                                placeholder="대댓글을 작성하세요..."
-                                value={replyContent}
-                                onChange={(e) => setReplyContent(e.target.value)}
-                                className="flex-1"
-                              />
-                              <Button type="submit" disabled={!replyContent.trim()} size="sm">
-                                <Send className="size-4" />
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setReplyingTo(null);
-                                  setReplyContent('');
-                                }}
-                              >
-                                취소
-                              </Button>
-                            </form>
-                          </div>
-                        )}
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{reply.userId}</span>
+                        <span className="text-muted-foreground text-xs">
+                          {new Date(reply.createdAt).toLocaleDateString()}
+                        </span>
                       </div>
-                    ))}
+                      <p className="text-sm">{reply.content}</p>
+                    </div>
                   </div>
-                )}
+                ))}
 
-                {comment.id !== comments[comments.length - 1].id && <Separator className="ml-11" />}
+                {comment.id !== rootComments[rootComments.length - 1].id && (
+                  <Separator className="ml-11" />
+                )}
               </div>
             ))}
 
-            {comments.length === 0 && (
+            {rootComments.length === 0 && (
               <div className="text-muted-foreground py-8 text-center">
                 아직 댓글이 없습니다. 첫 번째 댓글을 작성해보세요!
               </div>
             )}
           </div>
+
+          {/* 댓글 pagination */}
+          {commentTotalPages > 1 && (
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
+              <ButtonGroup aria-label="Comment pagination">
+                <Button
+                  variant="secondary"
+                  onClick={() => setCommentPage(Math.max(1, commentPage - 1))}
+                  disabled={commentPage === 1}
+                >
+                  <ArrowLeftIcon />
+                </Button>
+                {commentPageNumbers.map((pageNumber) => (
+                  <Button
+                    key={pageNumber}
+                    variant={pageNumber === commentPage ? 'secondary' : 'outline'}
+                    onClick={() => setCommentPage(pageNumber)}
+                  >
+                    {pageNumber}
+                  </Button>
+                ))}
+                <Button
+                  variant="secondary"
+                  onClick={() => setCommentPage(Math.min(commentTotalPages, commentPage + 1))}
+                  disabled={commentPage === commentTotalPages}
+                >
+                  <ArrowRightIcon />
+                </Button>
+              </ButtonGroup>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

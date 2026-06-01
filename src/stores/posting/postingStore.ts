@@ -2,10 +2,15 @@ import { create } from 'zustand';
 
 import {
   createPostingBookmark,
+  createPostingComment,
+  type CreatePostingCommentRequestDto,
+  type CreatePostingCommentResponse,
   createPostingLike,
   deletePostingBookmark,
   deletePostingLike,
   getMyBookmarks,
+  getPostingComments,
+  type GetPostingCommentsResponse,
   getPostingDetail,
   getPostings,
   type GetPostingsParams,
@@ -126,6 +131,52 @@ export const usePostingBookmarkStore = create<PostingBookmarkStore>((set) => ({
       }));
     } catch {
       set({ error: 'Failed to remove bookmark', loading: false });
+    }
+  },
+}));
+
+interface PostingCommentStore {
+  postingComments: Record<string, GetPostingCommentsResponse>;
+  loading: boolean;
+  error: string | null;
+  fetchPostingComments: (
+    postingId: string,
+    params?: { page?: number; size?: number },
+  ) => Promise<void>;
+  createPostingComment: (
+    postingId: string,
+    body: CreatePostingCommentRequestDto,
+  ) => Promise<CreatePostingCommentResponse | undefined>;
+}
+
+export const usePostingCommentStore = create<PostingCommentStore>((set) => ({
+  postingComments: {},
+  loading: false,
+  error: null,
+  fetchPostingComments: async (postingId: string, params = { page: 0, size: 20 }) => {
+    if (!postingId) return;
+    set({ loading: true, error: null });
+    try {
+      const response = await getPostingComments(postingId, params);
+      set((state) => ({
+        postingComments: {
+          ...state.postingComments,
+          [postingId]: response,
+        },
+        loading: false,
+      }));
+    } catch {
+      set({ error: 'Failed to fetch posting comments', loading: false });
+    }
+  },
+  createPostingComment: async (postingId: string, body: CreatePostingCommentRequestDto) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await createPostingComment(postingId, body);
+      set({ loading: false });
+      return response;
+    } catch {
+      set({ error: 'Failed to create posting comment', loading: false });
     }
   },
 }));

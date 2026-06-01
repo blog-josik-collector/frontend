@@ -39,9 +39,13 @@ const generateMockPostings = (count: number): PostingListItemDto[] => {
 
 // Mock 게시물 데이터 생성
 const mockPostingsData = generateMockPostings(110);
-const likedPostings = new Set<string>();
+const likedPostings = new Set<string>(
+  mockPostingsData.filter((post) => post.social.is_liked).map((post) => post.id),
+);
 const bookmarkMap = new Map<string, number>(
-  mockPostingsData.slice(0, 5).map((post, index) => [post.id, Date.now() - index * 60_000]),
+  mockPostingsData
+    .filter((post) => post.social.is_bookmarked)
+    .map((post, index) => [post.id, Date.now() - index * 60_000]),
 );
 const mockCommentsByPostId = new Map<string, PostingCommentItem[]>();
 
@@ -74,6 +78,11 @@ const generateMockPostingDetail = (postingId: string): PostingDetailDto => {
 
   return {
     ...basePosting,
+    social: {
+      ...basePosting.social,
+      is_liked: likedPostings.has(postingId),
+      is_bookmarked: bookmarkMap.has(postingId),
+    },
     url: `https://example.com/postings/${postingId}`,
     created_at: basePosting.published_at,
     updated_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -129,28 +138,62 @@ export const postingsHandlers = [
   // POST /api/v1/postings/:id/likes 핸들러
   http.post('/api/v1/postings/:id/likes', ({ params }) => {
     const { id } = params;
-    likedPostings.add(id as string);
+    const postingId = id as string;
+    const basePosting = mockPostingsData.find((post) => post.id === postingId);
+
+    if (basePosting && !likedPostings.has(postingId)) {
+      basePosting.social.like_count += 1;
+    }
+    if (basePosting) {
+      basePosting.social.is_liked = true;
+    }
+    likedPostings.add(postingId);
+
     return HttpResponse.json({}, { status: 202 });
   }),
 
   // DELETE /api/v1/postings/:id/likes 핸들러
   http.delete('/api/v1/postings/:id/likes', ({ params }) => {
     const { id } = params;
-    likedPostings.delete(id as string);
+    const postingId = id as string;
+    const basePosting = mockPostingsData.find((post) => post.id === postingId);
+
+    if (basePosting && likedPostings.has(postingId)) {
+      basePosting.social.like_count = Math.max(0, basePosting.social.like_count - 1);
+    }
+    if (basePosting) {
+      basePosting.social.is_liked = false;
+    }
+    likedPostings.delete(postingId);
+
     return HttpResponse.json({}, { status: 202 });
   }),
 
   // POST /api/v1/postings/:id/bookmarks 핸들러
   http.post('/api/v1/postings/:id/bookmarks', ({ params }) => {
     const { id } = params;
-    bookmarkMap.set(id as string, Date.now());
+    const postingId = id as string;
+    const basePosting = mockPostingsData.find((post) => post.id === postingId);
+
+    if (basePosting) {
+      basePosting.social.is_bookmarked = true;
+    }
+    bookmarkMap.set(postingId, Date.now());
+
     return HttpResponse.json({}, { status: 202 });
   }),
 
   // DELETE /api/v1/postings/:id/bookmarks 핸들러
   http.delete('/api/v1/postings/:id/bookmarks', ({ params }) => {
     const { id } = params;
-    bookmarkMap.delete(id as string);
+    const postingId = id as string;
+    const basePosting = mockPostingsData.find((post) => post.id === postingId);
+
+    if (basePosting) {
+      basePosting.social.is_bookmarked = false;
+    }
+    bookmarkMap.delete(postingId);
+
     return HttpResponse.json({}, { status: 202 });
   }),
 
@@ -176,7 +219,7 @@ export const postingsHandlers = [
   // POST /api/v1/postings/:id/comments 핸들러
   http.post('/api/v1/postings/:id/comments', async ({ request, params }) => {
     const { id } = params;
-    const body = (await request.json()) as { content?: string };
+    const body = (await request.json()) as { content?: string; parent_comment_id?: string };
 
     if (!body || typeof body.content !== 'string') {
       return HttpResponse.json({ error: 'content is required' }, { status: 400 });
@@ -188,7 +231,7 @@ export const postingsHandlers = [
       id: faker.string.uuid(),
       user_id: faker.internet.username(),
       post_id: postingId,
-      parent_comment_id: '',
+      parent_comment_id: body.parent_comment_id ?? '',
       has_child_comment: false,
       content: body.content,
       total_report_count: faker.number.int({ min: 0, max: 5 }),
@@ -197,6 +240,12 @@ export const postingsHandlers = [
     };
 
     const comments = mockCommentsByPostId.get(postingId) ?? [];
+    if (comment.parent_comment_id) {
+      const parentComment = comments.find((item) => item.id === comment.parent_comment_id);
+      if (parentComment) {
+        parentComment.has_child_comment = true;
+      }
+    }
     comments.unshift(comment);
     mockCommentsByPostId.set(postingId, comments);
 

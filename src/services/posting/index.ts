@@ -210,6 +210,7 @@ export const getMyBookmarks = async (
 
 export interface CreatePostingCommentRequestDto {
   content: string;
+  parent_comment_id?: string;
 }
 
 export interface CreatePostingCommentResponseDto {
