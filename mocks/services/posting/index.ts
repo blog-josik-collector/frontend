@@ -49,6 +49,35 @@ const bookmarkMap = new Map<string, number>(
 );
 const mockCommentsByPostId = new Map<string, PostingCommentItem[]>();
 
+const isReplyInThread = (
+  comment: PostingCommentItem,
+  rootCommentId: string,
+  comments: PostingCommentItem[],
+): boolean => {
+  let currentParentId = comment.parent_comment_id;
+
+  while (currentParentId) {
+    if (currentParentId === rootCommentId) {
+      return true;
+    }
+
+    const parentComment = comments.find((item) => item.id === currentParentId);
+    if (!parentComment) {
+      return false;
+    }
+
+    currentParentId = parentComment.parent_comment_id;
+  }
+
+  return false;
+};
+
+const getRootComments = (comments: PostingCommentItem[]) =>
+  comments.filter((comment) => !comment.parent_comment_id);
+
+const getThreadReplies = (comments: PostingCommentItem[], rootCommentId: string) =>
+  comments.filter((comment) => isReplyInThread(comment, rootCommentId, comments));
+
 // 게시물 상세 데이터 생성 함수
 const generateMockPostingDetail = (postingId: string): PostingDetailDto => {
   const basePosting = mockPostingsData.find((p) => p.id === postingId);
@@ -262,14 +291,20 @@ export const postingsHandlers = [
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '0');
     const size = parseInt(url.searchParams.get('size') || '20');
+    const parentCommentId = url.searchParams.get('parent_comment_id');
     const { id } = params;
     const comments = mockCommentsByPostId.get(id as string) ?? [];
+
+    const targetComments = parentCommentId
+      ? getThreadReplies(comments, parentCommentId)
+      : getRootComments(comments);
+
     const startIndex = page * size;
     const endIndex = startIndex + size;
 
     return HttpResponse.json({
-      total_count: String(comments.length),
-      items: comments.slice(startIndex, endIndex),
+      total_count: String(targetComments.length),
+      items: targetComments.slice(startIndex, endIndex),
     });
   }),
 ];

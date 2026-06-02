@@ -241,9 +241,15 @@ export const createPostingComment = async (
   return mapCreatePostingCommentResponseDtoToEntity(response.data);
 };
 
+export interface GetPostingCommentsParams {
+  page?: number;
+  size?: number;
+  parent_comment_id?: string;
+}
+
 export const getPostingComments = async (
   postingId: string,
-  params: { page?: number; size?: number } = { page: 0, size: 20 },
+  params: GetPostingCommentsParams = { page: 0, size: 20 },
 ): Promise<GetPostingCommentsResponse> => {
   const response = await api.get<GetPostingCommentsResponseDto>(
     `/api/v1/postings/${postingId}/comments`,

@@ -10,6 +10,7 @@ import {
   deletePostingLike,
   getMyBookmarks,
   getPostingComments,
+  type GetPostingCommentsParams,
   type GetPostingCommentsResponse,
   getPostingDetail,
   getPostings,
@@ -135,13 +136,23 @@ export const usePostingBookmarkStore = create<PostingBookmarkStore>((set) => ({
   },
 }));
 
+interface PostingCommentReplies {
+  items: GetPostingCommentsResponse['items'];
+  totalCount: number;
+}
+
 interface PostingCommentStore {
   postingComments: Record<string, GetPostingCommentsResponse>;
+  postingCommentReplies: Record<string, Record<string, PostingCommentReplies>>;
   loading: boolean;
+  replyLoading: Record<string, boolean>;
   error: string | null;
-  fetchPostingComments: (
+  fetchPostingComments: (postingId: string, params?: GetPostingCommentsParams) => Promise<void>;
+  fetchPostingCommentReplies: (
     postingId: string,
-    params?: { page?: number; size?: number },
+    parentCommentId: string,
+    params?: GetPostingCommentsParams,
+    append?: boolean,
   ) => Promise<void>;
   createPostingComment: (
     postingId: string,
@@ -151,7 +162,9 @@ interface PostingCommentStore {
 
 export const usePostingCommentStore = create<PostingCommentStore>((set) => ({
   postingComments: {},
+  postingCommentReplies: {},
   loading: false,
+  replyLoading: {},
   error: null,
   fetchPostingComments: async (postingId: string, params = { page: 0, size: 20 }) => {
     if (!postingId) return;
@@ -167,6 +180,51 @@ export const usePostingCommentStore = create<PostingCommentStore>((set) => ({
       }));
     } catch {
       set({ error: 'Failed to fetch posting comments', loading: false });
+    }
+  },
+  fetchPostingCommentReplies: async (
+    postingId: string,
+    parentCommentId: string,
+    params = { page: 0, size: 5 },
+    append = false,
+  ) => {
+    if (!postingId || !parentCommentId) return;
+
+    const replyKey = `${postingId}:${parentCommentId}`;
+    set((state) => ({
+      replyLoading: { ...state.replyLoading, [replyKey]: true },
+      error: null,
+    }));
+
+    try {
+      const response = await getPostingComments(postingId, {
+        ...params,
+        parent_comment_id: parentCommentId,
+      });
+      const totalCount = parseInt(response.totalCount, 10);
+
+      set((state) => {
+        const postReplies = state.postingCommentReplies[postingId] ?? {};
+        const existing = postReplies[parentCommentId];
+        const items =
+          append && existing ? [...existing.items, ...response.items] : response.items;
+
+        return {
+          postingCommentReplies: {
+            ...state.postingCommentReplies,
+            [postingId]: {
+              ...postReplies,
+              [parentCommentId]: { items, totalCount },
+            },
+          },
+          replyLoading: { ...state.replyLoading, [replyKey]: false },
+        };
+      });
+    } catch {
+      set((state) => ({
+        error: 'Failed to fetch posting comment replies',
+        replyLoading: { ...state.replyLoading, [replyKey]: false },
+      }));
     }
   },
   createPostingComment: async (postingId: string, body: CreatePostingCommentRequestDto) => {

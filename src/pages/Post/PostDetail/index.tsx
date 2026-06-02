@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router';
 
 import {
@@ -44,6 +44,7 @@ import {
 } from '@/stores/posting/postingStore';
 
 const defaultPagination = 5;
+const defaultReplyPagination = 5;
 const pageBlockSize = 10;
 
 const PostDetail = () => {
@@ -55,7 +56,14 @@ const PostDetail = () => {
     error: postingDetailError,
     fetchPostingDetail,
   } = usePostingDetailStore();
-  const { postingComments, fetchPostingComments, createPostingComment } = usePostingCommentStore();
+  const {
+    postingComments,
+    postingCommentReplies,
+    replyLoading,
+    fetchPostingComments,
+    fetchPostingCommentReplies,
+    createPostingComment,
+  } = usePostingCommentStore();
   const {
     loading: postingLikeLoading,
     likePosting,
@@ -70,24 +78,57 @@ const PostDetail = () => {
   const [newComment, setNewComment] = useState('');
   const [commentPage, setCommentPage] = useState(1);
   const [replyingToId, setReplyingToId] = useState<string | null>(null);
+  const [replyPageByRootId, setReplyPageByRootId] = useState<Record<string, number>>({});
 
   const commentPageSize = defaultPagination;
+  const replyPageSize = defaultReplyPagination;
   const post = postingDetailEntity[postId] ?? null;
-  const comments = postingComments[postId]?.items ?? [];
-  const rootComments = comments.filter((comment) => !comment.parentCommentId);
-  const childCommentsByParentId = comments.reduce<Record<string, PostingComment[]>>(
-    (acc, comment) => {
-      if (comment.parentCommentId) {
-        acc[comment.parentCommentId] = [...(acc[comment.parentCommentId] ?? []), comment];
+  const rootComments = useMemo(
+    () => postingComments[postId]?.items ?? [],
+    [postId, postingComments],
+  );
+  const commentRepliesByRootId = useMemo(
+    () => postingCommentReplies[postId] ?? {},
+    [postId, postingCommentReplies],
+  );
+
+  const allLoadedComments = useMemo(() => {
+    const replies = Object.values(commentRepliesByRootId).flatMap(({ items }) => items);
+
+    return [...rootComments, ...replies];
+  }, [commentRepliesByRootId, rootComments]);
+
+  const commentById = useMemo(
+    () =>
+      allLoadedComments.reduce<Record<string, PostingComment>>((acc, comment) => {
+        acc[comment.id] = comment;
+        return acc;
+      }, {}),
+    [allLoadedComments],
+  );
+
+  const getThreadRootId = useCallback(
+    (commentId: string) => {
+      let current = commentById[commentId];
+
+      if (!current) {
+        return commentId;
       }
 
-      return acc;
+      while (current.parentCommentId) {
+        const parent = commentById[current.parentCommentId];
+        if (!parent) {
+          break;
+        }
+        current = parent;
+      }
+
+      return current.id;
     },
-    {},
+    [commentById],
   );
-  const selectedReplyComment = replyingToId
-    ? comments.find((comment) => comment.id === replyingToId)
-    : null;
+
+  const selectedReplyComment = replyingToId ? commentById[replyingToId] : null;
   const commentTotalCount = postingComments[postId]?.totalCount
     ? parseInt(postingComments[postId].totalCount)
     : 0;
@@ -155,16 +196,106 @@ const PostDetail = () => {
     }
   };
 
+  const toggleCommentReportMenu = (commentId: string) => {
+    setOpenCommentReportMenuIds((prev) =>
+      prev.includes(commentId) ? prev.filter((id) => id !== commentId) : [...prev, commentId],
+    );
+  };
+
+  const renderCommentActions = (commentId: string) => (
+    <ButtonGroup>
+      <ButtonGroup>
+        <Button
+          variant={replyingToId === commentId ? 'secondary' : 'ghost'}
+          size="xs"
+          onClick={() => setReplyingToId(replyingToId === commentId ? null : commentId)}
+          className="flex items-center gap-1"
+        >
+          <MessageCircle className="size-3" />
+          <span className="text-xs">답글</span>
+        </Button>
+      </ButtonGroup>
+      <ButtonGroup>
+        <Button
+          variant={openCommentReportMenuIds.includes(commentId) ? 'default' : 'ghost'}
+          size="xs"
+          onClick={() => toggleCommentReportMenu(commentId)}
+          className="flex items-center gap-1"
+        >
+          <Siren className="size-3" />
+        </Button>
+      </ButtonGroup>
+      {openCommentReportMenuIds.includes(commentId) && (
+        <ButtonGroup>
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={() => handleCommentReport('gov')}
+            className="flex items-center gap-1"
+          >
+            정치
+          </Button>
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={() => handleCommentReport('sex')}
+            className="flex items-center gap-1"
+          >
+            성인
+          </Button>
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={() => handleCommentReport('other')}
+            className="flex items-center gap-1"
+          >
+            기타
+          </Button>
+        </ButtonGroup>
+      )}
+    </ButtonGroup>
+  );
+
+  const handleLoadMoreReplies = async (rootCommentId: string) => {
+    const nextPage = (replyPageByRootId[rootCommentId] ?? 0) + 1;
+
+    await fetchPostingCommentReplies(
+      postId,
+      rootCommentId,
+      { page: nextPage, size: replyPageSize },
+      true,
+    );
+    setReplyPageByRootId((prev) => ({ ...prev, [rootCommentId]: nextPage }));
+  };
+
+  const refreshThreadReplies = async (threadRootId: string) => {
+    const loadedPageCount = (replyPageByRootId[threadRootId] ?? 0) + 1;
+
+    await fetchPostingCommentReplies(postId, threadRootId, {
+      page: 0,
+      size: replyPageSize * loadedPageCount,
+    });
+  };
+
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newComment.trim() && postId) {
       try {
+        const replyTargetId = replyingToId;
+
         await createPostingComment(postId, {
           content: newComment,
-          ...(replyingToId && { parent_comment_id: replyingToId }),
+          ...(replyTargetId && { parent_comment_id: replyTargetId }),
         });
         setNewComment('');
         setReplyingToId(null);
+
+        if (replyTargetId) {
+          await refreshThreadReplies(getThreadRootId(replyTargetId));
+          fetchPostingComments(postId, { page: commentPage - 1, size: commentPageSize });
+          return;
+        }
+
         if (commentPage !== 1) {
           setCommentPage(1);
         }
@@ -186,6 +317,23 @@ const PostDetail = () => {
       fetchPostingComments(postId, { page: commentPage - 1, size: commentPageSize });
     }
   }, [commentPage, commentPageSize, fetchPostingComments, postId]);
+
+  useEffect(() => {
+    if (!postId) return;
+
+    rootComments.forEach((comment) => {
+      if (comment.hasChildComment && commentRepliesByRootId[comment.id] === undefined) {
+        fetchPostingCommentReplies(postId, comment.id, { page: 0, size: replyPageSize });
+        setReplyPageByRootId((prev) => ({ ...prev, [comment.id]: 0 }));
+      }
+    });
+  }, [
+    commentRepliesByRootId,
+    fetchPostingCommentReplies,
+    postId,
+    replyPageSize,
+    rootComments,
+  ]);
 
   const handleRetryPost = () => {
     if (!postId) return;
@@ -262,7 +410,6 @@ const PostDetail = () => {
         <CardHeader>
           <div className="space-y-4">
             <CardTitle className="text-2xl font-bold">{post.title}</CardTitle>
-            {post.summary && <CardDescription>{post.summary}</CardDescription>}
 
             <div className="text-muted-foreground flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
@@ -437,92 +584,62 @@ const PostDetail = () => {
                     </div>
 
                     <p className="text-sm">{comment.content}</p>
-                    <ButtonGroup>
-                      <ButtonGroup>
-                        <Button
-                          variant={replyingToId === comment.id ? 'secondary' : 'ghost'}
-                          size="xs"
-                          onClick={() =>
-                            setReplyingToId(replyingToId === comment.id ? null : comment.id)
-                          }
-                          className="flex items-center gap-1"
-                        >
-                          <MessageCircle className="size-3" />
-                          <span className="text-xs">답글</span>
-                        </Button>
-                      </ButtonGroup>
-                      <ButtonGroup>
-                        <Button
-                          variant={
-                            openCommentReportMenuIds.includes(comment.id) ? 'default' : 'ghost'
-                          }
-                          size="xs"
-                          onClick={() => {
-                            if (openCommentReportMenuIds.includes(comment.id)) {
-                              setOpenCommentReportMenuIds(
-                                openCommentReportMenuIds.filter((id) => id !== comment.id),
-                              );
-                            } else {
-                              setOpenCommentReportMenuIds([
-                                ...openCommentReportMenuIds,
-                                comment.id,
-                              ]);
-                            }
-                          }}
-                          className="flex items-center gap-1"
-                        >
-                          <Siren className="size-3" />
-                        </Button>
-                      </ButtonGroup>
-                      {openCommentReportMenuIds.includes(comment.id) && (
-                        <ButtonGroup>
-                          <Button
-                            variant="outline"
-                            size="xs"
-                            onClick={() => handleCommentReport('gov')}
-                            className="flex items-center gap-1"
-                          >
-                            정치
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="xs"
-                            onClick={() => handleCommentReport('sex')}
-                            className="flex items-center gap-1"
-                          >
-                            성인
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="xs"
-                            onClick={() => handleCommentReport('other')}
-                            className="flex items-center gap-1"
-                          >
-                            기타
-                          </Button>
-                        </ButtonGroup>
-                      )}
-                    </ButtonGroup>
+                    {renderCommentActions(comment.id)}
                   </div>
                 </div>
 
-                {(childCommentsByParentId[comment.id] ?? []).map((reply) => (
-                  <div key={reply.id} className="ml-11 flex items-start gap-3 rounded-md py-2">
-                    <div className="bg-muted flex h-7 w-7 items-center justify-center rounded-full">
-                      <User className="size-3.5" />
-                    </div>
+                {(commentRepliesByRootId[comment.id]?.items ?? []).map((reply) => {
+                  const parentComment = commentById[reply.parentCommentId];
 
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{reply.userId}</span>
-                        <span className="text-muted-foreground text-xs">
-                          {new Date(reply.createdAt).toLocaleDateString()}
-                        </span>
+                  return (
+                    <div key={reply.id} className="ml-11 flex items-start gap-3 rounded-md py-2">
+                      <div className="bg-muted flex h-7 w-7 items-center justify-center rounded-full">
+                        <User className="size-3.5" />
                       </div>
-                      <p className="text-sm">{reply.content}</p>
+
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{reply.userId}</span>
+                          <span className="text-muted-foreground text-xs">
+                            {new Date(reply.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+
+                        <p className="text-sm">
+                          <span className="text-primary font-medium">
+                            @{parentComment?.userId ?? 'unknown'}
+                          </span>{' '}
+                          {reply.content}
+                        </p>
+                        {renderCommentActions(reply.id)}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+
+                {(() => {
+                  const replyState = commentRepliesByRootId[comment.id];
+                  const loadedReplyCount = replyState?.items.length ?? 0;
+                  const totalReplyCount = replyState?.totalCount ?? 0;
+                  const hasMoreReplies = loadedReplyCount < totalReplyCount;
+                  const isReplyLoading = replyLoading[`${postId}:${comment.id}`];
+
+                  if (!hasMoreReplies) {
+                    return null;
+                  }
+
+                  return (
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      className="text-muted-foreground ml-11"
+                      onClick={() => handleLoadMoreReplies(comment.id)}
+                      disabled={isReplyLoading}
+                    >
+                      {isReplyLoading ? '불러오는 중...' : `답글 더보기 (${loadedReplyCount}/${totalReplyCount})`}
+                    </Button>
+                  );
+                })()}
 
                 {comment.id !== rootComments[rootComments.length - 1].id && (
                   <Separator className="ml-11" />
