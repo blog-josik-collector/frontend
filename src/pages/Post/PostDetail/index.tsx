@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -64,11 +64,7 @@ const PostDetail = () => {
     fetchPostingCommentReplies,
     createPostingComment,
   } = usePostingCommentStore();
-  const {
-    loading: postingLikeLoading,
-    likePosting,
-    unlikePosting,
-  } = usePostingLikeStore();
+  const { loading: postingLikeLoading, likePosting, unlikePosting } = usePostingLikeStore();
   const {
     loading: postingBookmarkLoading,
     createBookmark,
@@ -327,13 +323,7 @@ const PostDetail = () => {
         setReplyPageByRootId((prev) => ({ ...prev, [comment.id]: 0 }));
       }
     });
-  }, [
-    commentRepliesByRootId,
-    fetchPostingCommentReplies,
-    postId,
-    replyPageSize,
-    rootComments,
-  ]);
+  }, [commentRepliesByRootId, fetchPostingCommentReplies, postId, replyPageSize, rootComments]);
 
   const handleRetryPost = () => {
     if (!postId) return;
@@ -636,7 +626,9 @@ const PostDetail = () => {
                       onClick={() => handleLoadMoreReplies(comment.id)}
                       disabled={isReplyLoading}
                     >
-                      {isReplyLoading ? '불러오는 중...' : `답글 더보기 (${loadedReplyCount}/${totalReplyCount})`}
+                      {isReplyLoading
+                        ? '불러오는 중...'
+                        : `답글 더보기 (${loadedReplyCount}/${totalReplyCount})`}
                     </Button>
                   );
                 })()}

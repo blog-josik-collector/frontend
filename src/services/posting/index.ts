@@ -173,6 +173,9 @@ const mapGetPostingCommentsResponseDtoToEntity = (
 });
 
 // API 함수 - DTO로 받아서 Entity로 변환
+/**
+ * GET /api/v1/postings - 포스팅 목록 조회
+ */
 export const getPostings = async (
   params: GetPostingsParams = {
     page: 0,
@@ -185,22 +188,37 @@ export const getPostings = async (
   return mapGetPostingListResponseDtoToEntity(response.data);
 };
 
+/**
+ * POST /api/v1/postings/{posting_id}/likes - 포스팅 좋아요 생성
+ */
 export const createPostingLike = async (postingId: string): Promise<void> => {
   await api.post<void>(`/api/v1/postings/${postingId}/likes`);
 };
 
+/**
+ * DELETE /api/v1/postings/{posting_id}/likes - 포스팅 좋아요 삭제
+ */
 export const deletePostingLike = async (postingId: string): Promise<void> => {
   await api.delete<void>(`/api/v1/postings/${postingId}/likes`);
 };
 
+/**
+ * POST /api/v1/postings/{posting_id}/bookmarks - 포스팅 북마크 생성
+ */
 export const createPostingBookmark = async (postingId: string): Promise<void> => {
   await api.post<void>(`/api/v1/postings/${postingId}/bookmarks`);
 };
 
+/**
+ * DELETE /api/v1/postings/{posting_id}/bookmarks - 포스팅 북마크 삭제
+ */
 export const deletePostingBookmark = async (postingId: string): Promise<void> => {
   await api.delete<void>(`/api/v1/postings/${postingId}/bookmarks`);
 };
 
+/**
+ * GET /api/v1/me/bookmarks - 내 북마크 목록 조회
+ */
 export const getMyBookmarks = async (
   params: { page?: number; size?: number } = { page: 0, size: 20 },
 ): Promise<GetMyBookmarksResponse> => {
@@ -230,6 +248,9 @@ const mapCreatePostingCommentResponseDtoToEntity = (
   createdAt: dto.created_at,
 });
 
+/**
+ * POST /api/v1/postings/{posting_id}/comments - 포스팅 댓글 생성
+ */
 export const createPostingComment = async (
   postingId: string,
   body: CreatePostingCommentRequestDto,
@@ -247,6 +268,9 @@ export interface GetPostingCommentsParams {
   parent_comment_id?: string;
 }
 
+/**
+ * GET /api/v1/postings/{posting_id}/comments - 포스팅 댓글 목록 조회
+ */
 export const getPostingComments = async (
   postingId: string,
   params: GetPostingCommentsParams = { page: 0, size: 20 },
@@ -277,6 +301,9 @@ const mapGetPostingDetailResponseDtoToEntity = (dto: PostingDetailDto): PostingD
   updatedAt: dayjs(dto.updated_at).valueOf(),
 });
 
+/**
+ * GET /api/v1/postings/{posting_id} - 포스팅 상세 조회
+ */
 export const getPostingDetail = async (id: string): Promise<PostingDetailEntity> => {
   const response = await api.get<PostingDetailDto>(`/api/v1/postings/${id}`);
   return mapGetPostingDetailResponseDtoToEntity(response.data);
