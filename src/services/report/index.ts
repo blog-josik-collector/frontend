@@ -1,9 +1,28 @@
+/* eslint-disable no-redeclare */
 import dayjs from 'dayjs';
 
 import { api } from '../api';
 
-export interface CreateReportRequestDto {
-  reason_type: string;
+export const PostingReportReasonType = {
+  PostError: 'POST_ERROR',
+  LinkError: 'LINK_ERROR',
+  Other: 'OTHER',
+} as const;
+
+export type PostingReportReasonType =
+  (typeof PostingReportReasonType)[keyof typeof PostingReportReasonType];
+
+export const CommentReportReasonType = {
+  Politics: 'POLITICS',
+  Adult: 'ADULT',
+  Other: 'OTHER',
+} as const;
+
+export type CommentReportReasonType =
+  (typeof CommentReportReasonType)[keyof typeof CommentReportReasonType];
+
+export interface CreateReportRequestDto<TReasonType extends string = string> {
+  reason_type: TReasonType;
   content: string;
 }
 
@@ -165,7 +184,7 @@ const mapUpdateReportStatusResponseDtoToEntity = (
  */
 export const createPostingReport = async (
   postingId: string,
-  body: CreateReportRequestDto,
+  body: CreateReportRequestDto<PostingReportReasonType>,
 ): Promise<CreateReportResponse> => {
   const response = await api.post<CreateReportResponseDto>(
     `/api/v1/postings/${postingId}/reports`,
@@ -179,7 +198,7 @@ export const createPostingReport = async (
  */
 export const createCommentReport = async (
   commentId: string,
-  body: CreateReportRequestDto,
+  body: CreateReportRequestDto<CommentReportReasonType>,
 ): Promise<CreateReportResponse> => {
   const response = await api.post<CreateReportResponseDto>(
     `/api/v1/comments/${commentId}/reports`,

@@ -36,16 +36,23 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { type PostingComment } from '@/services/posting';
+import { CommentReportReasonType, PostingReportReasonType } from '@/services/report';
 import {
   usePostingBookmarkStore,
   usePostingCommentStore,
   usePostingDetailStore,
   usePostingLikeStore,
 } from '@/stores/posting/postingStore';
+import { useCreateCommentReport } from '@/stores/reports/commentReportsStore';
+import { useCreatePostingReport } from '@/stores/reports/postingReportsStore';
 
 const defaultPagination = 5;
 const defaultReplyPagination = 5;
 const pageBlockSize = 10;
+
+type PendingReport =
+  | { target: 'posting'; reasonType: PostingReportReasonType }
+  | { target: 'comment'; commentId: string; reasonType: CommentReportReasonType };
 
 const PostDetail = () => {
   const location = useLocation();
@@ -70,6 +77,8 @@ const PostDetail = () => {
     createBookmark,
     deleteBookmark,
   } = usePostingBookmarkStore();
+  const createPostingReportMutation = useCreatePostingReport();
+  const createCommentReportMutation = useCreateCommentReport();
 
   const [newComment, setNewComment] = useState('');
   const [commentPage, setCommentPage] = useState(1);
@@ -141,6 +150,9 @@ const PostDetail = () => {
   const [isOtherReportOpen, setIsOtherReportOpen] = useState(false);
   const [otherReportContent, setOtherReportContent] = useState('');
   const [openCommentReportMenuIds, setOpenCommentReportMenuIds] = useState<string[]>([]);
+  const [pendingReport, setPendingReport] = useState<PendingReport | null>(null);
+  const isReportSubmitting =
+    createPostingReportMutation.isPending || createCommentReportMutation.isPending;
 
   const handleLike = async () => {
     if (!post) return;
@@ -166,29 +178,98 @@ const PostDetail = () => {
     fetchPostingDetail(post.id);
   };
 
-  const handleReport = (type: string) => {
-    if (type === 'post-error' || type === 'link-error') {
-      alert(`${type === 'post-error' ? '포스트 오류' : '링크 오류'} 신고가 접수되었습니다.`);
-      setIsReportMenuOpen(false);
-    } else if (type === 'other') {
-      setIsOtherReportOpen(true);
-      setIsReportMenuOpen(false);
+  const createPostingReport = async (
+    reasonType: PostingReportReasonType,
+    content: string,
+  ) => {
+    if (!postId) return;
+
+    await createPostingReportMutation.mutateAsync({
+      postingId: postId,
+      body: {
+        reason_type: reasonType,
+        content,
+      },
+    });
+  };
+
+  const createCommentReport = async (
+    commentId: string,
+    reasonType: CommentReportReasonType,
+    content: string,
+  ) => {
+    await createCommentReportMutation.mutateAsync({
+      commentId,
+      body: {
+        reason_type: reasonType,
+        content,
+      },
+    });
+  };
+
+  const handleReport = async (reasonType: PostingReportReasonType) => {
+    try {
+      if (reasonType === PostingReportReasonType.PostError) {
+        await createPostingReport(reasonType, '포스트 오류');
+        alert('포스트 오류 신고가 접수되었습니다.');
+        setIsReportMenuOpen(false);
+      } else if (reasonType === PostingReportReasonType.LinkError) {
+        await createPostingReport(reasonType, '링크 오류');
+        alert('링크 오류 신고가 접수되었습니다.');
+        setIsReportMenuOpen(false);
+      } else {
+        setPendingReport({ target: 'posting', reasonType });
+        setIsOtherReportOpen(true);
+        setIsReportMenuOpen(false);
+      }
+    } catch {
+      alert('신고 접수에 실패했습니다.');
     }
   };
 
-  const handleOtherReportSubmit = () => {
-    if (otherReportContent.trim()) {
-      alert('기타 신고가 접수되었습니다.');
-      setOtherReportContent('');
-      setIsOtherReportOpen(false);
+  const handleOtherReportSubmit = async () => {
+    const content = otherReportContent.trim();
+
+    if (content && pendingReport) {
+      try {
+        if (pendingReport.target === 'posting') {
+          await createPostingReport(pendingReport.reasonType, content);
+        } else {
+          await createCommentReport(pendingReport.commentId, pendingReport.reasonType, content);
+          setOpenCommentReportMenuIds((prev) =>
+            prev.filter((commentId) => commentId !== pendingReport.commentId),
+          );
+        }
+
+        alert('기타 신고가 접수되었습니다.');
+        setOtherReportContent('');
+        setPendingReport(null);
+        setIsOtherReportOpen(false);
+      } catch {
+        alert('신고 접수에 실패했습니다.');
+      }
     }
   };
 
-  const handleCommentReport = (type: 'gov' | 'sex' | 'other') => {
-    if (type === 'gov' || type === 'sex') {
-      alert(`${type === 'gov' ? '정치' : '성인'} 신고가 접수되었습니다.`);
-    } else if (type === 'other') {
-      setIsOtherReportOpen(true);
+  const handleCommentReport = async (
+    commentId: string,
+    reasonType: CommentReportReasonType,
+  ) => {
+    try {
+      if (reasonType === CommentReportReasonType.Politics) {
+        await createCommentReport(commentId, reasonType, '정치');
+        alert('정치 신고가 접수되었습니다.');
+        setOpenCommentReportMenuIds((prev) => prev.filter((id) => id !== commentId));
+      } else if (reasonType === CommentReportReasonType.Adult) {
+        await createCommentReport(commentId, reasonType, '성인');
+        alert('성인 신고가 접수되었습니다.');
+        setOpenCommentReportMenuIds((prev) => prev.filter((id) => id !== commentId));
+      } else {
+        setPendingReport({ target: 'comment', commentId, reasonType });
+        setIsOtherReportOpen(true);
+      }
+    } catch {
+      alert('신고 접수에 실패했습니다.');
     }
   };
 
@@ -226,7 +307,7 @@ const PostDetail = () => {
           <Button
             variant="outline"
             size="xs"
-            onClick={() => handleCommentReport('gov')}
+            onClick={() => handleCommentReport(commentId, CommentReportReasonType.Politics)}
             className="flex items-center gap-1"
           >
             정치
@@ -234,7 +315,7 @@ const PostDetail = () => {
           <Button
             variant="outline"
             size="xs"
-            onClick={() => handleCommentReport('sex')}
+            onClick={() => handleCommentReport(commentId, CommentReportReasonType.Adult)}
             className="flex items-center gap-1"
           >
             성인
@@ -242,7 +323,7 @@ const PostDetail = () => {
           <Button
             variant="outline"
             size="xs"
-            onClick={() => handleCommentReport('other')}
+            onClick={() => handleCommentReport(commentId, CommentReportReasonType.Other)}
             className="flex items-center gap-1"
           >
             기타
@@ -469,13 +550,28 @@ const PostDetail = () => {
 
               {isReportMenuOpen && (
                 <ButtonGroup>
-                  <Button variant="outline" size="sm" onClick={() => handleReport('post-error')}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleReport(PostingReportReasonType.PostError)}
+                    disabled={isReportSubmitting}
+                  >
                     포스트 오류
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleReport('link-error')}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleReport(PostingReportReasonType.LinkError)}
+                    disabled={isReportSubmitting}
+                  >
                     링크 오류
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleReport('other')}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleReport(PostingReportReasonType.Other)}
+                    disabled={isReportSubmitting}
+                  >
                     기타 신고
                   </Button>
                 </ButtonGroup>
@@ -486,7 +582,16 @@ const PostDetail = () => {
       </Card>
 
       {/* 기타 신고 폼 다이얼로그 */}
-      <AlertDialog open={isOtherReportOpen} onOpenChange={setIsOtherReportOpen}>
+      <AlertDialog
+        open={isOtherReportOpen}
+        onOpenChange={(open) => {
+          setIsOtherReportOpen(open);
+          if (!open) {
+            setOtherReportContent('');
+            setPendingReport(null);
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>기타 신고</AlertDialogTitle>
@@ -503,10 +608,10 @@ const PostDetail = () => {
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogCancel disabled={isReportSubmitting}>취소</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleOtherReportSubmit}
-              disabled={!otherReportContent.trim()}
+              disabled={!otherReportContent.trim() || isReportSubmitting}
             >
               신고하기
             </AlertDialogAction>

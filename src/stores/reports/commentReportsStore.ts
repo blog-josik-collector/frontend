@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
+  CommentReportReasonType,
   createCommentReport,
   type CreateReportRequestDto,
   getAdminCommentReports,
@@ -37,7 +38,7 @@ export const useCreateCommentReport = () => {
       body,
     }: {
       commentId: string;
-      body: CreateReportRequestDto;
+      body: CreateReportRequestDto<CommentReportReasonType>;
     }) => createCommentReport(commentId, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: commentReportsQueryKey.list() });

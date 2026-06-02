@@ -5,6 +5,7 @@ import {
   type CreateReportRequestDto,
   getAdminPostingReports,
   type GetAdminReportsParams,
+  PostingReportReasonType,
   updateAdminPostingReportStatus,
   type UpdateReportStatusRequestDto,
 } from '@/services/report';
@@ -37,7 +38,7 @@ export const useCreatePostingReport = () => {
       body,
     }: {
       postingId: string;
-      body: CreateReportRequestDto;
+      body: CreateReportRequestDto<PostingReportReasonType>;
     }) => createPostingReport(postingId, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: postingReportsQueryKey.list() });
