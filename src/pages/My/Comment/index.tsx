@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { Trash2 } from 'lucide-react';
@@ -12,17 +13,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { handleApiError } from '@/services/api';
+import { useDeleteComment } from '@/stores/comments/commentsStore';
+import { useMyComments } from '@/stores/comments/meStore';
 
-interface MyCommentData {
-  id: string;
-  postTitle: string;
-  content: string;
-  createdAt: string;
-  postId: string;
-}
+const pageSize = 20;
 
-const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString('ko-KR', {
+const formatDate = (date: number) =>
+  new Date(date).toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -30,37 +28,33 @@ const formatDate = (dateString: string) =>
 
 const MyComment = () => {
   const navigate = useNavigate();
+  const [page, setPage] = useState(0);
+  const [deleteError, setDeleteError] = useState('');
+  const myComments = useMyComments({ page, size: pageSize });
+  const deleteComment = useDeleteComment();
 
-  // Mock data - 실제로는 API를 통해 데이터를 가져와야 합니다
-  const myComments: MyCommentData[] = [
-    {
-      id: '1',
-      postTitle: '블로그 포스트 제목',
-      content: '첫 번째 댓글입니다.',
-      createdAt: '2024-03-01',
-      postId: '1',
-    },
-    {
-      id: '2',
-      postTitle: '또 다른 포스트',
-      content: '@댓글 작성자1 대댓글입니다.',
-      createdAt: '2024-03-02',
-      postId: '2',
-    },
-    {
-      id: '3',
-      postTitle: '기술 관련 글',
-      content: '좋은 정보 감사합니다!',
-      createdAt: '2024-03-03',
-      postId: '3',
-    },
-  ];
+  const comments = myComments.data?.items ?? [];
+  const totalCount = myComments.data?.totalCount ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   const handleDeleteComment = (commentId: string) => {
-    // 실제로는 API를 통해 댓글 삭제
     if (window.confirm('댓글을 삭제하시겠습니까?')) {
-      alert(`댓글 ${commentId}가 삭제되었습니다.`);
-      // 여기에서 실제 삭제 로직 구현
+      const shouldMoveToPreviousPage = page > 0 && comments.length === 1;
+
+      deleteComment.mutate(
+        { commentId },
+        {
+          onSuccess: () => {
+            setDeleteError('');
+            if (shouldMoveToPreviousPage) {
+              setPage((prev) => Math.max(0, prev - 1));
+            }
+          },
+          onError: (error) => {
+            setDeleteError(handleApiError(error).message);
+          },
+        },
+      );
     }
   };
 
@@ -72,18 +66,49 @@ const MyComment = () => {
   return (
     <ProtectedRoute>
       <div className="flex flex-col gap-4 p-4">
-        <h2 className="text-lg font-semibold">내가 작성한 댓글</h2>
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold">내가 작성한 댓글</h2>
+            <p className="text-muted-foreground mt-1 text-sm">총 {totalCount.toLocaleString()}개</p>
+          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page === 0 || myComments.isFetching}
+                onClick={() => setPage((prev) => Math.max(0, prev - 1))}
+              >
+                이전
+              </Button>
+              <span className="text-muted-foreground text-sm">
+                {page + 1} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page + 1 >= totalPages || myComments.isFetching}
+                onClick={() => setPage((prev) => Math.min(totalPages - 1, prev + 1))}
+              >
+                다음
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {deleteError && <p className="text-destructive text-sm">{deleteError}</p>}
+
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>포스트 이름</TableHead>
+              <TableHead>포스트</TableHead>
               <TableHead>댓글 내용</TableHead>
               <TableHead className="w-36">작성일</TableHead>
               <TableHead className="w-24 text-center">삭제</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {myComments.map((comment) => (
+            {comments.map((comment) => (
               <TableRow key={comment.id}>
                 <TableCell>
                   <Button
@@ -91,7 +116,7 @@ const MyComment = () => {
                     className="h-auto p-0 text-left"
                     onClick={() => handleNavigateToPost(comment.postId)}
                   >
-                    {comment.postTitle}
+                    {comment.postId}
                   </Button>
                 </TableCell>
                 <TableCell className="max-w-md">
@@ -105,6 +130,7 @@ const MyComment = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => handleDeleteComment(comment.id)}
+                    disabled={deleteComment.isPending}
                     className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
                   >
                     <Trash2 className="size-4" />
@@ -114,9 +140,20 @@ const MyComment = () => {
             ))}
           </TableBody>
         </Table>
-        {myComments.length === 0 && (
-          <div className="text-muted-foreground py-8 text-center">작성한 댓글이 없습니다.</div>
+        {myComments.isLoading && (
+          <div className="text-muted-foreground py-8 text-center">댓글을 불러오는 중입니다.</div>
         )}
+        {myComments.isError && (
+          <div className="text-destructive py-8 text-center">
+            {handleApiError(myComments.error).message}
+          </div>
+        )}
+        {!myComments.isLoading &&
+          !myComments.isFetching &&
+          !myComments.isError &&
+          comments.length === 0 && (
+            <div className="text-muted-foreground py-8 text-center">작성한 댓글이 없습니다.</div>
+          )}
       </div>
     </ProtectedRoute>
   );

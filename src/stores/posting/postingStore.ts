@@ -16,6 +16,7 @@ import {
   getPostings,
   type GetPostingsParams,
   type GetPostingsResponse,
+  type MyBookmark,
   type PostingDetailEntity,
 } from '@/services/posting';
 
@@ -84,6 +85,7 @@ export const usePostingLikeStore = create<PostingLikeStore>((set) => ({
 }));
 
 interface PostingBookmarkStore {
+  bookmarks: MyBookmark[];
   bookmarkedPostings: string[];
   loading: boolean;
   error: string | null;
@@ -93,6 +95,7 @@ interface PostingBookmarkStore {
 }
 
 export const usePostingBookmarkStore = create<PostingBookmarkStore>((set) => ({
+  bookmarks: [],
   bookmarkedPostings: [],
   loading: false,
   error: null,
@@ -101,6 +104,7 @@ export const usePostingBookmarkStore = create<PostingBookmarkStore>((set) => ({
     try {
       const response = await getMyBookmarks(params);
       set({
+        bookmarks: response.items,
         bookmarkedPostings: response.items.map((item) => item.postId),
         loading: false,
       });
@@ -113,6 +117,9 @@ export const usePostingBookmarkStore = create<PostingBookmarkStore>((set) => ({
     try {
       await createPostingBookmark(postingId);
       set((state) => ({
+        bookmarks: state.bookmarks.some((bookmark) => bookmark.postId === postingId)
+          ? state.bookmarks
+          : [{ postId: postingId, createdAt: Date.now() }, ...state.bookmarks],
         bookmarkedPostings: state.bookmarkedPostings.includes(postingId)
           ? state.bookmarkedPostings
           : [...state.bookmarkedPostings, postingId],
@@ -127,6 +134,7 @@ export const usePostingBookmarkStore = create<PostingBookmarkStore>((set) => ({
     try {
       await deletePostingBookmark(postingId);
       set((state) => ({
+        bookmarks: state.bookmarks.filter((bookmark) => bookmark.postId !== postingId),
         bookmarkedPostings: state.bookmarkedPostings.filter((id) => id !== postingId),
         loading: false,
       }));

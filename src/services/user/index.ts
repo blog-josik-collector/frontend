@@ -44,6 +44,7 @@ export interface UserMe {
 
 export interface UpdateMeRequestDto {
   nickname: string;
+  introduction?: string;
 }
 
 export interface UpdateMeResponseDto {

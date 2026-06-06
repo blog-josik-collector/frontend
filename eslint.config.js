@@ -44,6 +44,9 @@ export default defineConfig([
       // react-refresh 관련 규칙
       'react-refresh/only-export-components': 'off',
 
+      // react-hooks 관련 규칙
+      'react-hooks/set-state-in-effect': 'off',
+
       // Import 관련 규칙
       'import/first': 'error',
       'import/newline-after-import': 'error',
