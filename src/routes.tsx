@@ -16,13 +16,18 @@ import SignUp from './pages/SignUp';
 
 export interface NavRoute {
   path: string;
+  fullPath: string;
   label: string;
   hideMenu?: boolean;
   component?: React.ReactNode;
   children?: NavRoute[];
 }
 
-export const navRoutes: NavRoute[] = [
+type BaseNavRoute = Omit<NavRoute, 'fullPath' | 'children'> & {
+  children?: BaseNavRoute[];
+};
+
+const baseNavRoutes: BaseNavRoute[] = [
   {
     path: '/',
     label: 'Home',
@@ -59,18 +64,42 @@ export const navRoutes: NavRoute[] = [
   },
 ];
 
-const createFlatRoutes = (parentPath: string, routes: NavRoute[]): RouteObject[] => {
+const joinPaths = (parentPath: string, path: string) => {
+  const normalizedParent = parentPath.replace(/\/+$/, '');
+  const normalizedPath = path.replace(/^\/+|\/+$/g, '');
+
+  if (!normalizedParent) {
+    return normalizedPath ? `/${normalizedPath}` : '/';
+  }
+
+  return normalizedPath ? `${normalizedParent}/${normalizedPath}` : normalizedParent;
+};
+
+const createNavRoutes = (routes: BaseNavRoute[], parentPath = ''): NavRoute[] =>
+  routes.map((route) => {
+    const fullPath = joinPaths(parentPath, route.path);
+
+    return {
+      ...route,
+      fullPath,
+      children: route.children ? createNavRoutes(route.children, fullPath) : undefined,
+    };
+  });
+
+export const navRoutes = createNavRoutes(baseNavRoutes);
+
+const createFlatRoutes = (routes: NavRoute[]): RouteObject[] => {
   return routes
     .flatMap((route) => [
       {
-        path: route.path,
+        path: route.fullPath,
         element: route.component,
       },
-      ...(route.children ? createFlatRoutes(`${parentPath}${route.path}`, route.children) : []),
+      ...(route.children ? createFlatRoutes(route.children) : []),
     ])
     .filter((route) => route.element !== undefined);
 };
-const flatRoutes = createFlatRoutes('', navRoutes);
+const flatRoutes = createFlatRoutes(navRoutes);
 
 const NotFoundRedirect = () => {
   const navigate = useNavigate();

@@ -1,8 +1,16 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { FilterIcon, MoreHorizontalIcon, SearchIcon, XIcon } from 'lucide-react';
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  FilterIcon,
+  MoreHorizontalIcon,
+  SearchIcon,
+  XIcon,
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { ButtonGroup } from '@/components/ui/button-group';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -22,76 +30,56 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { CommentReportReasonType, type GetAdminReportsParams } from '@/services/report';
+import {
+  useAdminCommentReports,
+  useUpdateAdminCommentReportStatus,
+} from '@/stores/reports/commentReportsStore';
 
-const REPORT_TYPES = ['스팸', '욕설/혐오', '부적절 콘텐츠', '저작권 침해', '기타'] as const;
-const REPORT_STATUSES = ['대기중', '삭제완료', '유지'] as const;
+const PAGE_SIZE = 20;
 
-type ReportType = (typeof REPORT_TYPES)[number];
-type ReportStatus = (typeof REPORT_STATUSES)[number];
+const REPORT_TYPES = [
+  { value: CommentReportReasonType.Politics, label: '정치' },
+  { value: CommentReportReasonType.Adult, label: '성인' },
+  { value: CommentReportReasonType.Other, label: '기타' },
+] as const;
 
-interface CommentReportItem {
-  id: number;
-  postTitle: string;
-  comment: string;
-  reportType: ReportType;
-  reportedAt: string;
-  content: string;
-  status: ReportStatus;
-}
+const REPORT_STATUSES = [
+  { value: 'OPEN', label: '대기중' },
+  { value: 'DONE', label: '처리완료' },
+] as const;
+
+type ReportType = (typeof REPORT_TYPES)[number]['value'];
+type ReportStatus = (typeof REPORT_STATUSES)[number]['value'];
 
 const STATUS_STYLES: Record<ReportStatus, string> = {
-  대기중: 'bg-yellow-100 text-yellow-700',
-  삭제완료: 'bg-red-100 text-red-700',
-  유지: 'bg-green-100 text-green-700',
+  OPEN: 'bg-yellow-100 text-yellow-700',
+  DONE: 'bg-green-100 text-green-700',
 };
 
-const MOCK_DATA: CommentReportItem[] = [
-  {
-    id: 1,
-    postTitle: 'React 상태 관리 완벽 정리',
-    comment: '이 글 완전 쓰레기네요',
-    reportType: '욕설/혐오',
-    reportedAt: '2026-03-01',
-    content: '욕설이 포함된 댓글입니다.',
-    status: '대기중',
-  },
-  {
-    id: 2,
-    postTitle: 'TypeScript 제네릭 활용법',
-    comment: '광고 클릭하면 할인 받아요!',
-    reportType: '스팸',
-    reportedAt: '2026-03-03',
-    content: '광고성 댓글입니다.',
-    status: '삭제완료',
-  },
-  {
-    id: 3,
-    postTitle: 'TanStack Router 시작하기',
-    comment: '이 내용은 제 블로그에서 가져간 겁니다.',
-    reportType: '저작권 침해',
-    reportedAt: '2026-03-05',
-    content: '무단 복제 관련 신고입니다.',
-    status: '유지',
-  },
-  {
-    id: 4,
-    postTitle: 'Tailwind CSS 고급 패턴',
-    comment: '19금 내용 링크입니다 http://...',
-    reportType: '부적절 콘텐츠',
-    reportedAt: '2026-03-06',
-    content: '부적절한 외부 링크가 포함되어 있습니다.',
-    status: '유지',
-  },
-  {
-    id: 5,
-    postTitle: 'Vite 빌드 최적화',
-    comment: '그냥 신고해봄',
-    reportType: '기타',
-    reportedAt: '2026-03-07',
-    content: '기타 사유로 신고합니다.',
-    status: '대기중',
-  },
-];
+const formatDate = (timestamp?: number) => {
+  if (!timestamp) return '-';
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(timestamp);
+};
+
+const getReportTypeLabel = (value?: string) => {
+  if (!value) return '-';
+
+  return REPORT_TYPES.find((item) => item.value === value)?.label ?? value;
+};
+
+const getStatusLabel = (value?: string) => {
+  if (!value) return '-';
+
+  return REPORT_STATUSES.find((item) => item.value === value)?.label ?? value;
+};
 
 export function CommentReport() {
   const [search, setSearch] = useState('');
@@ -99,45 +87,104 @@ export function CommentReport() {
   const [selectedStatuses, setSelectedStatuses] = useState<ReportStatus[]>([]);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [page, setPage] = useState(0);
 
-  const toggleReportType = (r: ReportType) =>
+  const params = useMemo<GetAdminReportsParams>(
+    () => ({
+      page,
+      size: PAGE_SIZE,
+      reason_type: selectedReportTypes[0],
+      status: selectedStatuses[0],
+      start_date: dateFrom || undefined,
+      end_date: dateTo || undefined,
+    }),
+    [dateFrom, dateTo, page, selectedReportTypes, selectedStatuses],
+  );
+
+  const { data, isError, isLoading } = useAdminCommentReports(params);
+  const updateStatusMutation = useUpdateAdminCommentReportStatus();
+
+  const toggleReportType = (reportType: ReportType) => {
+    setPage(0);
     setSelectedReportTypes((prev) =>
-      prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r],
+      prev.includes(reportType) ? prev.filter((item) => item !== reportType) : [reportType],
     );
+  };
 
-  const toggleStatus = (s: ReportStatus) =>
-    setSelectedStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
+  const toggleStatus = (status: ReportStatus) => {
+    setPage(0);
+    setSelectedStatuses((prev) =>
+      prev.includes(status) ? prev.filter((item) => item !== status) : [status],
+    );
+  };
+
+  const handleDateFromChange = (value: string) => {
+    setPage(0);
+    setDateFrom(value);
+  };
+
+  const handleDateToChange = (value: string) => {
+    setPage(0);
+    setDateTo(value);
+  };
 
   const activeFilterCount =
     selectedReportTypes.length + selectedStatuses.length + (dateFrom ? 1 : 0) + (dateTo ? 1 : 0);
 
   const activeTags = [
-    ...selectedReportTypes.map((r) => ({
-      key: `type-${r}`,
-      label: r,
-      onRemove: () => toggleReportType(r),
+    ...selectedReportTypes.map((reportType) => ({
+      key: `type-${reportType}`,
+      label: getReportTypeLabel(reportType),
+      onRemove: () => toggleReportType(reportType),
     })),
-    ...selectedStatuses.map((s) => ({
-      key: `status-${s}`,
-      label: s,
-      onRemove: () => toggleStatus(s),
+    ...selectedStatuses.map((status) => ({
+      key: `status-${status}`,
+      label: getStatusLabel(status),
+      onRemove: () => toggleStatus(status),
     })),
     ...(dateFrom
-      ? [{ key: 'dateFrom', label: `from ${dateFrom}`, onRemove: () => setDateFrom('') }]
+      ? [{ key: 'dateFrom', label: `from ${dateFrom}`, onRemove: () => handleDateFromChange('') }]
       : []),
-    ...(dateTo ? [{ key: 'dateTo', label: `~ ${dateTo}`, onRemove: () => setDateTo('') }] : []),
+    ...(dateTo
+      ? [{ key: 'dateTo', label: `~ ${dateTo}`, onRemove: () => handleDateToChange('') }]
+      : []),
   ];
+
+  const filteredItems = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    const items = data?.items ?? [];
+
+    if (!keyword) return items;
+
+    return items.filter((item) =>
+      [
+        item.postId,
+        item.commentId,
+        item.userId,
+        item.reportTypeCode,
+        item.reasonType,
+        item.content,
+      ].some((value) => value?.toLowerCase().includes(keyword)),
+    );
+  }, [data?.items, search]);
+
+  const totalCount = data?.totalCount ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   const resetFilters = () => {
     setSelectedReportTypes([]);
     setSelectedStatuses([]);
     setDateFrom('');
     setDateTo('');
+    setPage(0);
+  };
+
+  const updateReportStatus = (reportId: string, status: ReportStatus) => {
+    updateStatusMutation.mutate({ reportId, body: { status } });
   };
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      {/* 통합 필터 */}
       <div className="bg-background focus-within:ring-ring flex items-center rounded-xl border shadow-sm focus-within:ring-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -154,56 +201,53 @@ export function CommentReport() {
           <DropdownMenuContent
             className="w-56"
             align="start"
-            onCloseAutoFocus={(e) => e.preventDefault()}
+            onCloseAutoFocus={(event) => event.preventDefault()}
           >
-            {/* 신고 유형 */}
             <DropdownMenuLabel>신고 유형</DropdownMenuLabel>
             <DropdownMenuGroup>
-              {REPORT_TYPES.map((r) => (
+              {REPORT_TYPES.map((reportType) => (
                 <DropdownMenuCheckboxItem
-                  key={r}
-                  checked={selectedReportTypes.includes(r)}
-                  onCheckedChange={() => toggleReportType(r)}
+                  key={reportType.value}
+                  checked={selectedReportTypes.includes(reportType.value)}
+                  onCheckedChange={() => toggleReportType(reportType.value)}
                 >
-                  {r}
+                  {reportType.label}
                 </DropdownMenuCheckboxItem>
               ))}
             </DropdownMenuGroup>
 
             <DropdownMenuSeparator />
 
-            {/* 신고 상태 */}
             <DropdownMenuLabel>신고 상태</DropdownMenuLabel>
             <DropdownMenuGroup>
-              {REPORT_STATUSES.map((s) => (
+              {REPORT_STATUSES.map((status) => (
                 <DropdownMenuCheckboxItem
-                  key={s}
-                  checked={selectedStatuses.includes(s)}
-                  onCheckedChange={() => toggleStatus(s)}
+                  key={status.value}
+                  checked={selectedStatuses.includes(status.value)}
+                  onCheckedChange={() => toggleStatus(status.value)}
                 >
-                  {s}
+                  {status.label}
                 </DropdownMenuCheckboxItem>
               ))}
             </DropdownMenuGroup>
 
             <DropdownMenuSeparator />
 
-            {/* 날짜 */}
             <DropdownMenuLabel>신고 날짜</DropdownMenuLabel>
             <div className="flex flex-col gap-1.5 px-3 pb-2">
               <Input
                 type="date"
                 className="h-8 text-xs"
                 value={dateFrom}
-                onPointerDown={(e) => e.stopPropagation()}
-                onChange={(e) => setDateFrom(e.target.value)}
+                onPointerDown={(event) => event.stopPropagation()}
+                onChange={(event) => handleDateFromChange(event.target.value)}
               />
               <Input
                 type="date"
                 className="h-8 text-xs"
                 value={dateTo}
-                onPointerDown={(e) => e.stopPropagation()}
-                onChange={(e) => setDateTo(e.target.value)}
+                onPointerDown={(event) => event.stopPropagation()}
+                onChange={(event) => handleDateToChange(event.target.value)}
               />
             </div>
 
@@ -227,9 +271,9 @@ export function CommentReport() {
         </span>
         <Input
           className="flex-1 border-0 shadow-none focus-visible:ring-0"
-          placeholder="포스트 제목으로 검색"
+          placeholder="댓글 ID, 포스트 ID, 신고자 ID, 신고 내용으로 검색"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(event) => setSearch(event.target.value)}
         />
         {search && (
           <button
@@ -241,7 +285,6 @@ export function CommentReport() {
         )}
       </div>
 
-      {/* 선택된 필터 태그 */}
       {activeTags.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {activeTags.map((tag) => (
@@ -258,61 +301,122 @@ export function CommentReport() {
         </div>
       )}
 
-      {/* 테이블 */}
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>포스트 제목</TableHead>
-            <TableHead>신고 댓글</TableHead>
+            <TableHead>댓글 ID</TableHead>
+            <TableHead>포스트 ID</TableHead>
+            <TableHead>신고자 ID</TableHead>
             <TableHead className="w-32">신고 유형</TableHead>
-            <TableHead className="w-28">신고 날짜</TableHead>
+            <TableHead className="w-40">신고 날짜</TableHead>
             <TableHead>신고 내용</TableHead>
             <TableHead className="w-24">신고 상태</TableHead>
             <TableHead className="w-12" />
           </TableRow>
         </TableHeader>
         <TableBody>
-          {MOCK_DATA.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell className="font-medium">{item.postTitle}</TableCell>
-              <TableCell className="text-muted-foreground max-w-40 truncate">
-                {item.comment}
-              </TableCell>
-              <TableCell>
-                <span className="bg-muted inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium">
-                  {item.reportType}
-                </span>
-              </TableCell>
-              <TableCell className="text-muted-foreground">{item.reportedAt}</TableCell>
-              <TableCell className="text-muted-foreground max-w-xs truncate">
-                {item.content}
-              </TableCell>
-              <TableCell>
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[item.status]}`}
-                >
-                  {item.status}
-                </span>
-              </TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="size-8">
-                      <MoreHorizontalIcon />
-                      <span className="sr-only">메뉴 열기</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>유지</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive">삭제</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+          {isLoading && (
+            <TableRow>
+              <TableCell colSpan={8} className="text-muted-foreground h-24 text-center">
+                신고 목록을 불러오는 중입니다.
               </TableCell>
             </TableRow>
-          ))}
+          )}
+          {isError && (
+            <TableRow>
+              <TableCell colSpan={8} className="text-destructive h-24 text-center">
+                신고 목록을 불러오지 못했습니다.
+              </TableCell>
+            </TableRow>
+          )}
+          {!isLoading && !isError && filteredItems.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={8} className="text-muted-foreground h-24 text-center">
+                표시할 신고가 없습니다.
+              </TableCell>
+            </TableRow>
+          )}
+          {filteredItems.map((item) => {
+            const status = item.status ?? item.processed;
+
+            return (
+              <TableRow key={item.id}>
+                <TableCell className="font-medium">{item.commentId ?? '-'}</TableCell>
+                <TableCell className="text-muted-foreground">{item.postId ?? '-'}</TableCell>
+                <TableCell className="text-muted-foreground">{item.userId ?? '-'}</TableCell>
+                <TableCell>
+                  <span className="bg-muted inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium">
+                    {getReportTypeLabel(item.reasonType ?? item.reportTypeCode)}
+                  </span>
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {formatDate(item.createdAt)}
+                </TableCell>
+                <TableCell className="text-muted-foreground max-w-xs truncate">
+                  {item.content || '-'}
+                </TableCell>
+                <TableCell>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                      STATUS_STYLES[status as ReportStatus] ?? 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {getStatusLabel(status)}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="size-8">
+                        <MoreHorizontalIcon />
+                        <span className="sr-only">메뉴 열기</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        disabled={updateStatusMutation.isPending}
+                        onClick={() => updateReportStatus(item.id, 'OPEN')}
+                      >
+                        대기중으로 변경
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        disabled={updateStatusMutation.isPending}
+                        onClick={() => updateReportStatus(item.id, 'DONE')}
+                      >
+                        처리완료
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
+
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-muted-foreground text-sm">총 {totalCount}건</p>
+        <ButtonGroup aria-label="댓글 신고 목록 페이지네이션">
+          <Button
+            variant="secondary"
+            disabled={page === 0}
+            onClick={() => setPage((prev) => Math.max(0, prev - 1))}
+          >
+            <ArrowLeftIcon />
+          </Button>
+          <Button variant="outline" disabled>
+            {page + 1} / {pageCount}
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={page + 1 >= pageCount}
+            onClick={() => setPage((prev) => Math.min(pageCount - 1, prev + 1))}
+          >
+            <ArrowRightIcon />
+          </Button>
+        </ButtonGroup>
+      </div>
     </div>
   );
 }

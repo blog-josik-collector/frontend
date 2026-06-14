@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router';
 
 import {
   ArrowLeftIcon,
@@ -8,8 +9,6 @@ import {
   SearchIcon,
   XIcon,
 } from 'lucide-react';
-
-import { useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';

@@ -19,27 +19,32 @@ import { type NavRoute, navRoutes } from '@/routes';
 
 const renderMenuItem = (route: NavRoute, currentPath: string) => {
   if (route.children && route.children.length > 0) {
-    const hasActiveChild = route.children.some(
-      (child) => currentPath === child.path || currentPath.startsWith(child.path + '/'),
-    );
+    const isActive =
+      currentPath === route.fullPath ||
+      route.children.some(
+        (child) => currentPath === child.fullPath || currentPath.startsWith(child.fullPath + '/'),
+      );
 
     return (
-      <SidebarMenuItem key={route.path}>
-        <SidebarMenuButton isActive={hasActiveChild ? true : undefined}>
-          {route.component ? <Link to={route.path}>{route.label}</Link> : route.label}
+      <SidebarMenuItem key={route.fullPath}>
+        <SidebarMenuButton isActive={isActive ? true : undefined}>
+          {route.component ? <Link to={route.fullPath}>{route.label}</Link> : route.label}
         </SidebarMenuButton>
         <SidebarMenuSub>
           {route.children.map((child) => {
             if (child.hideMenu) {
               return null;
             }
+            if (child.children && child.children.length > 0) {
+              return renderMenuItem(child, currentPath);
+            }
             return (
-              <SidebarMenuSubItem key={child.path}>
+              <SidebarMenuSubItem key={child.fullPath}>
                 <SidebarMenuSubButton
                   asChild
-                  isActive={child.path === currentPath ? true : undefined}
+                  isActive={child.fullPath === currentPath ? true : undefined}
                 >
-                  <Link to={child.path}>{child.label}</Link>
+                  <Link to={child.fullPath}>{child.label}</Link>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
             );
@@ -49,12 +54,12 @@ const renderMenuItem = (route: NavRoute, currentPath: string) => {
     );
   }
 
-  const isActive = currentPath === route.path;
+  const isActive = currentPath === route.fullPath;
 
   return (
-    <SidebarMenuItem key={route.path}>
+    <SidebarMenuItem key={route.fullPath}>
       <SidebarMenuButton asChild isActive={isActive ? true : undefined}>
-        <Link to={route.path}>{route.label}</Link>
+        <Link to={route.fullPath}>{route.label}</Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
   );

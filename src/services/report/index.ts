@@ -21,6 +21,13 @@ export const CommentReportReasonType = {
 export type CommentReportReasonType =
   (typeof CommentReportReasonType)[keyof typeof CommentReportReasonType];
 
+export const ReportProcessStatus = {
+  Open: 'OPEN',
+  Done: 'DONE',
+} as const;
+
+export type ReportProcessStatus = (typeof ReportProcessStatus)[keyof typeof ReportProcessStatus];
+
 export interface CreateReportRequestDto<TReasonType extends string = string> {
   reason_type: TReasonType;
   content: string;
@@ -39,20 +46,20 @@ export interface CreateReportResponse {
 export interface GetAdminReportsParams {
   page?: number;
   size?: number;
-  reason_type?: string;
-  status?: string;
+  reason_type?: PostingReportReasonType | CommentReportReasonType;
+  status?: ReportProcessStatus;
   start_date?: string;
   end_date?: string;
 }
 
 export interface PostingReportDto {
-  id?: string;
+  id: string;
   user_id: string;
   post_id: string;
-  report_type_code: string;
+  report_type_code: PostingReportReasonType;
   content: string;
   created_at: string | number;
-  processed: string;
+  processed: ReportProcessStatus;
 }
 
 export interface GetAdminPostingReportsResponseDto {
@@ -61,13 +68,13 @@ export interface GetAdminPostingReportsResponseDto {
 }
 
 export interface PostingReport {
-  id?: string;
+  id: string;
   userId: string;
   postId: string;
-  reportTypeCode: string;
+  reportTypeCode: PostingReportReasonType;
   content: string;
   createdAt: number;
-  processed: string;
+  processed: ReportProcessStatus;
 }
 
 export interface GetAdminPostingReportsResponse {
@@ -77,16 +84,16 @@ export interface GetAdminPostingReportsResponse {
 
 export interface CommentReportDto {
   id: string;
-  user_id?: string;
-  comment_id?: string;
-  post_id?: string;
-  report_type_code?: string;
-  reason_type?: string;
-  content?: string;
-  created_at?: string | number;
-  updated_at?: string | number;
-  processed?: string;
-  status?: string;
+  user_id: string;
+  comment_id: string;
+  post_id: string;
+  report_type_code: CommentReportReasonType;
+  reason_type: CommentReportReasonType;
+  content: string;
+  created_at: string | number;
+  updated_at: string | number;
+  processed: ReportProcessStatus;
+  status: ReportProcessStatus;
 }
 
 export interface GetAdminCommentReportsResponseDto {
@@ -96,16 +103,16 @@ export interface GetAdminCommentReportsResponseDto {
 
 export interface CommentReport {
   id: string;
-  userId?: string;
-  commentId?: string;
-  postId?: string;
-  reportTypeCode?: string;
-  reasonType?: string;
-  content?: string;
-  createdAt?: number;
-  updatedAt?: number;
-  processed?: string;
-  status?: string;
+  userId: string;
+  commentId: string;
+  postId: string;
+  reportTypeCode: CommentReportReasonType;
+  reasonType: CommentReportReasonType;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+  processed: ReportProcessStatus;
+  status: ReportProcessStatus;
 }
 
 export interface GetAdminCommentReportsResponse {
@@ -114,7 +121,7 @@ export interface GetAdminCommentReportsResponse {
 }
 
 export interface UpdateReportStatusRequestDto {
-  status: string;
+  status: ReportProcessStatus;
 }
 
 export interface UpdateReportStatusResponseDto {
@@ -159,8 +166,8 @@ const mapCommentReportDtoToEntity = (dto: CommentReportDto): CommentReport => ({
   reportTypeCode: dto.report_type_code,
   reasonType: dto.reason_type,
   content: dto.content,
-  createdAt: dto.created_at ? dayjs(dto.created_at).valueOf() : undefined,
-  updatedAt: dto.updated_at ? dayjs(dto.updated_at).valueOf() : undefined,
+  createdAt: dayjs(dto.created_at).valueOf(),
+  updatedAt: dayjs(dto.updated_at).valueOf(),
   processed: dto.processed,
   status: dto.status,
 });
