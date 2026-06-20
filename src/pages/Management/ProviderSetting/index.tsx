@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type Dispatch, useState } from 'react';
 
 import { TrashIcon } from 'lucide-react';
 
@@ -15,15 +15,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-
-interface Provider {
-  id: string;
-  name: string;
-  description?: string;
-  status: 'active' | 'inactive';
-  url: string;
-  lastUpdated: string;
-}
+import {
+  type CreateProviderRequestDto,
+  type Provider,
+  useCreateProvider,
+  useDeleteProvider,
+  useProviders,
+  useUpdateProvider,
+} from '@/stores/collect/providersStore';
 
 const Switch = ({
   checked,
@@ -31,7 +30,7 @@ const Switch = ({
   disabled = false,
 }: {
   checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
+  onCheckedChange: Dispatch<boolean>;
   disabled?: boolean;
 }) => {
   return (
@@ -50,138 +49,120 @@ const Switch = ({
   );
 };
 
-const mockProviders: Provider[] = [
-  {
-    id: '1',
-    name: 'OpenAI',
-    status: 'active',
-    url: 'https://api.openai.com/v1',
-    lastUpdated: '2024-03-09 15:30:00',
-  },
-  {
-    id: '2',
-    name: 'Google AI',
-    status: 'inactive',
-    url: 'https://generativelanguage.googleapis.com/v1',
-    lastUpdated: '2024-03-08 10:15:00',
-  },
-  {
-    id: '3',
-    name: 'Anthropic',
-    status: 'inactive',
-    url: 'https://api.anthropic.com/v1',
-    lastUpdated: '2024-03-07 08:45:00',
-  },
-];
-
-const statusColors = {
+const statusColors: Record<'active' | 'inactive', string> = {
   active: 'bg-green-100 text-green-800',
   inactive: 'bg-gray-100 text-gray-800',
-  // error: 'bg-red-100 text-red-800',
 };
 
-const statusText = {
+const statusText: Record<'active' | 'inactive', string> = {
   active: '활성',
   inactive: '비활성',
-  // error: '오류',
 };
 
+const initialProvider: CreateProviderRequestDto = {
+  name: '',
+  description: '',
+  base_url: '',
+  is_used: true,
+};
+
+const formatDate = (timestamp: number) =>
+  new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(timestamp);
+
 const ProviderSetting = () => {
-  const [providers, setProviders] = useState<Provider[]>(mockProviders);
+  const { data, isError, isLoading } = useProviders();
+  const createProvider = useCreateProvider();
+  const updateProvider = useUpdateProvider();
+  const deleteProvider = useDeleteProvider();
+
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editUrl, setEditUrl] = useState('');
-  const [editStatus, setEditStatus] = useState<'active' | 'inactive'>('active');
-  const [editName, setEditName] = useState('');
+  const [editIsUsed, setEditIsUsed] = useState(true);
   const [editDescription, setEditDescription] = useState('');
-  const [newProvider, setNewProvider] = useState({
-    name: '',
-    description: '',
-    url: '',
-    status: 'active' as 'active' | 'inactive',
-  });
+  const [newProvider, setNewProvider] = useState<CreateProviderRequestDto>(initialProvider);
+
+  const providers = data?.items ?? [];
+  const isMutating =
+    createProvider.isPending || updateProvider.isPending || deleteProvider.isPending;
 
   const handleCardClick = (provider: Provider) => {
+    updateProvider.reset();
     setSelectedProvider(provider);
-    setEditName(provider.name);
-    setEditDescription(provider.description || '');
-    setEditUrl(provider.url);
-    setEditStatus(provider.status);
+    setEditDescription(provider.description);
+    setEditUrl(provider.baseUrl);
+    setEditIsUsed(provider.isUsed);
     setIsDialogOpen(true);
   };
 
-  const handleManualUpdate = (providerId: string) => {
-    setProviders((prev) =>
-      prev.map((p) =>
-        p.id === providerId ? { ...p, lastUpdated: new Date().toLocaleString('ko-KR') } : p,
-      ),
-    );
-  };
-
   const handleApply = () => {
-    if (selectedProvider) {
-      setProviders((prev) =>
-        prev.map((p) =>
-          p.id === selectedProvider.id
-            ? {
-                ...p,
-                name: editName,
-                description: editDescription,
-                url: editUrl,
-                status: editStatus,
-                lastUpdated: new Date().toLocaleString('ko-KR'),
-              }
-            : p,
-        ),
-      );
-      setIsDialogOpen(false);
-      setSelectedProvider(null);
-      setEditName('');
-      setEditDescription('');
-      setEditUrl('');
-      setEditStatus('active');
-    }
+    if (!selectedProvider || !editUrl.trim()) return;
+
+    updateProvider.mutate(
+      {
+        providerId: selectedProvider.providerId,
+        body: {
+          base_url: editUrl.trim(),
+          description: editDescription.trim(),
+          is_used: editIsUsed,
+        },
+      },
+      { onSuccess: handleCancel },
+    );
   };
 
   const handleCancel = () => {
     setIsDialogOpen(false);
     setSelectedProvider(null);
-    setEditName('');
     setEditDescription('');
     setEditUrl('');
-    setEditStatus('active');
+    setEditIsUsed(true);
   };
 
   const handleAddProvider = () => {
-    if (newProvider.name && newProvider.url) {
-      const provider: Provider = {
-        id: Date.now().toString(),
-        name: newProvider.name,
-        description: newProvider.description,
-        url: newProvider.url,
-        status: newProvider.status,
-        lastUpdated: new Date().toLocaleString('ko-KR'),
-      };
-      setProviders((prev) => [...prev, provider]);
-      setNewProvider({
-        name: '',
-        description: '',
-        url: '',
-        status: 'active',
-      });
-      setIsAddDialogOpen(false);
-    }
+    if (!newProvider.name.trim() || !newProvider.base_url.trim()) return;
+
+    createProvider.mutate(
+      {
+        ...newProvider,
+        name: newProvider.name.trim(),
+        description: newProvider.description.trim(),
+        base_url: newProvider.base_url.trim(),
+      },
+      {
+        onSuccess: () => {
+          setNewProvider(initialProvider);
+          setIsAddDialogOpen(false);
+        },
+      },
+    );
   };
 
   const handleAddCancel = () => {
-    setNewProvider({
-      name: '',
-      description: '',
-      url: '',
-      status: 'active',
-    });
+    setNewProvider(initialProvider);
     setIsAddDialogOpen(false);
+  };
+
+  const handleDelete = () => {
+    if (!selectedProvider) return;
+
+    deleteProvider.mutate(
+      { providerId: selectedProvider.providerId },
+      {
+        onSuccess: () => {
+          setIsDeleteDialogOpen(false);
+          handleCancel();
+        },
+      },
+    );
   };
 
   return (
@@ -192,9 +173,24 @@ const ProviderSetting = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {isLoading && (
+          <p className="text-muted-foreground col-span-full py-12 text-center">
+            제공자 목록을 불러오는 중입니다.
+          </p>
+        )}
+        {isError && (
+          <p className="text-destructive col-span-full py-12 text-center">
+            제공자 목록을 불러오지 못했습니다.
+          </p>
+        )}
+        {!isLoading && !isError && providers.length === 0 && (
+          <p className="text-muted-foreground col-span-full py-12 text-center">
+            등록된 제공자가 없습니다.
+          </p>
+        )}
         {providers.map((provider) => (
           <Card
-            key={provider.id}
+            key={provider.providerId}
             className="cursor-pointer transition-shadow hover:shadow-md"
             onClick={() => handleCardClick(provider)}
           >
@@ -202,9 +198,9 @@ const ProviderSetting = () => {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{provider.name}</CardTitle>
                 <span
-                  className={`rounded-full px-2 py-1 text-xs font-medium ${statusColors[provider.status]}`}
+                  className={`rounded-full px-2 py-1 text-xs font-medium ${statusColors[provider.isUsed ? 'active' : 'inactive']}`}
                 >
-                  {statusText[provider.status]}
+                  {statusText[provider.isUsed ? 'active' : 'inactive']}
                 </span>
               </div>
             </CardHeader>
@@ -213,11 +209,11 @@ const ProviderSetting = () => {
               <div className="space-y-2">
                 <div>
                   <p className="text-muted-foreground text-sm">URL</p>
-                  <p className="truncate font-mono text-sm">{provider.url}</p>
+                  <p className="truncate font-mono text-sm">{provider.baseUrl}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-sm">업데이트 시기</p>
-                  <p className="text-sm">{provider.lastUpdated}</p>
+                  <p className="text-sm">{formatDate(provider.updatedAt)}</p>
                 </div>
               </div>
             </CardContent>
@@ -229,17 +225,27 @@ const ProviderSetting = () => {
                 className="w-full"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleManualUpdate(provider.id);
+                  handleCardClick(provider);
                 }}
               >
-                수동 업데이트
+                설정 변경
               </Button>
             </CardFooter>
           </Card>
         ))}
       </div>
 
-      <AlertDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+      <AlertDialog
+        open={isAddDialogOpen}
+        onOpenChange={(open) => {
+          if (open) {
+            createProvider.reset();
+            setIsAddDialogOpen(true);
+          } else {
+            handleAddCancel();
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>제공자 추가</AlertDialogTitle>
@@ -268,8 +274,8 @@ const ProviderSetting = () => {
             <div>
               <label className="mb-2 block text-sm font-medium">URL</label>
               <Input
-                value={newProvider.url}
-                onChange={(e) => setNewProvider((prev) => ({ ...prev, url: e.target.value }))}
+                value={newProvider.base_url}
+                onChange={(e) => setNewProvider((prev) => ({ ...prev, base_url: e.target.value }))}
                 placeholder="제공자 URL을 입력하세요"
               />
             </div>
@@ -278,41 +284,63 @@ const ProviderSetting = () => {
               <div className="flex items-center space-x-3">
                 <span className="text-muted-foreground text-sm">비활성</span>
                 <Switch
-                  checked={newProvider.status === 'active'}
+                  checked={newProvider.is_used}
                   onCheckedChange={(checked) =>
-                    setNewProvider((prev) => ({ ...prev, status: checked ? 'active' : 'inactive' }))
+                    setNewProvider((prev) => ({ ...prev, is_used: checked }))
                   }
+                  disabled={createProvider.isPending}
                 />
                 <span className="text-muted-foreground text-sm">활성</span>
               </div>
             </div>
           </div>
 
+          {createProvider.isError && (
+            <p className="text-destructive text-sm">제공자를 등록하지 못했습니다.</p>
+          )}
+
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleAddCancel}>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={handleAddProvider}>등록</AlertDialogAction>
+            <AlertDialogCancel onClick={handleAddCancel} disabled={createProvider.isPending}>
+              취소
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                handleAddProvider();
+              }}
+              disabled={
+                createProvider.isPending || !newProvider.name.trim() || !newProvider.base_url.trim()
+              }
+            >
+              {createProvider.isPending ? '등록 중...' : '등록'}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <AlertDialog open={isDialogOpen} onOpenChange={(open) => !open && handleCancel()}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <div className="flex w-full items-center justify-between gap-2">
               {selectedProvider && (
                 <span
-                  className={`rounded-full px-2 py-1 text-xs font-medium ${statusColors[selectedProvider.status]}`}
+                  className={`rounded-full px-2 py-1 text-xs font-medium ${statusColors[selectedProvider.isUsed ? 'active' : 'inactive']}`}
                 >
-                  {statusText[selectedProvider.status]}
+                  {statusText[selectedProvider.isUsed ? 'active' : 'inactive']}
                 </span>
               )}
               <AlertDialogTitle className="text-lg">{selectedProvider?.name}</AlertDialogTitle>
               <Button
                 variant="destructive"
                 size="icon"
-                onClick={() => console.log('remove provider')}
+                disabled={isMutating || selectedProvider?.hasUsingCollectSource}
+                onClick={() => {
+                  deleteProvider.reset();
+                  setIsDeleteDialogOpen(true);
+                }}
               >
                 <TrashIcon className="h-4 w-4" />
+                <span className="sr-only">제공자 삭제</span>
               </Button>
             </div>
           </AlertDialogHeader>
@@ -320,11 +348,10 @@ const ProviderSetting = () => {
           <div className="space-y-4">
             <div>
               <label className="mb-2 block text-sm font-medium">이름</label>
-              <Input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                placeholder="제공자 이름을 입력하세요"
-              />
+              <Input value={selectedProvider?.name ?? ''} disabled />
+              <p className="text-muted-foreground mt-1 text-xs">
+                제공자 이름은 변경할 수 없습니다.
+              </p>
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium">설명</label>
@@ -348,17 +375,64 @@ const ProviderSetting = () => {
               <div className="flex items-center space-x-3">
                 <span className="text-muted-foreground text-sm">비활성</span>
                 <Switch
-                  checked={editStatus === 'active'}
-                  onCheckedChange={(checked) => setEditStatus(checked ? 'active' : 'inactive')}
+                  checked={editIsUsed}
+                  onCheckedChange={setEditIsUsed}
+                  disabled={updateProvider.isPending}
                 />
                 <span className="text-muted-foreground text-sm">활성</span>
               </div>
             </div>
           </div>
 
+          {selectedProvider?.hasUsingCollectSource && (
+            <p className="text-muted-foreground text-sm">
+              사용 중인 수집 소스가 있어 이 제공자는 삭제할 수 없습니다.
+            </p>
+          )}
+          {updateProvider.isError && (
+            <p className="text-destructive text-sm">제공자 설정을 변경하지 못했습니다.</p>
+          )}
+
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancel}>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={handleApply}>적용</AlertDialogAction>
+            <AlertDialogCancel onClick={handleCancel} disabled={updateProvider.isPending}>
+              취소
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                handleApply();
+              }}
+              disabled={updateProvider.isPending || !editUrl.trim()}
+            >
+              {updateProvider.isPending ? '적용 중...' : '적용'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>제공자 삭제</AlertDialogTitle>
+          </AlertDialogHeader>
+          <p className="text-muted-foreground text-sm">
+            {selectedProvider?.name} 제공자를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+          </p>
+          {deleteProvider.isError && (
+            <p className="text-destructive text-sm">제공자를 삭제하지 못했습니다.</p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteProvider.isPending}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90 text-white"
+              onClick={(event) => {
+                event.preventDefault();
+                handleDelete();
+              }}
+              disabled={deleteProvider.isPending}
+            >
+              {deleteProvider.isPending ? '삭제 중...' : '삭제'}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

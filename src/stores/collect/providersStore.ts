@@ -7,9 +7,12 @@ import {
   deleteProvider,
   getProvider,
   getProviders,
+  type Provider,
   updateProvider,
   type UpdateProviderRequestDto,
 } from '@/services/collect';
+
+export type { CreateProviderRequestDto, Provider, UpdateProviderRequestDto };
 
 export const providersQueryKey = {
   list: (params?: CollectListParams) =>
@@ -53,13 +56,8 @@ export const useUpdateProvider = () => {
 
   return useMutation({
     mutationKey: providerMutationKeys.update,
-    mutationFn: ({
-      providerId,
-      body,
-    }: {
-      providerId: string;
-      body: UpdateProviderRequestDto;
-    }) => updateProvider(providerId, body),
+    mutationFn: ({ providerId, body }: { providerId: string; body: UpdateProviderRequestDto }) =>
+      updateProvider(providerId, body),
     onSuccess: (_, { providerId }) => {
       queryClient.invalidateQueries({ queryKey: providersQueryKey.list() });
       queryClient.invalidateQueries({ queryKey: providersQueryKey.detail(providerId) });
