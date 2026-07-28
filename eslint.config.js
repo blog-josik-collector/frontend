@@ -25,6 +25,7 @@ export default defineConfig([
       globals: globals.browser,
     },
     plugins: {
+      '@typescript-eslint': tseslint.plugin,
       import: importPlugin,
       'simple-import-sort': simpleImportSort,
       'react-hooks': reactHooks,
@@ -39,7 +40,8 @@ export default defineConfig([
 
       // 일반적인 규칙
       'no-undef': 'off',
-      'no-unused-vars': 'warn',
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': 'warn',
 
       // react-refresh 관련 규칙
       'react-refresh/only-export-components': 'off',

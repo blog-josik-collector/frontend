@@ -24,7 +24,7 @@ interface PostingStore {
   postings: GetPostingsResponse;
   loading: boolean;
   error: string | null;
-  // eslint-disable-next-line no-unused-vars
+
   fetchPostings: (params?: GetPostingsParams) => Promise<void>;
 }
 
@@ -43,7 +43,6 @@ export const usePostingStore = create<PostingStore>((set) => ({
   },
 }));
 
-/* eslint-disable no-unused-vars */
 interface PostingLikeStore {
   likedPostings: string[];
   loading: boolean;
@@ -253,8 +252,6 @@ interface PostingDetailStore {
   error: string | null;
   fetchPostingDetail: (postingId: string) => Promise<PostingDetailEntity | undefined>;
 }
-
-/* eslint-enable no-unused-vars */
 
 export const usePostingDetailStore = create<PostingDetailStore>((set) => ({
   postingDetailEntity: {},
