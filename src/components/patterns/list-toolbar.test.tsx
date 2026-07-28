@@ -34,12 +34,12 @@ function renderToolbar(overrides: Partial<React.ComponentProps<typeof ListToolba
 }
 
 function SearchToolbar({ onSearchValueChange }: { onSearchValueChange: (value: string) => void }) {
-  const [searchValue, setSearchValue] = useState('');
+  const [searchValue, setSearchValue] = useState('react');
 
   return (
     <ListToolbar
       filterContent={<DropdownMenuContent />}
-      filterCount={0}
+      filterCount={2}
       searchValue={searchValue}
       onSearchValueChange={(value) => {
         setSearchValue(value);
@@ -63,9 +63,9 @@ describe('ListToolbar', () => {
 
     render(<SearchToolbar onSearchValueChange={onSearchValueChange} />);
 
-    await user.type(screen.getByRole('textbox', { name: '검색' }), 'react');
+    await user.type(screen.getByRole('textbox', { name: '검색' }), ' query');
 
-    expect(onSearchValueChange).toHaveBeenLastCalledWith('react');
+    expect(onSearchValueChange).toHaveBeenLastCalledWith('react query');
   });
 
   it('clears the active search when requested', async () => {
