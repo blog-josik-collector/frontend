@@ -1,0 +1,34 @@
+# Pages Inventory
+
+## 기준
+
+- 분석 범위: `src/pages`의 16개 파일과 `src/routes.tsx`
+- 실제 라우트 수: 10개(와일드카드 리다이렉트 제외)
+- `route`가 "없음"인 항목은 보조 컴포넌트이거나 현재 라우터에서 참조되지 않는다.
+
+| 파일 경로                                        | 컴포넌트          | Route                          | 주요 기능                                                    | Store / Service                                                                | 사용자 액션                                                | UI 상태                                                                    |
+| ------------------------------------------------ | ----------------- | ------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------ | ---------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `src/pages/SignIn/index.tsx`                     | `SignIn`          | `/signin`                      | 로그인 폼 배치                                               | `SignInForm`                                                                   | 폼 사용                                                    | 폼 상태 위임                                                               |
+| `src/pages/SignIn/SignInForm.tsx`                | `SignInForm`      | `/signin` 내부                 | 직접 계정 로그인                                             | `useLogin`, `handleApiError`                                                   | ID/비밀번호 입력, 로그인, 회원가입 이동                    | 필수값 오류, 요청 중 비활성화, API 오류                                    |
+| `src/pages/SignUp/index.tsx`                     | `Signup`          | `/signup`                      | 회원가입 폼 배치                                             | `SignupForm`                                                                   | 폼 사용                                                    | 폼 상태 위임                                                               |
+| `src/pages/SignUp/SignUpForm.tsx`                | `SignupForm`      | `/signup` 내부                 | 직접 회원가입                                                | `useSignUp`, `handleApiError`                                                  | 계정 정보 입력, 가입, 로그인 이동                          | 필수값/비밀번호 검증, 요청 중, API 오류                                    |
+| `src/pages/Post/PostList/index.tsx`              | `PostList`        | `/`                            | 게시물 목록, 제목 검색, 페이지 크기/페이지 이동              | `usePostingStore`                                                              | 검색, 필터 선택, 페이지 이동, 상세 이동                    | Zustand의 로딩/오류를 조회하지만 화면에는 표시하지 않음                    |
+| `src/pages/Post/PostList/PostingFilter.tsx`      | `PostingFilter`   | `/` 내부                       | 공급자처럼 보이는 로컬 필터 UI                               | 없음                                                                           | 검색어 변경, 복수 옵션 선택/해제                           | 선택 태그 표시. 선택값은 API 파라미터에 연결되지 않음                      |
+| `src/pages/Post/PostDetail/index.tsx`            | `PostDetail`      | `/post?post-id={id}`           | 상세, 원문 링크, 좋아요, 북마크, 댓글/답글, 게시물·댓글 신고 | 게시물 Zustand store 4개, 신고 React Query store 2개                           | 좋아요/북마크 토글, 댓글·답글 작성, 신고, 댓글 페이지 이동 | ID 없음, 로딩 스켈레톤, 상세 오류/재시도, 댓글 빈 상태, mutation 진행 상태 |
+| `src/pages/My/Info/index.tsx`                    | `MyInfo`          | `/my/info`                     | 내 정보 조회·수정, 비밀번호 변경, 회원 탈퇴                  | `useMe`, `useUpdateMe`, `useUpdateMyPassword`, `useDeleteMe`, `handleApiError` | 프로필 저장, 비밀번호 변경, 탈퇴 확인                      | 입력 검증, 저장 성공 표시, API 오류, 요청 중 비활성화                      |
+| `src/pages/My/Bookmark/index.tsx`                | `MyBookmark`      | `/my/bookmark`                 | 내 북마크 목록과 각 게시물 상세 보강, 북마크 삭제            | `usePostingBookmarkStore`, `usePostingDetailStore`                             | 페이지 이동, 상세 이동, 삭제 확인                          | 로딩, 오류, 빈 상태                                                        |
+| `src/pages/My/Comment/index.tsx`                 | `MyComment`       | `/my/comment`                  | 내 댓글 목록과 삭제                                          | `useMyComments`, `useDeleteComment`, `handleApiError`                          | 페이지 이동, 게시물 이동, 삭제 확인                        | 로딩, 조회 오류, 삭제 오류, 빈 상태                                        |
+| `src/pages/Management/ProviderSetting/index.tsx` | `ProviderSetting` | `/management/provider-setting` | 수집 제공자 목록·등록·수정·삭제                              | provider React Query store                                                     | 등록/편집/활성화/삭제                                      | 조회 로딩·오류·빈 상태, mutation 진행·오류                                 |
+| `src/pages/Management/Report/Post/index.tsx`     | `PostReport`      | `/management/report/post`      | 게시물 신고 검색·필터·처리상태 변경                          | posting report React Query store                                               | 유형/상태/날짜 필터, 검색, 페이지 이동, OPEN/DONE 변경     | 로딩, 오류, 빈 상태, 상태 변경 중 비활성화                                 |
+| `src/pages/Management/Report/Comment/index.tsx`  | `CommentReport`   | `/management/report/comment`   | 댓글 신고 검색·필터·처리상태 변경                            | comment report React Query store                                               | 유형/상태/날짜 필터, 검색, 페이지 이동, OPEN/DONE 변경     | 로딩, 오류, 빈 상태, 상태 변경 중 비활성화                                 |
+| `src/pages/Management/Post/index.tsx`            | `ManagementPost`  | 없음                           | 정적 관리 게시물 목록 데모                                   | 없음                                                                           | 로컬 필터, `/post?post-id={index}` 이동                    | API/로딩/오류 상태 없음                                                    |
+| `src/pages/Management/index.tsx`                 | `Management`      | 없음                           | `/management/report/post` 리다이렉트                         | 없음                                                                           | 없음                                                       | 라우터에서 미사용                                                          |
+| `src/pages/My/index.tsx`                         | `My`              | 없음                           | `/my/favorite` 리다이렉트                                    | 없음                                                                           | 없음                                                       | 라우터에서 미사용, 대상 경로도 미정의                                      |
+
+## 라우팅 동작
+
+- `src/routes.tsx`가 `SignLayout` 아래 `/signin`, `/signup`을 배치한다.
+- 나머지 실제 화면은 `PageLayout` 아래 평탄화된 절대 경로로 배치된다.
+- 알 수 없는 경로는 `NotFoundRedirect`가 `/`로 이동시킨다.
+- `/my/*` 화면만 `ProtectedRoute`를 직접 감싸지만, 현재 `hasAuth = true`로 고정되어 실질적인 접근 차단은 없다.
+- `/management/*` 화면에는 인증 또는 관리자 역할 검사가 없다.
