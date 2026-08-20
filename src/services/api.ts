@@ -6,6 +6,8 @@ import type {
 } from 'axios';
 import axios, { AxiosError } from 'axios';
 
+import { clearAuthSession } from './auth/session';
+
 // API 응답 타입 정의
 export interface ApiResponse<T = any> {
   data: T;
@@ -69,8 +71,8 @@ apiClient.interceptors.response.use(
 
     // 401 에러 처리 (인증 만료)
     if (response?.status === 401) {
-      localStorage.removeItem('accessToken');
-      window.location.href = '/login';
+      clearAuthSession();
+      window.location.href = '/signin';
     }
 
     // 403 에러 처리 (권한 없음)

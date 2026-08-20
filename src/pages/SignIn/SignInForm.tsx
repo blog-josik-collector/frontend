@@ -25,11 +25,12 @@ export function SignInForm({ className, ...props }: React.ComponentProps<'div'>)
       setError('아이디와 비밀번호를 입력해 주세요.');
       return;
     }
+    const encodePassword = encodeURIComponent(password);
 
     login.mutate(
       {
         login_id: loginId,
-        password,
+        password: encodePassword,
       },
       {
         onSuccess: () => {

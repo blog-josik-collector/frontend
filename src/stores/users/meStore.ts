@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { clearAuthSession } from '@/services/auth/session';
 import {
   deleteMe,
   getMe,
@@ -69,8 +70,7 @@ export const useDeleteMe = () => {
     mutationKey: userMutationKeys.deleteMe,
     mutationFn: deleteMe,
     onSuccess: () => {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      clearAuthSession();
       queryClient.removeQueries({ queryKey: meQueryKey.detail() });
     },
   });

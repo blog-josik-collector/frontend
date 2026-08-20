@@ -1,5 +1,5 @@
 import React from 'react';
-import { createBrowserRouter, type RouteObject, useNavigate } from 'react-router';
+import { createBrowserRouter, Navigate, type RouteObject, useNavigate } from 'react-router';
 
 import PageLayout from './components/layout/PageLayout';
 import SignLayout from './components/layout/SignLayout';
@@ -13,6 +13,9 @@ import PostDetail from './pages/Post/PostDetail';
 import PostList from './pages/Post/PostList';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
+import { type AuthRole, getStoredRoles } from './services/auth';
+
+type MenuScope = 'public' | 'user' | 'admin';
 
 export interface NavRoute {
   path: string;
@@ -20,6 +23,7 @@ export interface NavRoute {
   label: string;
   hideMenu?: boolean;
   component?: React.ReactNode;
+  scopes: MenuScope[];
   children?: NavRoute[];
 }
 
@@ -32,33 +36,45 @@ const baseNavRoutes: BaseNavRoute[] = [
     path: '/',
     label: 'Home',
     component: <PostList />,
-    children: [{ path: '/post', label: 'Post', hideMenu: true, component: <PostDetail /> }],
+    scopes: ['public'],
+    children: [
+      { path: '/post', label: 'Post', hideMenu: true, component: <PostDetail />, scopes: [] },
+    ],
   },
   {
     path: '/my',
     label: 'My',
+    scopes: ['admin', 'user'],
     children: [
-      { path: '/info', label: 'My Info', component: <MyInfo /> },
-      { path: '/bookmark', label: 'My Bookmark', component: <MyBookmark /> },
-      { path: '/comment', label: 'My Comment', component: <MyComment /> },
+      { path: '/info', label: 'My Info', component: <MyInfo />, scopes: [] },
+      { path: '/bookmark', label: 'My Bookmark', component: <MyBookmark />, scopes: [] },
+      { path: '/comment', label: 'My Comment', component: <MyComment />, scopes: [] },
     ],
   },
   {
     path: '/management',
     label: 'Management',
+    scopes: ['admin'],
     children: [
       {
         path: '/report',
         label: 'Report',
+        scopes: [],
         children: [
-          { path: '/post', label: 'Report Post', component: <ManagementReportPost /> },
-          { path: '/comment', label: 'Report Comment', component: <ManagementReportComment /> },
+          { path: '/post', label: 'Report Post', component: <ManagementReportPost />, scopes: [] },
+          {
+            path: '/comment',
+            label: 'Report Comment',
+            component: <ManagementReportComment />,
+            scopes: [],
+          },
         ],
       },
       {
         path: '/provider-setting',
         label: 'Provider Setting',
         component: <ManagementProviderSetting />,
+        scopes: [],
       },
     ],
   },
@@ -75,25 +91,71 @@ const joinPaths = (parentPath: string, path: string) => {
   return normalizedPath ? `${normalizedParent}/${normalizedPath}` : normalizedParent;
 };
 
-const createNavRoutes = (routes: BaseNavRoute[], parentPath = ''): NavRoute[] =>
+const joinScopes = (
+  parentScopes: MenuScope[] | undefined,
+  scopes: MenuScope[] | undefined,
+): MenuScope[] => {
+  const currentScopeSet = new Set<MenuScope>([]);
+  if (parentScopes) {
+    parentScopes.forEach((scope) => currentScopeSet.add(scope));
+  }
+  if (scopes) {
+    scopes.forEach((scope) => currentScopeSet.add(scope));
+  }
+  return Array.from(currentScopeSet);
+};
+
+const createNavRoutes = (
+  routes: BaseNavRoute[],
+  parentPath = '',
+  parentScopes: MenuScope[] = [],
+): NavRoute[] =>
   routes.map((route) => {
     const fullPath = joinPaths(parentPath, route.path);
+    const scopes = joinScopes(parentScopes, route.scopes);
 
     return {
       ...route,
       fullPath,
-      children: route.children ? createNavRoutes(route.children, fullPath) : undefined,
+      scopes,
+      children: route.children ? createNavRoutes(route.children, fullPath, scopes) : undefined,
     };
   });
 
 export const navRoutes = createNavRoutes(baseNavRoutes);
+
+export const canAccessScopes = (scopes: MenuScope[], roles: AuthRole[]): boolean => {
+  if (scopes.includes('public')) {
+    return true;
+  }
+
+  return roles.some((role) => scopes.includes(role.toLowerCase() as MenuScope));
+};
+
+export const getAccessibleNavRoutes = (routes: NavRoute[], roles: AuthRole[]): NavRoute[] =>
+  routes
+    .filter((route) => canAccessScopes(route.scopes, roles))
+    .map((route) => ({
+      ...route,
+      children: route.children ? getAccessibleNavRoutes(route.children, roles) : undefined,
+    }));
+
+const RouteAccess = ({ children, scopes }: { children: React.ReactNode; scopes: MenuScope[] }) => {
+  if (canAccessScopes(scopes, getStoredRoles())) {
+    return children;
+  }
+
+  return <Navigate to={localStorage.getItem('accessToken') ? '/' : '/signin'} replace />;
+};
 
 const createFlatRoutes = (routes: NavRoute[]): RouteObject[] => {
   return routes
     .flatMap((route) => [
       {
         path: route.fullPath,
-        element: route.component,
+        element: route.component ? (
+          <RouteAccess scopes={route.scopes}>{route.component}</RouteAccess>
+        ) : undefined,
       },
       ...(route.children ? createFlatRoutes(route.children) : []),
     ])

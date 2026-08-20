@@ -15,7 +15,8 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
-import { type NavRoute, navRoutes } from '@/routes';
+import { getAccessibleNavRoutes, type NavRoute, navRoutes } from '@/routes';
+import { getStoredRoles } from '@/services/auth';
 
 const renderMenuItem = (route: NavRoute, currentPath: string) => {
   if (route.children && route.children.length > 0) {
@@ -68,8 +69,11 @@ const renderMenuItem = (route: NavRoute, currentPath: string) => {
 const MenuList = () => {
   const location = useLocation();
   const currentPath = location.pathname;
+  const accessibleRoutes = getAccessibleNavRoutes(navRoutes, getStoredRoles());
 
-  return <SidebarMenu>{navRoutes.map((route) => renderMenuItem(route, currentPath))}</SidebarMenu>;
+  return (
+    <SidebarMenu>{accessibleRoutes.map((route) => renderMenuItem(route, currentPath))}</SidebarMenu>
+  );
 };
 
 const AppBar: React.FC = () => {
