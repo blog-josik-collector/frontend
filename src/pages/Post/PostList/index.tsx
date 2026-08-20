@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 
 import dayjs from 'dayjs';
 import { ArrowLeftIcon, ArrowRightIcon, BadgeCheckIcon, EyeIcon, HeartIcon } from 'lucide-react';
 
-import PostingFilter, { type FilterOption } from './PostingFilter';
+import PostingFilter, { isFilterOption } from './PostingFilter';
 
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
@@ -70,11 +70,14 @@ const ItemCard: React.FC<ItemCardProps> = ({
 
 const PostList = () => {
   const navigate = useNavigate();
-  const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<FilterOption[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(defaultPagination);
   const { postings, fetchPostings } = usePostingStore();
+  const search = searchParams.get('title') ?? '';
+  const providerIdParam = searchParams.get('provider_id');
+  const selectedProviderId = isFilterOption(providerIdParam) ? providerIdParam : undefined;
+  const selected = selectedProviderId ? [selectedProviderId] : [];
 
   const totalPages = Math.max(1, Math.ceil(postings.total / pageSize));
   const currentBlockStart = Math.floor((page - 1) / pageBlockSize) * pageBlockSize + 1;
@@ -88,21 +91,33 @@ const PostList = () => {
       page: page - 1,
       size: pageSize,
       title: search || undefined,
+      ...(selectedProviderId ? { provider_id: selectedProviderId } : {}),
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, search]);
+  }, [fetchPostings, page, pageSize, search, selectedProviderId]);
 
   return (
     <div className="flex flex-col gap-4 p-4">
       <PostingFilter
         search={search}
-        onSearchChange={(value) => {
-          setSearch(value);
-          setPage(1);
-        }}
         selected={selected}
-        onSelectedChange={(options) => {
-          setSelected(options);
+        onSubmit={({ search: nextSearch, providerId }) => {
+          setSearchParams((currentSearchParams) => {
+            const nextSearchParams = new URLSearchParams(currentSearchParams);
+
+            if (nextSearch) {
+              nextSearchParams.set('title', nextSearch);
+            } else {
+              nextSearchParams.delete('title');
+            }
+
+            if (providerId) {
+              nextSearchParams.set('provider_id', providerId);
+            } else {
+              nextSearchParams.delete('provider_id');
+            }
+
+            return nextSearchParams;
+          });
           setPage(1);
         }}
       />
