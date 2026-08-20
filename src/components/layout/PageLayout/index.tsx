@@ -6,7 +6,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/s
 
 const PageLayout = () => {
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <AppBar />
       <SidebarInset>
         <main className="p-4">
