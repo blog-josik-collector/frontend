@@ -6,7 +6,6 @@ import {
   ArrowRightIcon,
   Bookmark,
   Calendar,
-  ChevronRight,
   ExternalLink,
   Eye,
   FileQuestion,
@@ -32,6 +31,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -146,10 +151,8 @@ const PostDetail = () => {
     },
     (_, index) => commentCurrentBlockStart + index,
   );
-  const [isReportMenuOpen, setIsReportMenuOpen] = useState(false);
   const [isOtherReportOpen, setIsOtherReportOpen] = useState(false);
   const [otherReportContent, setOtherReportContent] = useState('');
-  const [openCommentReportMenuIds, setOpenCommentReportMenuIds] = useState<string[]>([]);
   const [pendingReport, setPendingReport] = useState<PendingReport | null>(null);
   const isReportSubmitting =
     createPostingReportMutation.isPending || createCommentReportMutation.isPending;
@@ -178,10 +181,7 @@ const PostDetail = () => {
     fetchPostingDetail(post.id);
   };
 
-  const createPostingReport = async (
-    reasonType: PostingReportReasonType,
-    content: string,
-  ) => {
+  const createPostingReport = async (reasonType: PostingReportReasonType, content: string) => {
     if (!postId) return;
 
     await createPostingReportMutation.mutateAsync({
@@ -212,15 +212,12 @@ const PostDetail = () => {
       if (reasonType === PostingReportReasonType.PostError) {
         await createPostingReport(reasonType, '포스트 오류');
         alert('포스트 오류 신고가 접수되었습니다.');
-        setIsReportMenuOpen(false);
       } else if (reasonType === PostingReportReasonType.LinkError) {
         await createPostingReport(reasonType, '링크 오류');
         alert('링크 오류 신고가 접수되었습니다.');
-        setIsReportMenuOpen(false);
       } else {
         setPendingReport({ target: 'posting', reasonType });
         setIsOtherReportOpen(true);
-        setIsReportMenuOpen(false);
       }
     } catch {
       alert('신고 접수에 실패했습니다.');
@@ -236,9 +233,6 @@ const PostDetail = () => {
           await createPostingReport(pendingReport.reasonType, content);
         } else {
           await createCommentReport(pendingReport.commentId, pendingReport.reasonType, content);
-          setOpenCommentReportMenuIds((prev) =>
-            prev.filter((commentId) => commentId !== pendingReport.commentId),
-          );
         }
 
         alert('기타 신고가 접수되었습니다.');
@@ -251,19 +245,14 @@ const PostDetail = () => {
     }
   };
 
-  const handleCommentReport = async (
-    commentId: string,
-    reasonType: CommentReportReasonType,
-  ) => {
+  const handleCommentReport = async (commentId: string, reasonType: CommentReportReasonType) => {
     try {
       if (reasonType === CommentReportReasonType.Politics) {
         await createCommentReport(commentId, reasonType, '정치');
         alert('정치 신고가 접수되었습니다.');
-        setOpenCommentReportMenuIds((prev) => prev.filter((id) => id !== commentId));
       } else if (reasonType === CommentReportReasonType.Adult) {
         await createCommentReport(commentId, reasonType, '성인');
         alert('성인 신고가 접수되었습니다.');
-        setOpenCommentReportMenuIds((prev) => prev.filter((id) => id !== commentId));
       } else {
         setPendingReport({ target: 'comment', commentId, reasonType });
         setIsOtherReportOpen(true);
@@ -271,12 +260,6 @@ const PostDetail = () => {
     } catch {
       alert('신고 접수에 실패했습니다.');
     }
-  };
-
-  const toggleCommentReportMenu = (commentId: string) => {
-    setOpenCommentReportMenuIds((prev) =>
-      prev.includes(commentId) ? prev.filter((id) => id !== commentId) : [...prev, commentId],
-    );
   };
 
   const renderCommentActions = (commentId: string) => (
@@ -292,44 +275,38 @@ const PostDetail = () => {
           <span className="text-xs">답글</span>
         </Button>
       </ButtonGroup>
-      <ButtonGroup>
-        <Button
-          variant={openCommentReportMenuIds.includes(commentId) ? 'default' : 'ghost'}
-          size="xs"
-          onClick={() => toggleCommentReportMenu(commentId)}
-          className="flex items-center gap-1"
-        >
-          <Siren className="size-3" />
-        </Button>
-      </ButtonGroup>
-      {openCommentReportMenuIds.includes(commentId) && (
-        <ButtonGroup>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
           <Button
-            variant="outline"
+            aria-label="댓글 신고"
+            variant="ghost"
             size="xs"
-            onClick={() => handleCommentReport(commentId, CommentReportReasonType.Politics)}
             className="flex items-center gap-1"
+          >
+            <Siren className="size-3" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" collisionPadding={8} className="w-36 min-w-36">
+          <DropdownMenuItem
+            disabled={isReportSubmitting}
+            onSelect={() => void handleCommentReport(commentId, CommentReportReasonType.Politics)}
           >
             정치
-          </Button>
-          <Button
-            variant="outline"
-            size="xs"
-            onClick={() => handleCommentReport(commentId, CommentReportReasonType.Adult)}
-            className="flex items-center gap-1"
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={isReportSubmitting}
+            onSelect={() => void handleCommentReport(commentId, CommentReportReasonType.Adult)}
           >
             성인
-          </Button>
-          <Button
-            variant="outline"
-            size="xs"
-            onClick={() => handleCommentReport(commentId, CommentReportReasonType.Other)}
-            className="flex items-center gap-1"
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={isReportSubmitting}
+            onSelect={() => void handleCommentReport(commentId, CommentReportReasonType.Other)}
           >
             기타
-          </Button>
-        </ButtonGroup>
-      )}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </ButtonGroup>
   );
 
@@ -510,7 +487,7 @@ const PostDetail = () => {
           <Separator />
 
           {/* 액션 버튼 */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <Button
               variant={post.social.isLiked ? 'default' : 'outline'}
               size="sm"
@@ -534,49 +511,34 @@ const PostDetail = () => {
             </Button>
 
             {/* 신고 버튼 그룹 */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsReportMenuOpen(!isReportMenuOpen)}
-                className="flex items-center gap-2"
-              >
-                <Flag className="size-4" />
-                <span>신고</span>
-                <ChevronRight
-                  className={`size-3 transition-transform ${isReportMenuOpen ? 'rotate-180' : ''}`}
-                />
-              </Button>
-
-              {isReportMenuOpen && (
-                <ButtonGroup>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleReport(PostingReportReasonType.PostError)}
-                    disabled={isReportSubmitting}
-                  >
-                    포스트 오류
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleReport(PostingReportReasonType.LinkError)}
-                    disabled={isReportSubmitting}
-                  >
-                    링크 오류
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleReport(PostingReportReasonType.Other)}
-                    disabled={isReportSubmitting}
-                  >
-                    기타 신고
-                  </Button>
-                </ButtonGroup>
-              )}
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Flag className="size-4" />
+                  <span>신고</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" collisionPadding={8}>
+                <DropdownMenuItem
+                  disabled={isReportSubmitting}
+                  onSelect={() => void handleReport(PostingReportReasonType.PostError)}
+                >
+                  포스트 오류
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={isReportSubmitting}
+                  onSelect={() => void handleReport(PostingReportReasonType.LinkError)}
+                >
+                  링크 오류
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={isReportSubmitting}
+                  onSelect={() => void handleReport(PostingReportReasonType.Other)}
+                >
+                  기타 신고
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardContent>
       </Card>
