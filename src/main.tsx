@@ -5,25 +5,29 @@ import App from './App.tsx';
 
 import './index.css';
 
-// MSW worker 초기화 (개발 환경에서만)
-if (import.meta.env.DEV) {
-  import('@mocks/browser')
-    .then(({ worker }) => {
-      console.log('Starting MSW worker...');
-      return worker.start({
-        onUnhandledRequest: 'warn',
-      });
-    })
-    .then(() => {
-      console.log('MSW worker started successfully!');
-    })
-    .catch((error) => {
-      console.error('Failed to start MSW worker:', error);
-    });
-}
+const enableMocking = async () => {
+  if (!import.meta.env.DEV) {
+    return;
+  }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+  try {
+    const { worker } = await import('@mocks/browser');
+    console.log('Starting MSW worker...');
+    await worker.start({
+      onUnhandledRequest: 'warn',
+    });
+    console.log('MSW worker started successfully!');
+  } catch (error) {
+    console.error('Failed to start MSW worker:', error);
+  }
+};
+
+const renderApp = () => {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+};
+
+void enableMocking().then(renderApp);
