@@ -1,0 +1,16 @@
+{
+  "home": "Home",
+  "post": "Post",
+  "my": "My",
+  "myInfo": "My Info",
+  "myBookmark": "My Bookmark",
+  "myComment": "My Comment",
+  "management": "Management",
+  "report": "Report",
+  "reportPost": "Report Post",
+  "reportComment": "Report Comment",
+  "providerSetting": "Provider Setting",
+  "signIn": "Sign In",
+  "signUp": "Sign Up",
+  "language": "Language"
+}

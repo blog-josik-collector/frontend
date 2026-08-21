@@ -1,0 +1,16 @@
+{
+  "navigation": "Navigation",
+  "goHome": "Go to home",
+  "search": "Search",
+  "searchPlaceholder": "Enter a search term",
+  "searchTitle": "Search by title",
+  "clearSearch": "Clear search",
+  "filter": "Filter",
+  "filterWithCount": "Filter {{count}}",
+  "filterSelectedCount": "{{count}} filters selected",
+  "removeFilter": "Remove {{label}} filter",
+  "providerSource": "Source",
+  "all": "All",
+  "resetSelection": "Clear selection",
+  "loading": "Loading"
+}

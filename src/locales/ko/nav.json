@@ -1,0 +1,16 @@
+{
+  "home": "홈",
+  "post": "포스트",
+  "my": "마이",
+  "myInfo": "내 정보",
+  "myBookmark": "북마크",
+  "myComment": "내 댓글",
+  "management": "관리",
+  "report": "신고",
+  "reportPost": "포스트 신고",
+  "reportComment": "댓글 신고",
+  "providerSetting": "프로바이더 설정",
+  "signIn": "로그인",
+  "signUp": "회원가입",
+  "language": "언어"
+}

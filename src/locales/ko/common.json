@@ -1,0 +1,16 @@
+{
+  "navigation": "내비게이션",
+  "goHome": "홈으로 이동",
+  "search": "검색",
+  "searchPlaceholder": "검색어를 입력하세요",
+  "searchTitle": "제목 검색",
+  "clearSearch": "검색어 지우기",
+  "filter": "필터",
+  "filterWithCount": "필터 {{count}}",
+  "filterSelectedCount": "필터 {{count}}개 선택됨",
+  "removeFilter": "{{label}} 필터 제거",
+  "providerSource": "원본 출처",
+  "all": "전체",
+  "resetSelection": "선택 초기화",
+  "loading": "불러오는 중"
+}
