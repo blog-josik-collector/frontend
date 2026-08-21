@@ -1,5 +1,7 @@
+import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router';
 
+import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -78,11 +80,13 @@ const MenuList = () => {
 
 const AppBar: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('nav');
+  const { t: tCommon } = useTranslation('common');
   return (
     <Sidebar>
       <SidebarHeader>
         <div className="px-3 py-2">
-          <h2 className="text-lg font-semibold">Navigation</h2>
+          <h2 className="text-lg font-semibold">{tCommon('navigation')}</h2>
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -94,15 +98,16 @@ const AppBar: React.FC = () => {
       </SidebarContent>
       <SidebarFooter>
         <div className="space-y-2 px-3 py-2">
+          <LanguageSwitcher />
           <Button
             variant="outline"
             className="w-full hover:cursor-pointer"
             onClick={() => navigate('/signin')}
           >
-            Sign In
+            {t('signIn')}
           </Button>
           <Button className="w-full hover:cursor-pointer" onClick={() => navigate('/signup')}>
-            Sign Up
+            {t('signUp')}
           </Button>
         </div>
       </SidebarFooter>
