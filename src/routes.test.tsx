@@ -10,6 +10,7 @@ import { navRoutes, router } from './routes';
 import AppBar from '@/components/layout/AppBar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import type { AuthRole } from '@/services/auth';
+import { renderWithI18n } from '@/test/i18n';
 
 afterEach(() => {
   cleanup();
@@ -43,7 +44,7 @@ const renderAppBar = (roles: AuthRole[] = []) => {
     localStorage.setItem('accessToken', createAccessToken(roles));
   }
 
-  render(
+  renderWithI18n(
     <MemoryRouter>
       <SidebarProvider>
         <AppBar />
@@ -68,25 +69,25 @@ describe('AppBar authorization', () => {
   it('shows only public navigation without a role', () => {
     renderAppBar();
 
-    expect(screen.getByText('Home')).toBeInTheDocument();
-    expect(screen.queryByText('My')).not.toBeInTheDocument();
-    expect(screen.queryByText('Management')).not.toBeInTheDocument();
+    expect(screen.getByText('홈')).toBeInTheDocument();
+    expect(screen.queryByText('마이')).not.toBeInTheDocument();
+    expect(screen.queryByText('관리')).not.toBeInTheDocument();
   });
 
   it('shows navigation whose scope includes user for USER', () => {
     renderAppBar(['USER']);
 
-    expect(screen.getByText('Home')).toBeInTheDocument();
-    expect(screen.getByText('My')).toBeInTheDocument();
-    expect(screen.queryByText('Management')).not.toBeInTheDocument();
+    expect(screen.getByText('홈')).toBeInTheDocument();
+    expect(screen.getByText('마이')).toBeInTheDocument();
+    expect(screen.queryByText('관리')).not.toBeInTheDocument();
   });
 
   it('shows navigation whose scope includes admin for ADMIN', () => {
     renderAppBar(['ADMIN']);
 
-    expect(screen.getByText('Home')).toBeInTheDocument();
-    expect(screen.getByText('My')).toBeInTheDocument();
-    expect(screen.getByText('Management')).toBeInTheDocument();
+    expect(screen.getByText('홈')).toBeInTheDocument();
+    expect(screen.getByText('마이')).toBeInTheDocument();
+    expect(screen.getByText('관리')).toBeInTheDocument();
   });
 });
 

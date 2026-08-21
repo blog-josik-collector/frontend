@@ -20,7 +20,7 @@ type MenuScope = 'public' | 'user' | 'admin';
 export interface NavRoute {
   path: string;
   fullPath: string;
-  label: string;
+  labelKey: string;
   hideMenu?: boolean;
   component?: React.ReactNode;
   scopes: MenuScope[];
@@ -34,37 +34,42 @@ type BaseNavRoute = Omit<NavRoute, 'fullPath' | 'children'> & {
 const baseNavRoutes: BaseNavRoute[] = [
   {
     path: '/',
-    label: 'Home',
+    labelKey: 'home',
     component: <PostList />,
     scopes: ['public'],
     children: [
-      { path: '/post', label: 'Post', hideMenu: true, component: <PostDetail />, scopes: [] },
+      { path: '/post', labelKey: 'post', hideMenu: true, component: <PostDetail />, scopes: [] },
     ],
   },
   {
     path: '/my',
-    label: 'My',
+    labelKey: 'my',
     scopes: ['admin', 'user'],
     children: [
-      { path: '/info', label: 'My Info', component: <MyInfo />, scopes: [] },
-      { path: '/bookmark', label: 'My Bookmark', component: <MyBookmark />, scopes: [] },
-      { path: '/comment', label: 'My Comment', component: <MyComment />, scopes: [] },
+      { path: '/info', labelKey: 'myInfo', component: <MyInfo />, scopes: [] },
+      { path: '/bookmark', labelKey: 'myBookmark', component: <MyBookmark />, scopes: [] },
+      { path: '/comment', labelKey: 'myComment', component: <MyComment />, scopes: [] },
     ],
   },
   {
     path: '/management',
-    label: 'Management',
+    labelKey: 'management',
     scopes: ['admin'],
     children: [
       {
         path: '/report',
-        label: 'Report',
+        labelKey: 'report',
         scopes: [],
         children: [
-          { path: '/post', label: 'Report Post', component: <ManagementReportPost />, scopes: [] },
+          {
+            path: '/post',
+            labelKey: 'reportPost',
+            component: <ManagementReportPost />,
+            scopes: [],
+          },
           {
             path: '/comment',
-            label: 'Report Comment',
+            labelKey: 'reportComment',
             component: <ManagementReportComment />,
             scopes: [],
           },
@@ -72,7 +77,7 @@ const baseNavRoutes: BaseNavRoute[] = [
       },
       {
         path: '/provider-setting',
-        label: 'Provider Setting',
+        labelKey: 'providerSetting',
         component: <ManagementProviderSetting />,
         scopes: [],
       },

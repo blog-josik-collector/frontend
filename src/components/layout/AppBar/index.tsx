@@ -20,7 +20,7 @@ import {
 import { getAccessibleNavRoutes, type NavRoute, navRoutes } from '@/routes';
 import { getStoredRoles } from '@/services/auth';
 
-const renderMenuItem = (route: NavRoute, currentPath: string) => {
+const renderMenuItem = (route: NavRoute, currentPath: string, t: (key: string) => string) => {
   if (route.children && route.children.length > 0) {
     const isActive =
       currentPath === route.fullPath ||
@@ -31,7 +31,11 @@ const renderMenuItem = (route: NavRoute, currentPath: string) => {
     return (
       <SidebarMenuItem key={route.fullPath}>
         <SidebarMenuButton isActive={isActive ? true : undefined}>
-          {route.component ? <Link to={route.fullPath}>{route.label}</Link> : route.label}
+          {route.component ? (
+            <Link to={route.fullPath}>{t(route.labelKey)}</Link>
+          ) : (
+            t(route.labelKey)
+          )}
         </SidebarMenuButton>
         <SidebarMenuSub>
           {route.children.map((child) => {
@@ -39,7 +43,7 @@ const renderMenuItem = (route: NavRoute, currentPath: string) => {
               return null;
             }
             if (child.children && child.children.length > 0) {
-              return renderMenuItem(child, currentPath);
+              return renderMenuItem(child, currentPath, t);
             }
             return (
               <SidebarMenuSubItem key={child.fullPath}>
@@ -47,7 +51,7 @@ const renderMenuItem = (route: NavRoute, currentPath: string) => {
                   asChild
                   isActive={child.fullPath === currentPath ? true : undefined}
                 >
-                  <Link to={child.fullPath}>{child.label}</Link>
+                  <Link to={child.fullPath}>{t(child.labelKey)}</Link>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
             );
@@ -62,7 +66,7 @@ const renderMenuItem = (route: NavRoute, currentPath: string) => {
   return (
     <SidebarMenuItem key={route.fullPath}>
       <SidebarMenuButton asChild isActive={isActive ? true : undefined}>
-        <Link to={route.fullPath}>{route.label}</Link>
+        <Link to={route.fullPath}>{t(route.labelKey)}</Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
@@ -70,11 +74,14 @@ const renderMenuItem = (route: NavRoute, currentPath: string) => {
 
 const MenuList = () => {
   const location = useLocation();
+  const { t } = useTranslation('nav');
   const currentPath = location.pathname;
   const accessibleRoutes = getAccessibleNavRoutes(navRoutes, getStoredRoles());
 
   return (
-    <SidebarMenu>{accessibleRoutes.map((route) => renderMenuItem(route, currentPath))}</SidebarMenu>
+    <SidebarMenu>
+      {accessibleRoutes.map((route) => renderMenuItem(route, currentPath, t))}
+    </SidebarMenu>
   );
 };
 
