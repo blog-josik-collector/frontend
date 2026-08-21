@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { FilterIcon, SearchIcon, XIcon } from 'lucide-react';
 
@@ -30,14 +31,16 @@ function ListToolbar({
   searchPlaceholder,
   children,
 }: ListToolbarProps) {
+  const { t } = useTranslation('common');
+
   return (
     <div className="flex flex-col gap-2">
       <div className="bg-background focus-within:ring-ring flex items-center rounded-2xl border focus-within:ring-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" aria-label={`필터 ${filterCount}개 선택됨`}>
+            <Button variant="ghost" aria-label={t('filterSelectedCount', { count: filterCount })}>
               <FilterIcon />
-              필터
+              {t('filter')}
               {filterCount > 0 && <span>{filterCount}</span>}
             </Button>
           </DropdownMenuTrigger>
@@ -49,11 +52,16 @@ function ListToolbar({
           value={searchValue}
           onChange={(event) => onSearchValueChange(event.target.value)}
           placeholder={searchPlaceholder}
-          aria-label="검색"
+          aria-label={t('search')}
           className="flex-1 border-0 shadow-none focus-visible:ring-0"
         />
         {searchValue && (
-          <Button variant="ghost" size="icon-sm" aria-label="검색어 지우기" onClick={onClearSearch}>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t('clearSearch')}
+            onClick={onClearSearch}
+          >
             <XIcon />
           </Button>
         )}
@@ -64,10 +72,17 @@ function ListToolbar({
 }
 
 function FilterChip({ label, onRemove }: FilterChipProps) {
+  const { t } = useTranslation('common');
+
   return (
     <span className="bg-primary/10 text-primary inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium">
       {label}
-      <Button variant="ghost" size="icon-xs" aria-label={`${label} 필터 제거`} onClick={onRemove}>
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        aria-label={t('removeFilter', { label })}
+        onClick={onRemove}
+      >
         <XIcon />
       </Button>
     </span>

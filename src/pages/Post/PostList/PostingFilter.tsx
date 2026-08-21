@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { FilterIcon, SearchIcon, XIcon } from 'lucide-react';
 
@@ -26,6 +27,7 @@ interface PostingFilterProps {
 }
 
 const PostingFilter: React.FC<PostingFilterProps> = ({ search, selected, onSubmit }) => {
+  const { t } = useTranslation('common');
   const appliedProviderId = selected[0];
   const [isExpanded, setIsExpanded] = useState(false);
   const [draftSearch, setDraftSearch] = useState(search);
@@ -56,7 +58,11 @@ const PostingFilter: React.FC<PostingFilterProps> = ({ search, selected, onSubmi
       <div className="flex min-w-0 items-center p-1">
         <button
           type="button"
-          aria-label={hasAppliedFilter ? `필터 ${selected.length}` : '필터'}
+          aria-label={
+            hasAppliedFilter
+              ? t('filterWithCount', { count: selected.length })
+              : t('filter')
+          }
           aria-expanded={isExpanded}
           aria-pressed={hasAppliedFilter}
           onClick={() => setIsExpanded((expanded) => !expanded)}
@@ -66,7 +72,7 @@ const PostingFilter: React.FC<PostingFilterProps> = ({ search, selected, onSubmi
           )}
         >
           <FilterIcon className="size-4" />
-          <span>필터</span>
+          <span>{t('filter')}</span>
           {hasAppliedFilter && (
             <span className="bg-primary text-primary-foreground flex size-5 items-center justify-center rounded-full text-xs font-medium">
               {selected.length}
@@ -79,16 +85,16 @@ const PostingFilter: React.FC<PostingFilterProps> = ({ search, selected, onSubmi
           <SearchIcon className="size-4" />
         </span>
         <Input
-          aria-label="제목 검색"
+          aria-label={t('searchTitle')}
           className="min-w-0 flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0"
-          placeholder="검색어를 입력하세요"
+          placeholder={t('searchPlaceholder')}
           value={draftSearch}
           onChange={(event) => setDraftSearch(event.target.value)}
         />
         {draftSearch && (
           <button
             type="button"
-            aria-label="검색어 지우기"
+            aria-label={t('clearSearch')}
             className="text-muted-foreground hover:text-foreground px-2"
             onClick={() => setDraftSearch('')}
           >
@@ -97,7 +103,7 @@ const PostingFilter: React.FC<PostingFilterProps> = ({ search, selected, onSubmi
         )}
         {!isExpanded && (
           <Button type="submit" className="shrink-0">
-            검색
+            {t('search')}
           </Button>
         )}
       </div>
@@ -106,7 +112,7 @@ const PostingFilter: React.FC<PostingFilterProps> = ({ search, selected, onSubmi
         <div className="border-border flex flex-wrap items-end gap-3 border-t px-4 py-3">
           <div className="min-w-48 space-y-1.5">
             <label htmlFor="posting-provider-filter" className="text-sm font-medium">
-              원본 출처
+              {t('providerSource')}
             </label>
             <select
               id="posting-provider-filter"
@@ -114,7 +120,7 @@ const PostingFilter: React.FC<PostingFilterProps> = ({ search, selected, onSubmi
               onChange={(event) => setDraftProviderId(event.target.value as FilterOption | '')}
               className="border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-9 w-full rounded-xl border px-3 text-sm outline-none focus-visible:ring-2"
             >
-              <option value="">전체</option>
+              <option value="">{t('all')}</option>
               {FILTER_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -128,10 +134,10 @@ const PostingFilter: React.FC<PostingFilterProps> = ({ search, selected, onSubmi
             onClick={() => setDraftProviderId('')}
             disabled={!draftProviderId}
           >
-            선택 초기화
+            {t('resetSelection')}
           </button>
           <Button type="submit" className="ml-auto shrink-0">
-            검색
+            {t('search')}
           </Button>
         </div>
       )}
