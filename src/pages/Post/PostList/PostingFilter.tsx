@@ -59,9 +59,7 @@ const PostingFilter: React.FC<PostingFilterProps> = ({ search, selected, onSubmi
         <button
           type="button"
           aria-label={
-            hasAppliedFilter
-              ? t('filterWithCount', { count: selected.length })
-              : t('filter')
+            hasAppliedFilter ? t('filterWithCount', { count: selected.length }) : t('filter')
           }
           aria-expanded={isExpanded}
           aria-pressed={hasAppliedFilter}
