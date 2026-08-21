@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { handleApiError } from '@/services/api';
 import { useSignUp } from '@/stores/users';
 
 export function SignupForm({ className, ...props }: React.ComponentProps<'div'>) {
+  const { t } = useTranslation('auth');
   const navigate = useNavigate();
   const signUp = useSignUp();
   const [error, setError] = useState('');
@@ -26,17 +28,17 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
     const introduction = String(formData.get('introduction') ?? '').trim();
 
     if (!nickname || !loginId || !password || !passwordConfirm) {
-      setError('필수 항목을 모두 입력해 주세요.');
+      setError(t('requiredFields'));
       return;
     }
 
     if (password.length < 8) {
-      setError('비밀번호는 8자 이상이어야 합니다.');
+      setError(t('passwordMinLength'));
       return;
     }
 
     if (password !== passwordConfirm) {
-      setError('비밀번호가 일치하지 않습니다.');
+      setError(t('passwordMismatch'));
       return;
     }
 
@@ -64,19 +66,19 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">회원가입</CardTitle>
-          <CardDescription>계정 정보를 입력해 주세요.</CardDescription>
+          <CardTitle className="text-xl">{t('signUpTitle')}</CardTitle>
+          <CardDescription>{t('signUpDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="nickname">닉네임</FieldLabel>
+                <FieldLabel htmlFor="nickname">{t('nickname')}</FieldLabel>
                 <Input
                   id="nickname"
                   name="nickname"
                   type="text"
-                  placeholder="닉네임"
+                  placeholder={t('nickname')}
                   required
                   disabled={signUp.isPending}
                   onChange={() => {
@@ -85,12 +87,12 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="loginId">아이디</FieldLabel>
+                <FieldLabel htmlFor="loginId">{t('loginId')}</FieldLabel>
                 <Input
                   id="loginId"
                   name="loginId"
                   type="text"
-                  placeholder="아이디"
+                  placeholder={t('loginId')}
                   required
                   disabled={signUp.isPending}
                   onChange={() => {
@@ -99,18 +101,18 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="introduction">자기소개</FieldLabel>
+                <FieldLabel htmlFor="introduction">{t('introduction')}</FieldLabel>
                 <Textarea
                   id="introduction"
                   name="introduction"
-                  placeholder="자기소개"
+                  placeholder={t('introduction')}
                   disabled={signUp.isPending}
                 />
               </Field>
               <Field>
                 <Field className="grid grid-cols-2 gap-4">
                   <Field>
-                    <FieldLabel htmlFor="password">비밀번호</FieldLabel>
+                    <FieldLabel htmlFor="password">{t('password')}</FieldLabel>
                     <Input
                       id="password"
                       name="password"
@@ -123,7 +125,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                     />
                   </Field>
                   <Field>
-                    <FieldLabel htmlFor="passwordConfirm">비밀번호 확인</FieldLabel>
+                    <FieldLabel htmlFor="passwordConfirm">{t('passwordConfirm')}</FieldLabel>
                     <Input
                       id="passwordConfirm"
                       name="passwordConfirm"
@@ -136,15 +138,15 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                     />
                   </Field>
                 </Field>
-                <FieldDescription>비밀번호는 8자 이상이어야 합니다.</FieldDescription>
+                <FieldDescription>{t('passwordMinLengthHint')}</FieldDescription>
                 <FieldError errors={error ? [{ message: error }] : undefined} />
               </Field>
               <Field>
                 <Button type="submit" disabled={signUp.isPending}>
-                  {signUp.isPending ? '가입 중...' : '회원가입'}
+                  {signUp.isPending ? t('signUpPending') : t('signUpSubmit')}
                 </Button>
                 <FieldDescription className="text-center">
-                  이미 계정이 있으신가요? <a href="/signin">로그인</a>
+                  {t('hasAccount')} <a href="/signin">{t('signInLink')}</a>
                 </FieldDescription>
               </Field>
             </FieldGroup>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Link, Outlet } from 'react-router';
 
 import { HouseIcon } from 'lucide-react';
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
 const PageLayout = () => {
+  const { t } = useTranslation('common');
   return (
     <SidebarProvider defaultOpen={false}>
       <AppBar />
@@ -16,7 +18,7 @@ const PageLayout = () => {
           <div className="mb-2 flex items-center gap-1">
             <SidebarTrigger />
             <Button variant="ghost" size="icon-sm" asChild>
-              <Link to="/" aria-label="홈으로 이동">
+              <Link to="/" aria-label={t('goHome')}>
                 <HouseIcon />
               </Link>
             </Button>

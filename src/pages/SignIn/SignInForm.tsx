@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { handleApiError } from '@/services/api';
 import { useLogin } from '@/stores/auth/authStore';
 
 export function SignInForm({ className, ...props }: React.ComponentProps<'div'>) {
+  const { t } = useTranslation('auth');
   const navigate = useNavigate();
   const login = useLogin();
   const [error, setError] = useState('');
@@ -22,7 +24,7 @@ export function SignInForm({ className, ...props }: React.ComponentProps<'div'>)
     const password = String(formData.get('password') ?? '');
 
     if (!loginId || !password) {
-      setError('아이디와 비밀번호를 입력해 주세요.');
+      setError(t('missingCredentials'));
       return;
     }
     const encodePassword = encodeURIComponent(password);
@@ -48,19 +50,19 @@ export function SignInForm({ className, ...props }: React.ComponentProps<'div'>)
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>로그인</CardTitle>
-          <CardDescription>아이디와 비밀번호를 입력해 주세요.</CardDescription>
+          <CardTitle>{t('signInTitle')}</CardTitle>
+          <CardDescription>{t('signInDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="loginId">아이디</FieldLabel>
+                <FieldLabel htmlFor="loginId">{t('loginId')}</FieldLabel>
                 <Input
                   id="loginId"
                   name="loginId"
                   type="text"
-                  placeholder="아이디"
+                  placeholder={t('loginId')}
                   required
                   disabled={login.isPending}
                   onChange={() => {
@@ -70,7 +72,7 @@ export function SignInForm({ className, ...props }: React.ComponentProps<'div'>)
               </Field>
               <Field>
                 <div className="flex items-center">
-                  <FieldLabel htmlFor="password">비밀번호</FieldLabel>
+                  <FieldLabel htmlFor="password">{t('password')}</FieldLabel>
                 </div>
                 <Input
                   id="password"
@@ -86,10 +88,10 @@ export function SignInForm({ className, ...props }: React.ComponentProps<'div'>)
               </Field>
               <Field>
                 <Button type="submit" disabled={login.isPending}>
-                  {login.isPending ? '로그인 중...' : '로그인'}
+                  {login.isPending ? t('loginPending') : t('login')}
                 </Button>
                 <FieldDescription className="text-center">
-                  계정이 없으신가요? <a href="/signup">회원가입</a>
+                  {t('noAccount')} <a href="/signup">{t('signUpLink')}</a>
                 </FieldDescription>
               </Field>
             </FieldGroup>
