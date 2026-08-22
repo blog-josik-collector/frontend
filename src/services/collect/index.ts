@@ -11,7 +11,6 @@ export interface CreateProviderRequestDto {
   name: string;
   base_url: string;
   description: string;
-  is_used: boolean;
 }
 
 export interface CreateProviderResponseDto {
@@ -91,6 +90,8 @@ export type CreateSourceRequestDto =
       url: string;
       schedule_type: 'cron';
       cron_expression: string;
+      cron_from_page: number;
+      cron_to_page: number;
     };
 
 export interface CreateSourceResponseDto {
@@ -109,6 +110,8 @@ export interface SourceDto {
   url: string;
   schedule_type: ScheduleType;
   cron_expression?: string;
+  cron_from_page?: number;
+  cron_to_page?: number;
   is_used: boolean;
   created_at: string | number;
   updated_at: string | number;
@@ -120,6 +123,8 @@ export interface Source {
   url: string;
   scheduleType: ScheduleType;
   cronExpression?: string;
+  cronFromPage?: number;
+  cronToPage?: number;
   isUsed: boolean;
   createdAt: number;
   updatedAt: number;
@@ -141,9 +146,11 @@ export interface GetSourcesResponse {
 
 export interface UpdateSourceRequestDto {
   url: string;
-  schedule_type: ScheduleType;
+  collect_schedule_type: ScheduleType;
   is_used: boolean;
   cron_expression?: string;
+  cron_from_page?: number;
+  cron_to_page?: number;
 }
 
 export interface UpdateSourceResponseDto {
@@ -166,28 +173,50 @@ export interface StartCollectJobResponse {
   jobStatus: string;
 }
 
+export interface StartCollectJobParams {
+  from_page?: string;
+  to_page?: string;
+  force_recollect?: boolean;
+}
+
+export type JobStatus = 'pending' | 'running' | 'success' | 'failed' | 'cancelled';
+export type CollectingStatus =
+  | 'discovered'
+  | 'fetched'
+  | 'fetch_failed'
+  | 'parsed'
+  | 'parse_failed';
+
 export interface CollectJobDto {
   job_id: string;
-  job_status: string;
-  trigger_type: string;
+  job_status: JobStatus;
+  collecting_status: CollectingStatus;
   triggered_by: string;
+  from_page: number;
+  to_page: number;
+  force_recollect: boolean;
   total_count: number;
   collected_count: number;
   attempt_count: number;
   started_at: string | number;
   ended_at?: string | number;
+  error_message?: string;
 }
 
 export interface CollectJob {
   jobId: string;
-  jobStatus: string;
-  triggerType: string;
+  jobStatus: JobStatus;
+  collectingStatus: CollectingStatus;
   triggeredBy: string;
+  fromPage: number;
+  toPage: number;
+  forceRecollect: boolean;
   totalCount: number;
   collectedCount: number;
   attemptCount: number;
   startedAt: number;
   endedAt?: number;
+  errorMessage?: string;
 }
 
 export interface GetCollectJobsResponseDto {
@@ -208,24 +237,30 @@ export interface CollectPostingDto {
   posting_id: string;
   collect_source_id: string;
   title: string;
+  summary: string;
   url: string;
   published_at: string | number;
   thumbnail_url: string;
   indexing_error_count: number;
+  indexing_status: 'pending' | 'indexing' | 'indexed' | 'failed' | 'skipped';
   last_collected_at: string | number;
   last_collecting_job_id: string;
+  last_indexed_at?: string | number;
 }
 
 export interface CollectPosting {
   postingId: string;
   collectSourceId: string;
   title: string;
+  summary: string;
   url: string;
   publishedAt: number;
   thumbnailUrl: string;
   indexingErrorCount: number;
+  indexingStatus: 'pending' | 'indexing' | 'indexed' | 'failed' | 'skipped';
   lastCollectedAt: number;
   lastCollectingJobId: string;
+  lastIndexedAt?: number;
 }
 
 const mapCreateProviderResponseDtoToEntity = (
@@ -276,6 +311,8 @@ const mapSourceDtoToEntity = (dto: SourceDto): Source => ({
   url: dto.url,
   scheduleType: dto.schedule_type,
   cronExpression: dto.cron_expression,
+  cronFromPage: dto.cron_from_page,
+  cronToPage: dto.cron_to_page,
   isUsed: dto.is_used,
   createdAt: dayjs(dto.created_at).valueOf(),
   updatedAt: dayjs(dto.updated_at).valueOf(),
@@ -305,13 +342,17 @@ const mapStartCollectJobResponseDtoToEntity = (
 const mapCollectJobDtoToEntity = (dto: CollectJobDto): CollectJob => ({
   jobId: dto.job_id,
   jobStatus: dto.job_status,
-  triggerType: dto.trigger_type,
+  collectingStatus: dto.collecting_status,
   triggeredBy: dto.triggered_by,
+  fromPage: dto.from_page,
+  toPage: dto.to_page,
+  forceRecollect: dto.force_recollect,
   totalCount: dto.total_count,
   collectedCount: dto.collected_count,
   attemptCount: dto.attempt_count,
   startedAt: dayjs(dto.started_at).valueOf(),
   endedAt: dto.ended_at ? dayjs(dto.ended_at).valueOf() : undefined,
+  errorMessage: dto.error_message,
 });
 
 const mapGetCollectJobsResponseDtoToEntity = (
@@ -327,12 +368,15 @@ const mapCollectPostingDtoToEntity = (dto: CollectPostingDto): CollectPosting =>
   postingId: dto.posting_id,
   collectSourceId: dto.collect_source_id,
   title: dto.title,
+  summary: dto.summary,
   url: dto.url,
   publishedAt: dayjs(dto.published_at).valueOf(),
   thumbnailUrl: dto.thumbnail_url,
   indexingErrorCount: dto.indexing_error_count,
+  indexingStatus: dto.indexing_status,
   lastCollectedAt: dayjs(dto.last_collected_at).valueOf(),
   lastCollectingJobId: dto.last_collecting_job_id,
+  lastIndexedAt: dto.last_indexed_at ? dayjs(dto.last_indexed_at).valueOf() : undefined,
 });
 
 /**
@@ -434,9 +478,14 @@ export const deleteSource = async (sourceId: string): Promise<void> => {
 /**
  * POST /collect/v1/sources/{source-id}/_start - 수집 작업 실행
  */
-export const startCollectJob = async (sourceId: string): Promise<StartCollectJobResponse> => {
+export const startCollectJob = async (
+  sourceId: string,
+  params: StartCollectJobParams = {},
+): Promise<StartCollectJobResponse> => {
   const response = await api.post<StartCollectJobResponseDto>(
     `/collect/v1/sources/${sourceId}/_start`,
+    undefined,
+    { params },
   );
   return mapStartCollectJobResponseDtoToEntity(response.data);
 };

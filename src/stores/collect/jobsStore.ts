@@ -7,6 +7,7 @@ import {
   getCollectJob,
   getCollectJobs,
   startCollectJob,
+  type StartCollectJobParams,
   stopCollectJob,
 } from '@/services/collect';
 
@@ -39,7 +40,8 @@ export const useStartCollectJob = () => {
 
   return useMutation({
     mutationKey: collectJobMutationKeys.start,
-    mutationFn: ({ sourceId }: { sourceId: string }) => startCollectJob(sourceId),
+    mutationFn: ({ sourceId, params }: { sourceId: string; params?: StartCollectJobParams }) =>
+      startCollectJob(sourceId, params),
     onSuccess: (_, { sourceId }) => {
       queryClient.invalidateQueries({ queryKey: collectJobsQueryKey.list() });
       queryClient.invalidateQueries({ queryKey: sourcesQueryKey.detail(sourceId) });

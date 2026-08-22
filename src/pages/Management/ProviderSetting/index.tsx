@@ -63,7 +63,6 @@ const initialProvider: CreateProviderRequestDto = {
   name: '',
   description: '',
   base_url: '',
-  is_used: true,
 };
 
 const formatDate = (timestamp: number) =>
@@ -278,20 +277,6 @@ const ProviderSetting = () => {
                 onChange={(e) => setNewProvider((prev) => ({ ...prev, base_url: e.target.value }))}
                 placeholder="제공자 URL을 입력하세요"
               />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium">상태</label>
-              <div className="flex items-center space-x-3">
-                <span className="text-muted-foreground text-sm">비활성</span>
-                <Switch
-                  checked={newProvider.is_used}
-                  onCheckedChange={(checked) =>
-                    setNewProvider((prev) => ({ ...prev, is_used: checked }))
-                  }
-                  disabled={createProvider.isPending}
-                />
-                <span className="text-muted-foreground text-sm">활성</span>
-              </div>
             </div>
           </div>
 
