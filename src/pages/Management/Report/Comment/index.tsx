@@ -268,7 +268,7 @@ export function CommentReport() {
         </span>
         <Input
           className="flex-1 border-0 shadow-none focus-visible:ring-0"
-          placeholder="댓글 ID, 포스트 ID, 신고자 ID, 신고 내용으로 검색"
+          placeholder="댓글 ID, 신고자 ID, 신고 내용으로 검색"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
@@ -302,7 +302,6 @@ export function CommentReport() {
         <TableHeader>
           <TableRow>
             <TableHead>댓글 ID</TableHead>
-            <TableHead>포스트 ID</TableHead>
             <TableHead>신고자 ID</TableHead>
             <TableHead className="w-32">신고 유형</TableHead>
             <TableHead className="w-40">신고 날짜</TableHead>
@@ -314,21 +313,21 @@ export function CommentReport() {
         <TableBody>
           {isLoading && (
             <TableRow>
-              <TableCell colSpan={8} className="text-muted-foreground h-24 text-center">
+              <TableCell colSpan={7} className="text-muted-foreground h-24 text-center">
                 신고 목록을 불러오는 중입니다.
               </TableCell>
             </TableRow>
           )}
           {isError && (
             <TableRow>
-              <TableCell colSpan={8} className="text-destructive h-24 text-center">
+              <TableCell colSpan={7} className="text-destructive h-24 text-center">
                 신고 목록을 불러오지 못했습니다.
               </TableCell>
             </TableRow>
           )}
           {!isLoading && !isError && filteredItems.length === 0 && (
             <TableRow>
-              <TableCell colSpan={8} className="text-muted-foreground h-24 text-center">
+              <TableCell colSpan={7} className="text-muted-foreground h-24 text-center">
                 표시할 신고가 없습니다.
               </TableCell>
             </TableRow>
@@ -336,7 +335,6 @@ export function CommentReport() {
           {filteredItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.commentId ?? '-'}</TableCell>
-                <TableCell className="text-muted-foreground">-</TableCell>
                 <TableCell className="text-muted-foreground">{item.reporterId}</TableCell>
                 <TableCell>
                   <span className="bg-muted inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium">
