@@ -47,3 +47,22 @@ it('can reject a report while keeping the posting', async () => {
     reportId: 'report-1',
   });
 });
+
+it('applies inline report filters only when search is submitted', async () => {
+  const user = userEvent.setup();
+  render(<PostReport />);
+
+  const filterButton = screen.getByRole('button', { name: '필터' });
+
+  expect(screen.queryByRole('combobox', { name: '신고 유형' })).not.toBeInTheDocument();
+
+  await user.click(filterButton);
+  await user.selectOptions(screen.getByRole('combobox', { name: '신고 유형' }), 'invalid_content');
+
+  expect(filterButton).toHaveAccessibleName('필터');
+
+  await user.click(screen.getByRole('button', { name: '검색' }));
+
+  expect(screen.queryByRole('combobox', { name: '신고 유형' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '필터 1' })).toHaveAttribute('aria-pressed', 'true');
+});
