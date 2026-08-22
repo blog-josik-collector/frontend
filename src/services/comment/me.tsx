@@ -7,7 +7,7 @@ export interface MyCommentDto {
   user_id: string;
   has_child_comment: boolean;
   content: string;
-  status: string;
+  status: 'active' | 'blocked' | 'deleted';
   created_at: string;
   updated_at: string;
 }
@@ -24,7 +24,7 @@ export interface MyComment {
   userId: string;
   hasChildComment: boolean;
   content: string;
-  status: string;
+  status: 'active' | 'blocked' | 'deleted';
   createdAt: number;
   updatedAt: number;
 }

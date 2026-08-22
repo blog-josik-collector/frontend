@@ -9,7 +9,7 @@ export interface CreateReplyRequestDto {
 export interface CreateReplyResponseDto {
   id: string;
   parent_id: string;
-  created_at: string | number;
+  created_at: string;
 }
 
 export interface CreateReplyResponse {
@@ -63,7 +63,7 @@ export interface UpdateReplyRequestDto {
 
 export interface UpdateReplyResponseDto {
   id: string;
-  updated_at: string | number;
+  updated_at: string;
 }
 
 export interface UpdateReplyResponse {

@@ -22,7 +22,9 @@ const formatDate = (ts: number) =>
 const MyBookmark = () => {
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
-  const { bookmarks, loading, error, fetchBookmarks, deleteBookmark } = usePostingBookmarkStore();
+  const { bookmarks, totalCount, loading, error, fetchBookmarks, deleteBookmark } =
+    usePostingBookmarkStore();
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
 
   useEffect(() => {
     fetchBookmarks({ page, size: pageSize });
@@ -53,7 +55,9 @@ const MyBookmark = () => {
         <div>
           <h2 className="text-lg font-semibold">북마크 목록</h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            {loading ? '불러오는 중' : `${bookmarks.length.toLocaleString()}개 표시 중`}
+            {loading
+              ? '불러오는 중'
+              : `총 ${totalCount.toLocaleString()}개 · ${bookmarks.length.toLocaleString()}개 표시 중`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -65,11 +69,13 @@ const MyBookmark = () => {
           >
             이전
           </Button>
-          <span className="text-muted-foreground text-sm">{page + 1}</span>
+          <span className="text-muted-foreground text-sm">
+            {page + 1} / {pageCount}
+          </span>
           <Button
             variant="outline"
             size="sm"
-            disabled={bookmarks.length < pageSize || loading}
+            disabled={page + 1 >= pageCount || loading}
             onClick={() => setPage((prev) => prev + 1)}
           >
             다음

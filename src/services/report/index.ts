@@ -36,7 +36,7 @@ export interface CreateReportRequestDto<TReasonType extends string = string> {
 
 export interface CreateReportResponseDto {
   id: string;
-  created_at: string | number;
+  created_at: string;
 }
 
 export interface CreateReportResponse {
@@ -59,8 +59,8 @@ export interface PostingReportDto {
   post_id: string;
   report_type: PostingReportReasonType;
   content: string;
-  created_at: string | number;
-  updated_at: string | number;
+  created_at: string;
+  updated_at: string;
   status: ReportProcessStatus;
 }
 
@@ -95,8 +95,8 @@ export interface CommentReportDto {
   comment_id: string;
   report_type: CommentReportReasonType;
   content: string;
-  created_at: string | number;
-  updated_at: string | number;
+  created_at: string;
+  updated_at: string;
   status: ReportProcessStatus;
 }
 
@@ -132,7 +132,7 @@ export interface UpdateReportStatusRequestDto {
 export interface UpdateReportStatusResponseDto {
   id: string;
   status: ReportProcessStatus;
-  updated_at: string | number;
+  updated_at: string;
 }
 
 export interface UpdateReportStatusResponse {

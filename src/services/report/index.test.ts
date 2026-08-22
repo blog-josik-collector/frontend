@@ -2,6 +2,9 @@ import { AxiosHeaders } from 'axios';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  createCommentReport,
+  createPostingReport,
+  getAdminCommentReports,
   getAdminPostingReports,
   updateAdminPostingReportStatus,
 } from './index';
@@ -21,6 +24,30 @@ afterEach(() => {
 });
 
 describe('report OpenAPI contract', () => {
+  it('sends current posting and comment report request bodies', async () => {
+    const post = vi
+      .spyOn(api, 'post')
+      .mockResolvedValue(axiosResponse({ created_at: '2026-08-22T00:00:00Z', id: 'report-1' }));
+
+    await createPostingReport('post-1', {
+      content: 'broken',
+      report_type: 'broken_link',
+    });
+    await createCommentReport('comment-1', {
+      content: 'political',
+      report_type: 'political',
+    });
+
+    expect(post).toHaveBeenNthCalledWith(1, '/interaction/v1/postings/post-1/reports', {
+      content: 'broken',
+      report_type: 'broken_link',
+    });
+    expect(post).toHaveBeenNthCalledWith(2, '/interaction/v1/comments/comment-1/reports', {
+      content: 'political',
+      report_type: 'political',
+    });
+  });
+
   it('maps paged posting reports using reporter, report type, and status', async () => {
     vi.spyOn(api, 'get').mockResolvedValue(
       axiosResponse({
@@ -53,6 +80,42 @@ describe('report OpenAPI contract', () => {
           reporterId: 'user-1',
           status: 'pending',
           updatedAt: Date.parse('2026-08-22T01:00:00Z'),
+        },
+      ],
+      page: 0,
+      size: 20,
+      totalCount: 1,
+    });
+  });
+
+  it('maps paged comment reports without legacy fields', async () => {
+    vi.spyOn(api, 'get').mockResolvedValue(
+      axiosResponse({
+        items: [
+          {
+            comment_id: 'comment-1',
+            content: 'political',
+            created_at: '2026-08-22T00:00:00Z',
+            id: 'report-1',
+            report_type: 'political',
+            reporter_id: 'user-1',
+            status: 'rejected_keep',
+            updated_at: '2026-08-22T01:00:00Z',
+          },
+        ],
+        page: 0,
+        size: 20,
+        total_count: 1,
+      }),
+    );
+
+    await expect(getAdminCommentReports()).resolves.toMatchObject({
+      items: [
+        {
+          commentId: 'comment-1',
+          reportType: 'political',
+          reporterId: 'user-1',
+          status: 'rejected_keep',
         },
       ],
       page: 0,

@@ -8,7 +8,7 @@ export interface UpdateCommentRequestDto {
 
 export interface UpdateCommentResponseDto {
   id: string;
-  updated_at: string | number;
+  updated_at: string;
 }
 
 export interface UpdateCommentResponse {

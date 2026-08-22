@@ -5,26 +5,22 @@ import { faker } from '@faker-js/faker';
 interface CommentItem {
   id: string;
   user_id: string;
-  post_id: string;
-  parent_id?: string;
-  parent_comment_id?: string;
   has_child_comment: boolean;
   content: string;
-  status?: string;
-  created_at: number;
-  updated_at: number;
+  status: 'active' | 'blocked' | 'deleted';
+  created_at: string;
+  updated_at: string;
 }
 
 const now = Date.now();
 const myComments: CommentItem[] = Array.from({ length: 36 }, (_, index) => ({
   id: `my-comment-${index + 1}`,
   user_id: 'me',
-  post_id: `posting-${(index % 12) + 1}`,
   has_child_comment: faker.datatype.boolean(),
   content: faker.lorem.sentence({ min: 5, max: 14 }),
-  status: 'OPEN',
-  created_at: now - index * 86_400_000,
-  updated_at: now - index * 43_200_000,
+  status: 'active',
+  created_at: new Date(now - index * 86_400_000).toISOString(),
+  updated_at: new Date(now - index * 43_200_000).toISOString(),
 }));
 
 const repliesByCommentId = new Map<string, CommentItem[]>();
@@ -36,14 +32,11 @@ const getReplies = (commentId: string) => {
   const replies = Array.from({ length: faker.number.int({ min: 3, max: 14 }) }, (_, index) => ({
     id: `${commentId}-reply-${index + 1}`,
     user_id: faker.internet.username(),
-    post_id: `posting-${(index % 12) + 1}`,
-    parent_id: commentId,
-    parent_comment_id: commentId,
     has_child_comment: false,
     content: faker.lorem.sentence({ min: 4, max: 12 }),
-    status: 'OPEN',
-    created_at: now - index * 3_600_000,
-    updated_at: now - index * 1_800_000,
+    status: 'active' as const,
+    created_at: new Date(now - index * 3_600_000).toISOString(),
+    updated_at: new Date(now - index * 1_800_000).toISOString(),
   }));
 
   repliesByCommentId.set(commentId, replies);
@@ -51,9 +44,9 @@ const getReplies = (commentId: string) => {
 };
 
 export const commentHandlers = [
-  http.patch('/api/v1/comments/:commentId', async ({ request, params }) => {
+  http.patch('/interaction/v1/comments/:commentId', async ({ request, params }) => {
     const body = (await request.json()) as { content?: string };
-    const updatedAt = Date.now();
+    const updatedAt = new Date().toISOString();
     const comment = myComments.find((item) => item.id === params.commentId);
 
     if (comment && body.content) {
@@ -67,21 +60,18 @@ export const commentHandlers = [
     });
   }),
 
-  http.delete('/api/v1/comments/:commentId', () => new HttpResponse(null, { status: 202 })),
+  http.delete('/interaction/v1/comments/:commentId', () => new HttpResponse(null, { status: 202 })),
 
-  http.post('/api/v1/comments/:commentId/replies', async ({ request, params }) => {
+  http.post('/interaction/v1/comments/:commentId/replies', async ({ request, params }) => {
     const body = (await request.json()) as { content?: string };
-    const createdAt = Date.now();
+    const createdAt = new Date().toISOString();
     const commentId = params.commentId as string;
     const reply = {
       id: faker.string.uuid(),
-      parent_id: commentId,
-      parent_comment_id: commentId,
       user_id: 'me',
-      post_id: `posting-${faker.number.int({ min: 1, max: 12 })}`,
-      has_child_comment: false,
+      has_child_comment: false as const,
       content: body.content ?? '',
-      status: 'OPEN',
+      status: 'active' as const,
       created_at: createdAt,
       updated_at: createdAt,
     };
@@ -98,7 +88,7 @@ export const commentHandlers = [
     );
   }),
 
-  http.get('/api/v1/comments/:commentId/replies', ({ request, params }) => {
+  http.get('/interaction/v1/comments/:commentId/replies', ({ request, params }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '0');
     const size = parseInt(url.searchParams.get('size') || '20');
@@ -107,13 +97,15 @@ export const commentHandlers = [
 
     return HttpResponse.json({
       total_count: replies.length,
+      page,
+      size,
       items: replies.slice(startIndex, startIndex + size),
     });
   }),
 
-  http.patch('/api/v1/replies/:replyId', async ({ request, params }) => {
+  http.patch('/interaction/v1/replies/:replyId', async ({ request, params }) => {
     const body = (await request.json()) as { content?: string };
-    const updatedAt = Date.now();
+    const updatedAt = new Date().toISOString();
 
     Array.from(repliesByCommentId.values())
       .flat()
@@ -130,9 +122,9 @@ export const commentHandlers = [
     });
   }),
 
-  http.delete('/api/v1/replies/:replyId', () => new HttpResponse(null, { status: 202 })),
+  http.delete('/interaction/v1/replies/:replyId', () => new HttpResponse(null, { status: 202 })),
 
-  http.get('/api/v1/me/comments', ({ request }) => {
+  http.get('/interaction/v1/me/comments', ({ request }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '0');
     const size = parseInt(url.searchParams.get('size') || '20');
@@ -140,6 +132,8 @@ export const commentHandlers = [
 
     return HttpResponse.json({
       total_count: myComments.length,
+      page,
+      size,
       items: myComments.slice(startIndex, startIndex + size),
     });
   }),

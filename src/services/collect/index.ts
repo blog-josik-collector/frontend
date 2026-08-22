@@ -15,7 +15,7 @@ export interface CreateProviderRequestDto {
 
 export interface CreateProviderResponseDto {
   provider_id: string;
-  created_at: string | number;
+  created_at: string;
 }
 
 export interface CreateProviderResponse {
@@ -31,8 +31,8 @@ export interface ProviderDto {
   is_used: boolean;
   has_using_collect_source?: boolean;
   using_collect_source_id?: string;
-  created_at: string | number;
-  updated_at: string | number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Provider {
@@ -69,7 +69,7 @@ export interface UpdateProviderRequestDto {
 
 export interface UpdateProviderResponseDto {
   provider_id: string;
-  updated_at: string | number;
+  updated_at: string;
 }
 
 export interface UpdateProviderResponse {
@@ -96,7 +96,7 @@ export type CreateSourceRequestDto =
 
 export interface CreateSourceResponseDto {
   source_id: string;
-  created_at: string | number;
+  created_at: string;
 }
 
 export interface CreateSourceResponse {
@@ -113,8 +113,8 @@ export interface SourceDto {
   cron_from_page?: number;
   cron_to_page?: number;
   is_used: boolean;
-  created_at: string | number;
-  updated_at: string | number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Source {
@@ -155,22 +155,12 @@ export interface UpdateSourceRequestDto {
 
 export interface UpdateSourceResponseDto {
   source_id: string;
-  updated_at: string | number;
+  updated_at: string;
 }
 
 export interface UpdateSourceResponse {
   sourceId: string;
   updatedAt: number;
-}
-
-export interface StartCollectJobResponseDto {
-  job_id: string;
-  job_status: string;
-}
-
-export interface StartCollectJobResponse {
-  jobId: string;
-  jobStatus: string;
 }
 
 export interface StartCollectJobParams {
@@ -187,6 +177,16 @@ export type CollectingStatus =
   | 'parsed'
   | 'parse_failed';
 
+export interface StartCollectJobResponseDto {
+  job_id: string;
+  job_status: JobStatus;
+}
+
+export interface StartCollectJobResponse {
+  jobId: string;
+  jobStatus: JobStatus;
+}
+
 export interface CollectJobDto {
   job_id: string;
   job_status: JobStatus;
@@ -198,8 +198,8 @@ export interface CollectJobDto {
   total_count: number;
   collected_count: number;
   attempt_count: number;
-  started_at: string | number;
-  ended_at?: string | number;
+  started_at: string;
+  ended_at?: string;
   error_message?: string;
 }
 
@@ -239,13 +239,13 @@ export interface CollectPostingDto {
   title: string;
   summary: string;
   url: string;
-  published_at: string | number;
+  published_at: string;
   thumbnail_url: string;
   indexing_error_count: number;
   indexing_status: 'pending' | 'indexing' | 'indexed' | 'failed' | 'skipped';
-  last_collected_at: string | number;
+  last_collected_at: string;
   last_collecting_job_id: string;
-  last_indexed_at?: string | number;
+  last_indexed_at?: string;
 }
 
 export interface CollectPosting {

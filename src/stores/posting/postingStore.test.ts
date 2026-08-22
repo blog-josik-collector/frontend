@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { usePostingCommentStore } from './postingStore';
+import { usePostingBookmarkStore, usePostingCommentStore } from './postingStore';
 
-const { getCommentRepliesMock, getPostingCommentsMock } = vi.hoisted(() => ({
+const { getCommentRepliesMock, getMyBookmarksMock, getPostingCommentsMock } = vi.hoisted(() => ({
   getCommentRepliesMock: vi.fn(),
+  getMyBookmarksMock: vi.fn(),
   getPostingCommentsMock: vi.fn(),
 }));
 
@@ -13,6 +14,7 @@ vi.mock('@/services/comment/replies', () => ({
 
 vi.mock('@/services/posting', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/services/posting')>()),
+  getMyBookmarks: getMyBookmarksMock,
   getPostingComments: getPostingCommentsMock,
 }));
 
@@ -24,6 +26,30 @@ afterEach(() => {
     postingCommentReplies: {},
     postingComments: {},
     replyLoading: {},
+  });
+  usePostingBookmarkStore.setState({
+    bookmarkedPostings: [],
+    bookmarks: [],
+    error: null,
+    loading: false,
+    page: 0,
+    size: 20,
+    totalCount: 0,
+  });
+});
+
+describe('posting bookmark pagination', () => {
+  it('retains the server pagination metadata', async () => {
+    getMyBookmarksMock.mockResolvedValue({
+      items: [{ id: 'post-1' }],
+      page: 1,
+      size: 20,
+      totalCount: 45,
+    });
+
+    await usePostingBookmarkStore.getState().fetchBookmarks({ page: 1, size: 20 });
+
+    expect(usePostingBookmarkStore.getState()).toMatchObject({ page: 1, size: 20, totalCount: 45 });
   });
 });
 

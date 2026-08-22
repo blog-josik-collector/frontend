@@ -91,6 +91,9 @@ export const usePostingLikeStore = create<PostingLikeStore>((set) => ({
 interface PostingBookmarkStore {
   bookmarks: BookmarkedPosting[];
   bookmarkedPostings: string[];
+  totalCount: number;
+  page: number;
+  size: number;
   loading: boolean;
   error: string | null;
   fetchBookmarks: (_params?: { page?: number; size?: number }) => Promise<void>;
@@ -101,6 +104,9 @@ interface PostingBookmarkStore {
 export const usePostingBookmarkStore = create<PostingBookmarkStore>((set) => ({
   bookmarks: [],
   bookmarkedPostings: [],
+  totalCount: 0,
+  page: 0,
+  size: 20,
   loading: false,
   error: null,
   fetchBookmarks: async (params = { page: 0, size: 20 }) => {
@@ -110,6 +116,9 @@ export const usePostingBookmarkStore = create<PostingBookmarkStore>((set) => ({
       set({
         bookmarks: response.items,
         bookmarkedPostings: response.items.map((item) => item.id),
+        totalCount: response.totalCount,
+        page: response.page,
+        size: response.size,
         loading: false,
       });
     } catch {

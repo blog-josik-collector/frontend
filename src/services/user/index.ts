@@ -11,7 +11,7 @@ export interface SignUpRequestDto {
 
 export interface SignUpResponseDto {
   user_id: string;
-  created_at: string | number;
+  created_at: string;
 }
 
 export interface SignUpResponse {
@@ -23,9 +23,9 @@ export interface UserMeDto {
   user_id: string;
   user_type: 'USER' | 'ADMIN';
   nickname: string;
-  created_at: string | number;
-  updated_at: string | number;
-  last_login_at: string | number;
+  created_at: string;
+  updated_at: string;
+  last_login_at: string;
 }
 
 export interface UserMe {
@@ -43,7 +43,7 @@ export interface UpdateMeRequestDto {
 
 export interface UpdateMeResponseDto {
   user_id: string;
-  updated_at: string | number;
+  updated_at: string;
 }
 
 export interface UpdateMeResponse {
@@ -58,7 +58,7 @@ export interface UpdateMyPasswordRequestDto {
 
 export interface UpdateMyPasswordResponseDto {
   user_id: string;
-  updated_at: string | number;
+  updated_at: string;
 }
 
 export interface UpdateMyPasswordResponse {

@@ -34,7 +34,7 @@ const paginate = <T>(items: T[], request: Request) => {
 };
 
 export const reportHandlers = [
-  http.post('/api/v1/postings/:postingId/reports', async ({ request, params }) => {
+  http.post('/interaction/v1/postings/:postingId/reports', async ({ request, params }) => {
     const body = (await request.json()) as { report_type?: string; content?: string };
     const createdAt = new Date().toISOString();
     const report = {
@@ -59,7 +59,7 @@ export const reportHandlers = [
     );
   }),
 
-  http.post('/api/v1/comments/:commentId/reports', async ({ request, params }) => {
+  http.post('/interaction/v1/comments/:commentId/reports', async ({ request, params }) => {
     const body = (await request.json()) as { report_type?: string; content?: string };
     const createdAt = new Date().toISOString();
     const report = {
@@ -84,7 +84,7 @@ export const reportHandlers = [
     );
   }),
 
-  http.get('/api/v1/admin/reports/postings', ({ request }) =>
+  http.get('/interaction/v1/admin/reports/postings', ({ request }) =>
     HttpResponse.json((() => {
       const url = new URL(request.url);
       const page = Number(url.searchParams.get('page') ?? 0);
@@ -93,7 +93,7 @@ export const reportHandlers = [
     })()),
   ),
 
-  http.patch('/api/v1/admin/reports/postings/:reportId', async ({ request, params }) => {
+  http.patch('/interaction/v1/admin/reports/postings/:reportId', async ({ request, params }) => {
     const body = (await request.json()) as { status?: string };
     const updatedAt = new Date().toISOString();
     const report = postingReports.find((item) => item.id === params.reportId);
@@ -110,7 +110,7 @@ export const reportHandlers = [
     });
   }),
 
-  http.get('/api/v1/admin/reports/comments', ({ request }) =>
+  http.get('/interaction/v1/admin/reports/comments', ({ request }) =>
     HttpResponse.json((() => {
       const url = new URL(request.url);
       const page = Number(url.searchParams.get('page') ?? 0);
@@ -119,7 +119,7 @@ export const reportHandlers = [
     })()),
   ),
 
-  http.patch('/api/v1/admin/reports/comments/:reportId', async ({ request, params }) => {
+  http.patch('/interaction/v1/admin/reports/comments/:reportId', async ({ request, params }) => {
     const body = (await request.json()) as { status?: string };
     const updatedAt = new Date().toISOString();
     const report = commentReports.find((item) => item.id === params.reportId);

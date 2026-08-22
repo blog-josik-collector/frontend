@@ -378,6 +378,12 @@ export function CommentReport() {
                       >
                         삭제 처리
                       </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={updateStatusMutation.isPending}
+                        onClick={() => updateReportStatus(item.id, 'rejected_keep')}
+                      >
+                        신고 반려·댓글 유지
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
