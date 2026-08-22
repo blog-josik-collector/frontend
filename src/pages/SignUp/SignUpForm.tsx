@@ -40,11 +40,14 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
       return;
     }
 
+    const encodePassword = btoa(password);
+    const encodePasswordConfirm = btoa(passwordConfirm);
+
     signUp.mutate(
       {
         login_id: loginId,
-        password,
-        password_confirm: passwordConfirm,
+        password: encodePassword,
+        password_confirm: encodePasswordConfirm,
         nickname,
       },
       {

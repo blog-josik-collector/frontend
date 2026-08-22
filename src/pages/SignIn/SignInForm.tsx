@@ -27,7 +27,7 @@ export function SignInForm({ className, ...props }: React.ComponentProps<'div'>)
       setError(t('missingCredentials'));
       return;
     }
-    const encodePassword = encodeURIComponent(password);
+    const encodePassword = btoa(password);
 
     login.mutate(
       {
