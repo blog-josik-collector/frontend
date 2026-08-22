@@ -12,12 +12,12 @@ vi.mock('@/stores/reports/commentReportsStore', () => ({
     data: {
       items: [
         {
-          commentId: 'comment-1',
+          commentContent: 'Original comment',
           content: 'political',
           createdAt: Date.parse('2026-08-22T00:00:00Z'),
           id: 'report-1',
+          nickname: 'reporter',
           reportType: 'political',
-          reporterId: 'user-1',
           status: 'pending',
           updatedAt: Date.parse('2026-08-22T01:00:00Z'),
         },
@@ -34,6 +34,15 @@ vi.mock('@/stores/reports/commentReportsStore', () => ({
 
 beforeEach(() => mutateMock.mockReset());
 afterEach(cleanup);
+
+it('renders the comment content and reporter nickname from the current report resource', () => {
+  render(<CommentReport />);
+
+  expect(screen.getByRole('columnheader', { name: '댓글 내용' })).toBeInTheDocument();
+  expect(screen.getByRole('columnheader', { name: '신고자 닉네임' })).toBeInTheDocument();
+  expect(screen.getByText('Original comment')).toBeInTheDocument();
+  expect(screen.getByText('reporter')).toBeInTheDocument();
+});
 
 it('can reject a report while keeping the comment', async () => {
   const user = userEvent.setup();

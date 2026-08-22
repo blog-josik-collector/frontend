@@ -48,7 +48,7 @@ describe('report OpenAPI contract', () => {
     });
   });
 
-  it('maps paged posting reports using reporter, report type, and status', async () => {
+  it('maps paged posting reports using title and nickname', async () => {
     vi.spyOn(api, 'get').mockResolvedValue(
       axiosResponse({
         items: [
@@ -56,10 +56,10 @@ describe('report OpenAPI contract', () => {
             content: 'bad content',
             created_at: '2026-08-22T00:00:00Z',
             id: 'report-1',
-            post_id: 'post-1',
+            nickname: 'reporter',
             report_type: 'invalid_content',
-            reporter_id: 'user-1',
             status: 'pending',
+            title: 'Reported post title',
             updated_at: '2026-08-22T01:00:00Z',
           },
         ],
@@ -75,10 +75,10 @@ describe('report OpenAPI contract', () => {
           content: 'bad content',
           createdAt: Date.parse('2026-08-22T00:00:00Z'),
           id: 'report-1',
-          postId: 'post-1',
+          nickname: 'reporter',
           reportType: 'invalid_content',
-          reporterId: 'user-1',
           status: 'pending',
+          title: 'Reported post title',
           updatedAt: Date.parse('2026-08-22T01:00:00Z'),
         },
       ],
@@ -88,17 +88,17 @@ describe('report OpenAPI contract', () => {
     });
   });
 
-  it('maps paged comment reports without legacy fields', async () => {
+  it('maps paged comment reports using comment content and nickname', async () => {
     vi.spyOn(api, 'get').mockResolvedValue(
       axiosResponse({
         items: [
           {
-            comment_id: 'comment-1',
+            comment_content: 'Original comment',
             content: 'political',
             created_at: '2026-08-22T00:00:00Z',
             id: 'report-1',
+            nickname: 'reporter',
             report_type: 'political',
-            reporter_id: 'user-1',
             status: 'rejected_keep',
             updated_at: '2026-08-22T01:00:00Z',
           },
@@ -112,9 +112,9 @@ describe('report OpenAPI contract', () => {
     await expect(getAdminCommentReports()).resolves.toMatchObject({
       items: [
         {
-          commentId: 'comment-1',
+          commentContent: 'Original comment',
+          nickname: 'reporter',
           reportType: 'political',
-          reporterId: 'user-1',
           status: 'rejected_keep',
         },
       ],

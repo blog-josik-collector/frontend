@@ -54,7 +54,7 @@ export interface BookmarkedPostingDto {
 
 export interface PostingCommentDto {
   id: string;
-  user_id: string;
+  nickname: string;
   has_child_comment: boolean;
   content: string;
   status: PostingStatus;
@@ -109,7 +109,7 @@ export interface BookmarkedPosting {
 
 export interface PostingComment {
   id: string;
-  userId: string;
+  nickname: string;
   hasChildComment: boolean;
   content: string;
   status: PostingStatus;
@@ -205,7 +205,7 @@ const mapGetMyBookmarksResponseDtoToEntity = (
 
 const mapPostingCommentDtoToEntity = (dto: PostingCommentDto): PostingComment => ({
   id: dto.id,
-  userId: dto.user_id,
+  nickname: dto.nickname,
   hasChildComment: dto.has_child_comment,
   content: dto.content,
   status: dto.status,

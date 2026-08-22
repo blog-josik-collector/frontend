@@ -98,7 +98,7 @@ export function PostReport() {
     if (!keyword) return items;
 
     return items.filter((item) =>
-      [item.postId, item.reporterId, item.reportType, item.content].some((value) =>
+      [item.title, item.nickname, item.reportType, item.content].some((value) =>
         value.toLowerCase().includes(keyword),
       ),
     );
@@ -136,8 +136,8 @@ export function PostReport() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>포스트 ID</TableHead>
-            <TableHead>신고자 ID</TableHead>
+            <TableHead>제목</TableHead>
+            <TableHead>신고자 닉네임</TableHead>
             <TableHead className="w-32">신고 유형</TableHead>
             <TableHead className="w-40">신고 날짜</TableHead>
             <TableHead>신고 내용</TableHead>
@@ -169,8 +169,8 @@ export function PostReport() {
           )}
           {filteredItems.map((item) => (
             <TableRow key={item.id}>
-              <TableCell className="font-medium">{item.postId}</TableCell>
-              <TableCell className="text-muted-foreground">{item.reporterId}</TableCell>
+              <TableCell className="font-medium">{item.title}</TableCell>
+              <TableCell className="text-muted-foreground">{item.nickname}</TableCell>
               <TableCell>
                 <span className="bg-muted inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium">
                   {getReportTypeLabel(item.reportType)}

@@ -15,10 +15,10 @@ vi.mock('@/stores/reports/postingReportsStore', () => ({
           content: 'bad content',
           createdAt: Date.parse('2026-08-22T00:00:00Z'),
           id: 'report-1',
-          postId: 'post-1',
+          nickname: 'reporter',
           reportType: 'invalid_content',
-          reporterId: 'user-1',
           status: 'pending',
+          title: 'Reported post title',
           updatedAt: Date.parse('2026-08-22T01:00:00Z'),
         },
       ],
@@ -34,6 +34,15 @@ vi.mock('@/stores/reports/postingReportsStore', () => ({
 
 beforeEach(() => mutateMock.mockReset());
 afterEach(cleanup);
+
+it('renders the posting title and reporter nickname from the current report resource', () => {
+  render(<PostReport />);
+
+  expect(screen.getByRole('columnheader', { name: '제목' })).toBeInTheDocument();
+  expect(screen.getByRole('columnheader', { name: '신고자 닉네임' })).toBeInTheDocument();
+  expect(screen.getByText('Reported post title')).toBeInTheDocument();
+  expect(screen.getByText('reporter')).toBeInTheDocument();
+});
 
 it('can reject a report while keeping the posting', async () => {
   const user = userEvent.setup();

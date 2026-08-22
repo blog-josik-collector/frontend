@@ -4,7 +4,7 @@ import { api } from '../api';
 
 export interface MyCommentDto {
   id: string;
-  user_id: string;
+  nickname: string;
   has_child_comment: boolean;
   content: string;
   status: 'active' | 'blocked' | 'deleted';
@@ -21,7 +21,7 @@ export interface GetMyCommentsResponseDto {
 
 export interface MyComment {
   id: string;
-  userId: string;
+  nickname: string;
   hasChildComment: boolean;
   content: string;
   status: 'active' | 'blocked' | 'deleted';
@@ -43,7 +43,7 @@ export interface GetMyCommentsParams {
 
 const mapMyCommentDtoToEntity = (dto: MyCommentDto): MyComment => ({
   id: dto.id,
-  userId: dto.user_id,
+  nickname: dto.nickname,
   hasChildComment: dto.has_child_comment,
   content: dto.content,
   status: dto.status,

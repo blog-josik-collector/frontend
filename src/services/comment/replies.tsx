@@ -20,7 +20,7 @@ export interface CreateReplyResponse {
 
 export interface ReplyDto {
   id: string;
-  user_id: string;
+  nickname: string;
   has_child_comment: boolean;
   content: string;
   status: 'active' | 'blocked' | 'deleted';
@@ -37,7 +37,7 @@ export interface GetCommentRepliesResponseDto {
 
 export interface Reply {
   id: string;
-  userId: string;
+  nickname: string;
   hasChildComment: boolean;
   content: string;
   status: 'active' | 'blocked' | 'deleted';
@@ -79,7 +79,7 @@ const mapCreateReplyResponseDtoToEntity = (dto: CreateReplyResponseDto): CreateR
 
 const mapReplyDtoToEntity = (dto: ReplyDto): Reply => ({
   id: dto.id,
-  userId: dto.user_id,
+  nickname: dto.nickname,
   hasChildComment: dto.has_child_comment,
   content: dto.content,
   status: dto.status,

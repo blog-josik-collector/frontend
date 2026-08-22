@@ -55,8 +55,8 @@ export interface GetAdminReportsParams {
 
 export interface PostingReportDto {
   id: string;
-  reporter_id: string;
-  post_id: string;
+  nickname: string;
+  title: string;
   report_type: PostingReportReasonType;
   content: string;
   created_at: string;
@@ -73,8 +73,8 @@ export interface GetAdminPostingReportsResponseDto {
 
 export interface PostingReport {
   id: string;
-  reporterId: string;
-  postId: string;
+  nickname: string;
+  title: string;
   reportType: PostingReportReasonType;
   content: string;
   createdAt: number;
@@ -91,8 +91,8 @@ export interface GetAdminPostingReportsResponse {
 
 export interface CommentReportDto {
   id: string;
-  reporter_id: string;
-  comment_id: string;
+  nickname: string;
+  comment_content: string;
   report_type: CommentReportReasonType;
   content: string;
   created_at: string;
@@ -109,8 +109,8 @@ export interface GetAdminCommentReportsResponseDto {
 
 export interface CommentReport {
   id: string;
-  reporterId: string;
-  commentId: string;
+  nickname: string;
+  commentContent: string;
   reportType: CommentReportReasonType;
   content: string;
   createdAt: number;
@@ -150,8 +150,8 @@ const mapCreateReportResponseDtoToEntity = (
 
 const mapPostingReportDtoToEntity = (dto: PostingReportDto): PostingReport => ({
   id: dto.id,
-  reporterId: dto.reporter_id,
-  postId: dto.post_id,
+  nickname: dto.nickname,
+  title: dto.title,
   reportType: dto.report_type,
   content: dto.content,
   createdAt: dayjs(dto.created_at).valueOf(),
@@ -170,8 +170,8 @@ const mapGetAdminPostingReportsResponseDtoToEntity = (
 
 const mapCommentReportDtoToEntity = (dto: CommentReportDto): CommentReport => ({
   id: dto.id,
-  reporterId: dto.reporter_id,
-  commentId: dto.comment_id,
+  nickname: dto.nickname,
+  commentContent: dto.comment_content,
   reportType: dto.report_type,
   content: dto.content,
   createdAt: dayjs(dto.created_at).valueOf(),

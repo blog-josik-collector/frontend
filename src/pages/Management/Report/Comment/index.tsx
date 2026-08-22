@@ -104,7 +104,7 @@ export function CommentReport() {
     if (!keyword) return items;
 
     return items.filter((item) =>
-      [item.commentId, item.reporterId, item.reportType, item.content].some((value) =>
+      [item.commentContent, item.nickname, item.reportType, item.content].some((value) =>
         value.toLowerCase().includes(keyword),
       ),
     );
@@ -142,8 +142,8 @@ export function CommentReport() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>댓글 ID</TableHead>
-            <TableHead>신고자 ID</TableHead>
+            <TableHead>댓글 내용</TableHead>
+            <TableHead>신고자 닉네임</TableHead>
             <TableHead className="w-32">신고 유형</TableHead>
             <TableHead className="w-40">신고 날짜</TableHead>
             <TableHead>신고 내용</TableHead>
@@ -175,8 +175,8 @@ export function CommentReport() {
           )}
           {filteredItems.map((item) => (
             <TableRow key={item.id}>
-              <TableCell className="font-medium">{item.commentId ?? '-'}</TableCell>
-              <TableCell className="text-muted-foreground">{item.reporterId}</TableCell>
+              <TableCell className="font-medium">{item.commentContent ?? '-'}</TableCell>
+              <TableCell className="text-muted-foreground">{item.nickname}</TableCell>
               <TableCell>
                 <span className="bg-muted inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium">
                   {getReportTypeLabel(item.reportType)}
