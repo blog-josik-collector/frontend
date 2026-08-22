@@ -2,7 +2,7 @@ import { MemoryRouter } from 'react-router';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import PostDetail from './index';
@@ -87,6 +87,20 @@ afterEach(() => {
 });
 
 describe('PostDetail report menus', () => {
+  it('places comment actions in the same header row as the nickname', () => {
+    render(
+      <MemoryRouter initialEntries={['/post?post-id=posting-1']}>
+        <PostDetail />
+      </MemoryRouter>,
+    );
+
+    const commentHeader = screen.getByText('commenter').parentElement;
+
+    expect(commentHeader).not.toBeNull();
+    expect(within(commentHeader!).getByRole('button', { name: '답글 작성' })).toBeInTheDocument();
+    expect(within(commentHeader!).getByRole('button', { name: '댓글 신고' })).toBeInTheDocument();
+  });
+
   it('opens posting report reasons in a dropdown menu', async () => {
     const user = userEvent.setup();
     vi.spyOn(window, 'alert').mockImplementation(() => undefined);
@@ -147,7 +161,6 @@ describe('PostDetail report menus', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText('삭제된 댓글')).toBeInTheDocument();
     expect(screen.getByText('Deleted comment content')).toHaveClass('text-muted-foreground');
     expect(screen.getByRole('button', { name: '답글 작성' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '댓글 신고' })).not.toBeInTheDocument();

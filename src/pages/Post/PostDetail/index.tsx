@@ -297,7 +297,7 @@ const PostDetail = () => {
   };
 
   const renderCommentActions = (comment: PostingComment) => (
-    <ButtonGroup>
+    <div className="flex items-center gap-2">
       <ButtonGroup>
         <Button
           variant={replyingToId === comment.id ? 'secondary' : 'ghost'}
@@ -346,7 +346,7 @@ const PostDetail = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       )}
-    </ButtonGroup>
+    </div>
   );
 
   const handleLoadMoreReplies = async (rootCommentId: string) => {
@@ -678,10 +678,10 @@ const PostDetail = () => {
                       <span className="text-muted-foreground text-xs">
                         {new Date(comment.createdAt).toLocaleDateString()}
                       </span>
+                      <div className="ml-auto shrink-0">{renderCommentActions(comment)}</div>
                     </div>
 
                     <CommentContent content={comment.content} status={comment.status} />
-                    {renderCommentActions(comment)}
                   </div>
                 </div>
 
@@ -698,10 +698,10 @@ const PostDetail = () => {
                           <span className="text-muted-foreground text-xs">
                             {new Date(reply.createdAt).toLocaleDateString()}
                           </span>
+                          <div className="ml-auto shrink-0">{renderCommentActions(reply)}</div>
                         </div>
 
                         <CommentContent content={reply.content} status={reply.status} />
-                        {renderCommentActions(reply)}
                       </div>
                     </div>
                   );
