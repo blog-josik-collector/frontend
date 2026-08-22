@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 
 import dayjs from 'dayjs';
 import { ArrowLeftIcon, ArrowRightIcon, BadgeCheckIcon, EyeIcon, HeartIcon } from 'lucide-react';
 
-import PostingFilter, { isFilterOption } from './PostingFilter';
+import PostingFilter from './PostingFilter';
 
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
@@ -24,6 +24,7 @@ import {
   ItemMedia,
   ItemTitle,
 } from '@/components/ui/item';
+import { useProviders } from '@/stores/collect';
 import { usePostingStore } from '@/stores/posting/postingStore';
 
 const paginationOptions = [10, 20, 50, 100];
@@ -74,10 +75,29 @@ const PostList = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(defaultPagination);
   const { postings, fetchPostings } = usePostingStore();
+  const providers = useProviders({ page: 0, size: 100 });
   const search = searchParams.get('title') ?? '';
-  const providerIdParam = searchParams.get('provider_id');
-  const selectedProviderId = isFilterOption(providerIdParam) ? providerIdParam : undefined;
-  const selected = selectedProviderId ? [selectedProviderId] : [];
+  const requestedProvider = searchParams.get('provider') || undefined;
+  const providerItems = providers.data?.items;
+  const providerNames = useMemo(
+    () => Array.from(new Set((providerItems ?? []).map((provider) => provider.name))),
+    [providerItems],
+  );
+  const canValidateProvider = providerItems !== undefined;
+  const isRequestedProviderValid = requestedProvider
+    ? providerNames.includes(requestedProvider)
+    : false;
+  const isWaitingForProvider =
+    Boolean(requestedProvider) && !canValidateProvider && !providers.isError;
+  const isInvalidProvider =
+    Boolean(requestedProvider) && canValidateProvider && !isRequestedProviderValid;
+  const selectedProvider = isRequestedProviderValid
+    ? requestedProvider
+    : providers.isError
+      ? requestedProvider
+      : undefined;
+  const selected = selectedProvider ? [selectedProvider] : [];
+  const providerOptions = providerNames.map((name) => ({ label: name, value: name }));
 
   const totalPages = Math.max(1, Math.ceil(postings.totalCount / pageSize));
   const currentBlockStart = Math.floor((page - 1) / pageBlockSize) * pageBlockSize + 1;
@@ -87,20 +107,45 @@ const PostList = () => {
   );
 
   useEffect(() => {
+    if (!requestedProvider || !isInvalidProvider) return;
+
+    setSearchParams(
+      (currentSearchParams) => {
+        const nextSearchParams = new URLSearchParams(currentSearchParams);
+        nextSearchParams.delete('provider');
+        return nextSearchParams;
+      },
+      { replace: true },
+    );
+  }, [isInvalidProvider, requestedProvider, setSearchParams]);
+
+  useEffect(() => {
+    if (isWaitingForProvider || isInvalidProvider) return;
+
     fetchPostings({
       page: page - 1,
       size: pageSize,
       title: search || undefined,
-      ...(selectedProviderId ? { provider: selectedProviderId } : {}),
+      ...(selectedProvider ? { provider: selectedProvider } : {}),
     });
-  }, [fetchPostings, page, pageSize, search, selectedProviderId]);
+  }, [
+    fetchPostings,
+    isInvalidProvider,
+    isWaitingForProvider,
+    page,
+    pageSize,
+    search,
+    selectedProvider,
+  ]);
 
   return (
     <div className="flex flex-col gap-4 p-4">
       <PostingFilter
         search={search}
         selected={selected}
-        onSubmit={({ search: nextSearch, providerId }) => {
+        providerOptions={providerOptions}
+        isProviderLoading={providers.isLoading}
+        onSubmit={({ search: nextSearch, provider }) => {
           setSearchParams((currentSearchParams) => {
             const nextSearchParams = new URLSearchParams(currentSearchParams);
 
@@ -110,10 +155,10 @@ const PostList = () => {
               nextSearchParams.delete('title');
             }
 
-            if (providerId) {
-              nextSearchParams.set('provider_id', providerId);
+            if (provider) {
+              nextSearchParams.set('provider', provider);
             } else {
-              nextSearchParams.delete('provider_id');
+              nextSearchParams.delete('provider');
             }
 
             return nextSearchParams;

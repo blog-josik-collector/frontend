@@ -7,45 +7,48 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
-const FILTER_OPTIONS = [
-  { label: 'Provider 1', value: 'provider-1' },
-  { label: 'Provider 2', value: 'provider-2' },
-  { label: 'Provider 3', value: 'provider-3' },
-] as const;
-
-export type FilterOption = (typeof FILTER_OPTIONS)[number]['value'];
+export interface ProviderFilterOption {
+  label: string;
+  value: string;
+}
 
 export interface PostingFilterValue {
   search: string;
-  providerId?: FilterOption;
+  provider?: string;
 }
 
 interface PostingFilterProps {
   search: string;
-  selected: FilterOption[];
+  selected: string[];
+  providerOptions: ProviderFilterOption[];
+  isProviderLoading?: boolean;
   onSubmit: (value: PostingFilterValue) => void;
 }
 
-const PostingFilter: React.FC<PostingFilterProps> = ({ search, selected, onSubmit }) => {
+const PostingFilter: React.FC<PostingFilterProps> = ({
+  search,
+  selected,
+  providerOptions,
+  isProviderLoading = false,
+  onSubmit,
+}) => {
   const { t } = useTranslation('common');
   const appliedProviderId = selected[0];
   const [isExpanded, setIsExpanded] = useState(false);
   const [draftSearch, setDraftSearch] = useState(search);
-  const [draftProviderId, setDraftProviderId] = useState<FilterOption | ''>(
-    appliedProviderId ?? '',
-  );
+  const [draftProvider, setDraftProvider] = useState(appliedProviderId ?? '');
   const hasAppliedFilter = selected.length > 0;
 
   useEffect(() => {
     setDraftSearch(search);
-    setDraftProviderId(appliedProviderId ?? '');
+    setDraftProvider(appliedProviderId ?? '');
   }, [search, appliedProviderId]);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     onSubmit({
       search: draftSearch.trim(),
-      ...(draftProviderId ? { providerId: draftProviderId } : {}),
+      ...(draftProvider ? { provider: draftProvider } : {}),
     });
     setIsExpanded(false);
   };
@@ -114,12 +117,13 @@ const PostingFilter: React.FC<PostingFilterProps> = ({ search, selected, onSubmi
             </label>
             <select
               id="posting-provider-filter"
-              value={draftProviderId}
-              onChange={(event) => setDraftProviderId(event.target.value as FilterOption | '')}
+              value={draftProvider}
+              onChange={(event) => setDraftProvider(event.target.value)}
+              disabled={isProviderLoading}
               className="border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-9 w-full rounded-xl border px-3 text-sm outline-none focus-visible:ring-2"
             >
               <option value="">{t('all')}</option>
-              {FILTER_OPTIONS.map((option) => (
+              {providerOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -129,8 +133,8 @@ const PostingFilter: React.FC<PostingFilterProps> = ({ search, selected, onSubmi
           <button
             type="button"
             className="text-muted-foreground hover:text-foreground h-9 text-xs disabled:opacity-50"
-            onClick={() => setDraftProviderId('')}
-            disabled={!draftProviderId}
+            onClick={() => setDraftProvider('')}
+            disabled={!draftProvider}
           >
             {t('resetSelection')}
           </button>
@@ -143,8 +147,4 @@ const PostingFilter: React.FC<PostingFilterProps> = ({ search, selected, onSubmi
   );
 };
 
-const isFilterOption = (value: string | null): value is FilterOption =>
-  FILTER_OPTIONS.some((option) => option.value === value);
-
 export default PostingFilter;
-export { FILTER_OPTIONS, isFilterOption };

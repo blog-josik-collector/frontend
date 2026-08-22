@@ -3,21 +3,21 @@ import { http, HttpResponse } from 'msw';
 import { faker } from '@faker-js/faker';
 
 import type { MyCommentDto } from '@/services/comment/me';
-
-type CommentItem = MyCommentDto;
+import type { ReplyDto } from '@/services/comment/replies';
 
 const now = Date.now();
-const myComments: CommentItem[] = Array.from({ length: 36 }, (_, index) => ({
+const myComments: MyCommentDto[] = Array.from({ length: 36 }, (_, index) => ({
   id: `my-comment-${index + 1}`,
   nickname: 'mock-user',
   has_child_comment: faker.datatype.boolean(),
+  has_parent_comment: faker.datatype.boolean(),
   content: faker.lorem.sentence({ min: 5, max: 14 }),
   status: 'active',
   created_at: new Date(now - index * 86_400_000).toISOString(),
   updated_at: new Date(now - index * 43_200_000).toISOString(),
 }));
 
-const repliesByCommentId = new Map<string, CommentItem[]>();
+const repliesByCommentId = new Map<string, ReplyDto[]>();
 
 const getReplies = (commentId: string) => {
   const existing = repliesByCommentId.get(commentId);
