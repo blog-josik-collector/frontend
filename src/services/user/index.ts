@@ -21,6 +21,7 @@ export interface SignUpResponse {
 
 export interface UserMeDto {
   user_id: string;
+  login_id: string;
   user_type: 'USER' | 'ADMIN';
   nickname: string;
   created_at: string;
@@ -30,6 +31,7 @@ export interface UserMeDto {
 
 export interface UserMe {
   userId: string;
+  loginId: string;
   userType: 'USER' | 'ADMIN';
   nickname: string;
   createdAt: number;
@@ -77,6 +79,7 @@ const mapSignUpResponseDtoToEntity = (dto: SignUpResponseDto): SignUpResponse =>
 
 const mapUserMeDtoToEntity = (dto: UserMeDto): UserMe => ({
   userId: dto.user_id,
+  loginId: dto.login_id,
   userType: dto.user_type,
   nickname: dto.nickname,
   createdAt: dayjs(dto.created_at).valueOf(),

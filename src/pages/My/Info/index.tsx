@@ -158,7 +158,7 @@ const MyInfo = () => {
           <FieldGroup>
             <Field orientation="horizontal">
               <FieldTitle className="w-28 shrink-0">아이디</FieldTitle>
-              <span className="text-foreground text-sm font-medium">{me.data?.userId || ''}</span>
+              <span className="text-foreground text-sm font-medium">{me.data?.loginId || ''}</span>
             </Field>
           </FieldGroup>
         </CardContent>
