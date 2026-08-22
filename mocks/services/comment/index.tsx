@@ -2,20 +2,14 @@ import { http, HttpResponse } from 'msw';
 
 import { faker } from '@faker-js/faker';
 
-interface CommentItem {
-  id: string;
-  user_id: string;
-  has_child_comment: boolean;
-  content: string;
-  status: 'active' | 'blocked' | 'deleted';
-  created_at: string;
-  updated_at: string;
-}
+import type { MyCommentDto } from '@/services/comment/me';
+
+type CommentItem = MyCommentDto;
 
 const now = Date.now();
 const myComments: CommentItem[] = Array.from({ length: 36 }, (_, index) => ({
   id: `my-comment-${index + 1}`,
-  user_id: 'me',
+  nickname: 'mock-user',
   has_child_comment: faker.datatype.boolean(),
   content: faker.lorem.sentence({ min: 5, max: 14 }),
   status: 'active',
@@ -31,7 +25,7 @@ const getReplies = (commentId: string) => {
 
   const replies = Array.from({ length: faker.number.int({ min: 3, max: 14 }) }, (_, index) => ({
     id: `${commentId}-reply-${index + 1}`,
-    user_id: faker.internet.username(),
+    nickname: faker.internet.username(),
     has_child_comment: false,
     content: faker.lorem.sentence({ min: 4, max: 12 }),
     status: 'active' as const,
@@ -68,7 +62,7 @@ export const commentHandlers = [
     const commentId = params.commentId as string;
     const reply = {
       id: faker.string.uuid(),
-      user_id: 'me',
+      nickname: 'mock-user',
       has_child_comment: false as const,
       content: body.content ?? '',
       status: 'active' as const,

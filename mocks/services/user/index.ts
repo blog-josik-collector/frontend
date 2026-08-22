@@ -2,8 +2,11 @@ import { http, HttpResponse } from 'msw';
 
 import { faker } from '@faker-js/faker';
 
-const me = {
+import type { UserMeDto } from '@/services/user';
+
+const me: UserMeDto = {
   user_id: 'user-me',
+  login_id: 'mock-user@example.com',
   user_type: 'USER',
   nickname: 'mock-user',
   created_at: new Date(Date.now() - 30 * 86_400_000).toISOString(),

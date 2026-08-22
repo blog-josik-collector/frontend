@@ -2,17 +2,10 @@ import { http, HttpResponse } from 'msw';
 
 import { faker } from '@faker-js/faker';
 
-import type { PostingDetailDto, PostingListItemDto } from '@/services/posting';
+import type { PostingCommentDto, PostingDetailDto, PostingListItemDto } from '@/services/posting';
 
-interface PostingCommentItem {
-  id: string;
-  user_id: string;
+interface PostingCommentItem extends PostingCommentDto {
   parent_comment_id: string;
-  has_child_comment: boolean;
-  content: string;
-  status: 'active' | 'blocked' | 'deleted';
-  created_at: string;
-  updated_at: string;
 }
 
 // Mock 데이터 생성 함수
@@ -78,14 +71,14 @@ const getRootComments = (comments: PostingCommentItem[]) =>
 const getThreadReplies = (comments: PostingCommentItem[], rootCommentId: string) =>
   comments.filter((comment) => isReplyInThread(comment, rootCommentId, comments));
 
-const toPostingCommentResponse = (comment: PostingCommentItem) => ({
+const toPostingCommentResponse = (comment: PostingCommentItem): PostingCommentDto => ({
   content: comment.content,
   created_at: comment.created_at,
   has_child_comment: comment.has_child_comment,
   id: comment.id,
   status: comment.status,
   updated_at: comment.updated_at,
-  user_id: comment.user_id,
+  nickname: comment.nickname,
 });
 
 // 게시물 상세 데이터 생성 함수
@@ -268,7 +261,7 @@ export const postingsHandlers = [
     const createdAt = new Date().toISOString();
     const comment: PostingCommentItem = {
       id: faker.string.uuid(),
-      user_id: faker.internet.username(),
+      nickname: faker.internet.username(),
       parent_comment_id: '',
       has_child_comment: false,
       content: body.content,
