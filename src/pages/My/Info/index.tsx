@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
-import { TriangleAlert } from 'lucide-react';
+import { CircleCheck, TriangleAlert } from 'lucide-react';
 
 import {
   AlertDialog,
@@ -88,7 +88,7 @@ const MyInfo = () => {
           setProfileError('');
           setIsProfileChanged(false);
           setProfileSaved(true);
-          setTimeout(() => setProfileSaved(false), 2000);
+          setTimeout(() => setProfileSaved(false), 3000);
         },
         onError: (error) => {
           setProfileError(handleApiError(error).message);
@@ -118,7 +118,7 @@ const MyInfo = () => {
           setPasswords({ current: '', next: '', confirm: '' });
           setPasswordErrors({});
           setPasswordSaved(true);
-          setTimeout(() => setPasswordSaved(false), 2000);
+          setTimeout(() => setPasswordSaved(false), 3000);
         },
         onError: (error) => {
           setPasswordErrors({ current: handleApiError(error).message });
@@ -190,11 +190,29 @@ const MyInfo = () => {
               <Field>
                 <Button
                   type="submit"
-                  className="self-end"
-                  disabled={me.isLoading || updateMe.isPending || !isProfileChanged}
+                  className={`self-end ${
+                    profileSaved
+                      ? 'bg-emerald-600 text-white hover:bg-emerald-600 disabled:opacity-100'
+                      : ''
+                  }`}
+                  disabled={me.isLoading || updateMe.isPending || !isProfileChanged || profileSaved}
                 >
-                  {updateMe.isPending ? '저장 중...' : profileSaved ? '저장됨 ✓' : '프로필 저장'}
+                  {updateMe.isPending ? (
+                    '저장 중...'
+                  ) : profileSaved ? (
+                    <>
+                      <CircleCheck />
+                      저장됨
+                    </>
+                  ) : (
+                    '프로필 저장'
+                  )}
                 </Button>
+                {profileSaved && (
+                  <p role="status" className="text-right text-sm font-medium text-emerald-600">
+                    프로필이 저장되었습니다.
+                  </p>
+                )}
               </Field>
             </FieldGroup>
           </form>
@@ -269,13 +287,29 @@ const MyInfo = () => {
                 />
               </Field>
               <Field>
-                <Button type="submit" className="self-end" disabled={updateMyPassword.isPending}>
-                  {updateMyPassword.isPending
-                    ? '변경 중...'
-                    : passwordSaved
-                      ? '변경됨 ✓'
-                      : '비밀번호 변경'}
+                <Button
+                  type="submit"
+                  className={`self-end ${
+                    passwordSaved ? 'bg-emerald-600 text-white hover:bg-emerald-600' : ''
+                  }`}
+                  disabled={updateMyPassword.isPending || passwordSaved}
+                >
+                  {updateMyPassword.isPending ? (
+                    '변경 중...'
+                  ) : passwordSaved ? (
+                    <>
+                      <CircleCheck />
+                      변경됨
+                    </>
+                  ) : (
+                    '비밀번호 변경'
+                  )}
                 </Button>
+                {passwordSaved && (
+                  <p role="status" className="text-right text-sm font-medium text-emerald-600">
+                    비밀번호가 변경되었습니다.
+                  </p>
+                )}
               </Field>
             </FieldGroup>
           </form>
