@@ -7,7 +7,6 @@ export interface SignUpRequestDto {
   password: string;
   password_confirm: string;
   nickname: string;
-  introduction: string;
 }
 
 export interface SignUpResponseDto {
@@ -22,10 +21,8 @@ export interface SignUpResponse {
 
 export interface UserMeDto {
   user_id: string;
-  user_type: string;
-  login_type: string;
+  user_type: 'USER' | 'ADMIN';
   nickname: string;
-  introduction?: string;
   created_at: string | number;
   updated_at: string | number;
   last_login_at: string | number;
@@ -33,10 +30,8 @@ export interface UserMeDto {
 
 export interface UserMe {
   userId: string;
-  userType: string;
-  loginType: string;
+  userType: 'USER' | 'ADMIN';
   nickname: string;
-  introduction?: string;
   createdAt: number;
   updatedAt: number;
   lastLoginAt: number;
@@ -44,7 +39,6 @@ export interface UserMe {
 
 export interface UpdateMeRequestDto {
   nickname: string;
-  introduction?: string;
 }
 
 export interface UpdateMeResponseDto {
@@ -60,7 +54,6 @@ export interface UpdateMeResponse {
 export interface UpdateMyPasswordRequestDto {
   password: string;
   new_password: string;
-  new_password_confirm: string;
 }
 
 export interface UpdateMyPasswordResponseDto {
@@ -85,9 +78,7 @@ const mapSignUpResponseDtoToEntity = (dto: SignUpResponseDto): SignUpResponse =>
 const mapUserMeDtoToEntity = (dto: UserMeDto): UserMe => ({
   userId: dto.user_id,
   userType: dto.user_type,
-  loginType: dto.login_type,
   nickname: dto.nickname,
-  introduction: dto.introduction,
   createdAt: dayjs(dto.created_at).valueOf(),
   updatedAt: dayjs(dto.updated_at).valueOf(),
   lastLoginAt: dayjs(dto.last_login_at).valueOf(),

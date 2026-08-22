@@ -5,9 +5,7 @@ import { faker } from '@faker-js/faker';
 const me = {
   user_id: 'user-me',
   user_type: 'USER',
-  login_type: 'DIRECT',
   nickname: 'mock-user',
-  introduction: 'MSW mock user',
   created_at: new Date(Date.now() - 30 * 86_400_000).toISOString(),
   updated_at: new Date().toISOString(),
   last_login_at: new Date().toISOString(),

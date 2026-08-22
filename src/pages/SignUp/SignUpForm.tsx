@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { handleApiError } from '@/services/api';
 import { useSignUp } from '@/stores/users';
@@ -25,7 +24,6 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
     const loginId = String(formData.get('loginId') ?? '').trim();
     const password = String(formData.get('password') ?? '');
     const passwordConfirm = String(formData.get('passwordConfirm') ?? '');
-    const introduction = String(formData.get('introduction') ?? '').trim();
 
     if (!nickname || !loginId || !password || !passwordConfirm) {
       setError(t('requiredFields'));
@@ -48,7 +46,6 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
         password,
         password_confirm: passwordConfirm,
         nickname,
-        introduction,
       },
       {
         onSuccess: () => {
@@ -98,15 +95,6 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                   onChange={() => {
                     if (error) setError('');
                   }}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="introduction">{t('introduction')}</FieldLabel>
-                <Textarea
-                  id="introduction"
-                  name="introduction"
-                  placeholder={t('introduction')}
-                  disabled={signUp.isPending}
                 />
               </Field>
               <Field>

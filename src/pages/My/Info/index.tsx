@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
-import { CheckCircle2, TriangleAlert, XCircle } from 'lucide-react';
+import { TriangleAlert } from 'lucide-react';
 
 import {
   AlertDialog,
@@ -17,7 +17,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldError, FieldGroup, FieldLabel, FieldTitle } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { handleApiError } from '@/services/api';
 import { useDeleteMe, useMe, useUpdateMe, useUpdateMyPassword } from '@/stores/users';
 
@@ -76,7 +75,6 @@ const MyInfo = () => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const nextNickname = String(formData.get('nickname') ?? '').trim();
-    const nextIntroduction = String(formData.get('introduction') ?? '').trim();
 
     if (!nextNickname) {
       setProfileError('닉네임을 입력해 주세요.');
@@ -84,7 +82,7 @@ const MyInfo = () => {
     }
 
     updateMe.mutate(
-      { nickname: nextNickname, introduction: nextIntroduction },
+      { nickname: nextNickname },
       {
         onSuccess: () => {
           setProfileError('');
@@ -102,12 +100,7 @@ const MyInfo = () => {
   const handleProfileChange = (e: React.FormEvent<HTMLFormElement>) => {
     const formData = new FormData(e.currentTarget);
     const nextNickname = String(formData.get('nickname') ?? '').trim();
-    const nextIntroduction = String(formData.get('introduction') ?? '').trim();
-
-    setIsProfileChanged(
-      nextNickname !== (me.data?.nickname ?? '') ||
-        nextIntroduction !== (me.data?.introduction ?? ''),
-    );
+    setIsProfileChanged(nextNickname !== (me.data?.nickname ?? ''));
     if (profileError) setProfileError('');
   };
 
@@ -119,7 +112,6 @@ const MyInfo = () => {
       {
         password: passwords.current,
         new_password: passwords.next,
-        new_password_confirm: passwords.confirm,
       },
       {
         onSuccess: () => {
@@ -168,28 +160,6 @@ const MyInfo = () => {
               <FieldTitle className="w-28 shrink-0">아이디</FieldTitle>
               <span className="text-foreground text-sm font-medium">{me.data?.userId || ''}</span>
             </Field>
-            <Field orientation="horizontal">
-              <FieldTitle className="w-28 shrink-0">자기소개</FieldTitle>
-              <span className="text-muted-foreground text-sm">
-                {me.data?.introduction || '등록된 자기소개가 없습니다.'}
-              </span>
-            </Field>
-            <Field orientation="horizontal">
-              <FieldTitle className="w-28 shrink-0">Google 연동</FieldTitle>
-              <div className="flex items-center gap-2">
-                {me.data?.loginType === 'GOOGLE' ? (
-                  <>
-                    <CheckCircle2 className="text-primary h-4 w-4 shrink-0" />
-                    <span className="text-sm font-medium">연동됨</span>
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="text-muted-foreground h-4 w-4 shrink-0" />
-                    <span className="text-muted-foreground text-sm">연동되지 않음</span>
-                  </>
-                )}
-              </div>
-            </Field>
           </FieldGroup>
         </CardContent>
       </Card>
@@ -198,7 +168,7 @@ const MyInfo = () => {
       <Card>
         <CardHeader>
           <CardTitle>프로필</CardTitle>
-          <CardDescription>닉네임과 자기소개를 수정할 수 있습니다.</CardDescription>
+          <CardDescription>닉네임을 수정할 수 있습니다.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleProfileSubmit} onChange={handleProfileChange}>
@@ -216,17 +186,6 @@ const MyInfo = () => {
                   disabled={me.isLoading || updateMe.isPending}
                 />
                 <FieldError errors={profileError ? [{ message: profileError }] : undefined} />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="introduction">자기소개: {me.data?.introduction}</FieldLabel>
-                <Textarea
-                  id="introduction"
-                  name="introduction"
-                  placeholder="자기소개를 입력하세요"
-                  defaultValue={me.data?.introduction ?? ''}
-                  key={`introduction-${me.data?.introduction ?? ''}`}
-                  disabled={me.isLoading || updateMe.isPending}
-                />
               </Field>
               <Field>
                 <Button
