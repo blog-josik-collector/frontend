@@ -32,11 +32,9 @@ const renderMenuItem = (route: NavRoute, currentPath: string, t: (key: string) =
       <SidebarMenuItem key={route.fullPath}>
         <SidebarMenuButton asChild isActive={isActive ? true : undefined}>
           {route.component ? (
-            <Link className="w-full" to={route.fullPath}>
-              {t(route.labelKey)}
-            </Link>
+            <Link to={route.fullPath}>{t(route.labelKey)}</Link>
           ) : (
-            t(route.labelKey)
+            <div>{t(route.labelKey)}</div>
           )}
         </SidebarMenuButton>
         <SidebarMenuSub>
