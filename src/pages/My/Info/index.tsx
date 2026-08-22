@@ -110,8 +110,8 @@ const MyInfo = () => {
 
     updateMyPassword.mutate(
       {
-        password: passwords.current,
-        new_password: passwords.next,
+        password: btoa(passwords.current),
+        new_password: btoa(passwords.next),
       },
       {
         onSuccess: () => {
