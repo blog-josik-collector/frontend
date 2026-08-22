@@ -6,6 +6,7 @@ export interface MyCommentDto {
   id: string;
   nickname: string;
   has_child_comment: boolean;
+  has_parent_comment: boolean;
   content: string;
   status: 'active' | 'blocked' | 'deleted';
   created_at: string;
@@ -23,6 +24,7 @@ export interface MyComment {
   id: string;
   nickname: string;
   hasChildComment: boolean;
+  hasParentComment: boolean;
   content: string;
   status: 'active' | 'blocked' | 'deleted';
   createdAt: number;
@@ -45,6 +47,7 @@ const mapMyCommentDtoToEntity = (dto: MyCommentDto): MyComment => ({
   id: dto.id,
   nickname: dto.nickname,
   hasChildComment: dto.has_child_comment,
+  hasParentComment: dto.has_parent_comment,
   content: dto.content,
   status: dto.status,
   createdAt: dayjs(dto.created_at).valueOf(),

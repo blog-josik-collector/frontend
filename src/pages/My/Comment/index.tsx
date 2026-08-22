@@ -14,6 +14,7 @@ import {
 import { handleApiError } from '@/services/api';
 import { useDeleteComment } from '@/stores/comments/commentsStore';
 import { useMyComments } from '@/stores/comments/meStore';
+import { useDeleteReply } from '@/stores/comments/repliesStore';
 
 const pageSize = 20;
 
@@ -29,29 +30,53 @@ const MyComment = () => {
   const [deleteError, setDeleteError] = useState('');
   const myComments = useMyComments({ page, size: pageSize });
   const deleteComment = useDeleteComment();
+  const deleteReply = useDeleteReply();
 
   const comments = myComments.data?.items ?? [];
   const totalCount = myComments.data?.totalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
-  const handleDeleteComment = (commentId: string) => {
-    if (window.confirm('댓글을 삭제하시겠습니까?')) {
-      const shouldMoveToPreviousPage = page > 0 && comments.length === 1;
+  const handleDeleteComment = (commentId: string, isReply: boolean) => {
+    if (isReply === false) {
+      // Handle comment deletion
+      if (window.confirm('댓글을 삭제하시겠습니까?')) {
+        const shouldMoveToPreviousPage = page > 0 && comments.length === 1;
 
-      deleteComment.mutate(
-        { commentId },
-        {
-          onSuccess: () => {
-            setDeleteError('');
-            if (shouldMoveToPreviousPage) {
-              setPage((prev) => Math.max(0, prev - 1));
-            }
+        deleteComment.mutate(
+          { commentId },
+          {
+            onSuccess: () => {
+              setDeleteError('');
+              if (shouldMoveToPreviousPage) {
+                setPage((prev) => Math.max(0, prev - 1));
+              }
+            },
+            onError: (error) => {
+              setDeleteError(handleApiError(error).message);
+            },
           },
-          onError: (error) => {
-            setDeleteError(handleApiError(error).message);
+        );
+      }
+    } else {
+      // Handle reply deletion
+      if (window.confirm('대댓글을 삭제하시겠습니까?')) {
+        const shouldMoveToPreviousPage = page > 0 && comments.length === 1;
+
+        deleteReply.mutate(
+          { replyId: commentId },
+          {
+            onSuccess: () => {
+              setDeleteError('');
+              if (shouldMoveToPreviousPage) {
+                setPage((prev) => Math.max(0, prev - 1));
+              }
+            },
+            onError: (error) => {
+              setDeleteError(handleApiError(error).message);
+            },
           },
-        },
-      );
+        );
+      }
     }
   };
 
@@ -110,7 +135,7 @@ const MyComment = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleDeleteComment(comment.id)}
+                  onClick={() => handleDeleteComment(comment.id, comment.hasParentComment)}
                   disabled={deleteComment.isPending}
                   className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
                 >
