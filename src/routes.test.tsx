@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { navRoutes, router } from './routes';
 
@@ -45,11 +46,13 @@ const renderAppBar = (roles: AuthRole[] = []) => {
   }
 
   renderWithI18n(
-    <MemoryRouter>
-      <SidebarProvider>
-        <AppBar />
-      </SidebarProvider>
-    </MemoryRouter>,
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter>
+        <SidebarProvider>
+          <AppBar />
+        </SidebarProvider>
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 };
 
@@ -88,6 +91,28 @@ describe('AppBar authorization', () => {
     expect(screen.getByText('홈')).toBeInTheDocument();
     expect(screen.getByText('마이')).toBeInTheDocument();
     expect(screen.getByText('관리')).toBeInTheDocument();
+  });
+
+  it('shows sign out instead of sign in and sign up when authenticated', () => {
+    renderAppBar(['USER']);
+
+    expect(screen.getByRole('button', { name: '로그아웃' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '로그인' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '회원가입' })).not.toBeInTheDocument();
+  });
+
+  it('clears the stored session when signing out', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('refreshToken', 'refresh-token');
+    localStorage.setItem('roles', '["USER"]');
+    renderAppBar(['USER']);
+
+    await user.click(screen.getByRole('button', { name: '로그아웃' }));
+
+    await waitFor(() => expect(localStorage.getItem('accessToken')).toBeNull());
+    expect(localStorage.getItem('refreshToken')).toBeNull();
+    expect(localStorage.getItem('roles')).toBeNull();
+    expect(screen.getByRole('button', { name: '로그인' })).toBeInTheDocument();
   });
 });
 

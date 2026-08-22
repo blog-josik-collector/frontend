@@ -20,9 +20,7 @@ export const postingReportMutationKeys = {
   updateStatus: ['reports', 'postings', 'update-status'] as const,
 };
 
-export const useAdminPostingReports = (
-  params: GetAdminReportsParams = { page: 0, size: 20 },
-) =>
+export const useAdminPostingReports = (params: GetAdminReportsParams = { page: 0, size: 20 }) =>
   useQuery({
     queryKey: postingReportsQueryKey.list(params),
     queryFn: () => getAdminPostingReports(params),
@@ -42,7 +40,6 @@ export const useCreatePostingReport = () => {
     }) => createPostingReport(postingId, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: postingReportsQueryKey.list() });
-      queryClient.invalidateQueries({ queryKey: ['postings'] });
     },
   });
 };
@@ -52,13 +49,8 @@ export const useUpdateAdminPostingReportStatus = () => {
 
   return useMutation({
     mutationKey: postingReportMutationKeys.updateStatus,
-    mutationFn: ({
-      reportId,
-      body,
-    }: {
-      reportId: string;
-      body: UpdateReportStatusRequestDto;
-    }) => updateAdminPostingReportStatus(reportId, body),
+    mutationFn: ({ reportId, body }: { reportId: string; body: UpdateReportStatusRequestDto }) =>
+      updateAdminPostingReportStatus(reportId, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: postingReportsQueryKey.list() });
     },
