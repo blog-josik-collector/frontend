@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/sidebar';
 import { getAccessibleNavRoutes, type NavRoute, navRoutes } from '@/routes';
 import { getStoredRoles } from '@/services/auth';
+import { useLogout } from '@/stores/auth';
 
 const renderMenuItem = (route: NavRoute, currentPath: string, t: (key: string) => string) => {
   if (route.children && route.children.length > 0) {
@@ -87,8 +88,10 @@ const MenuList = () => {
 
 const AppBar: React.FC = () => {
   const navigate = useNavigate();
+  const logout = useLogout();
   const { t } = useTranslation('nav');
   const { t: tCommon } = useTranslation('common');
+  const isAuthenticated = Boolean(localStorage.getItem('accessToken'));
   return (
     <Sidebar>
       <SidebarHeader>
@@ -106,16 +109,29 @@ const AppBar: React.FC = () => {
       <SidebarFooter>
         <div className="space-y-2 px-3 py-2">
           <LanguageSwitcher />
-          <Button
-            variant="outline"
-            className="w-full hover:cursor-pointer"
-            onClick={() => navigate('/signin')}
-          >
-            {t('signIn')}
-          </Button>
-          <Button className="w-full hover:cursor-pointer" onClick={() => navigate('/signup')}>
-            {t('signUp')}
-          </Button>
+          {isAuthenticated ? (
+            <Button
+              variant="outline"
+              className="w-full hover:cursor-pointer"
+              disabled={logout.isPending}
+              onClick={() => logout.mutate(undefined, { onSuccess: () => navigate(0) })}
+            >
+              {t('signOut')}
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                className="w-full hover:cursor-pointer"
+                onClick={() => navigate('/signin')}
+              >
+                {t('signIn')}
+              </Button>
+              <Button className="w-full hover:cursor-pointer" onClick={() => navigate('/signup')}>
+                {t('signUp')}
+              </Button>
+            </>
+          )}
         </div>
       </SidebarFooter>
     </Sidebar>
