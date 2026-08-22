@@ -39,22 +39,24 @@ import {
 const PAGE_SIZE = 20;
 
 const REPORT_TYPES = [
-  { value: CommentReportReasonType.Politics, label: '정치' },
+  { value: CommentReportReasonType.Political, label: '정치' },
   { value: CommentReportReasonType.Adult, label: '성인' },
   { value: CommentReportReasonType.Other, label: '기타' },
 ] as const;
 
 const REPORT_STATUSES = [
-  { value: 'OPEN', label: '대기중' },
-  { value: 'DONE', label: '처리완료' },
+  { value: 'pending', label: '대기중' },
+  { value: 'resolved_deleted', label: '삭제 처리' },
+  { value: 'rejected_keep', label: '유지' },
 ] as const;
 
 type ReportType = (typeof REPORT_TYPES)[number]['value'];
 type ReportStatus = (typeof REPORT_STATUSES)[number]['value'];
 
 const STATUS_STYLES: Record<ReportStatus, string> = {
-  OPEN: 'bg-yellow-100 text-yellow-700',
-  DONE: 'bg-green-100 text-green-700',
+  pending: 'bg-yellow-100 text-yellow-700',
+  resolved_deleted: 'bg-green-100 text-green-700',
+  rejected_keep: 'bg-gray-100 text-gray-700',
 };
 
 const formatDate = (timestamp?: number) => {
@@ -93,7 +95,7 @@ export function CommentReport() {
     () => ({
       page,
       size: PAGE_SIZE,
-      reason_type: selectedReportTypes[0],
+      report_type: selectedReportTypes[0],
       status: selectedStatuses[0],
       start_date: dateFrom || undefined,
       end_date: dateTo || undefined,
@@ -157,14 +159,9 @@ export function CommentReport() {
     if (!keyword) return items;
 
     return items.filter((item) =>
-      [
-        item.postId,
-        item.commentId,
-        item.userId,
-        item.reportTypeCode,
-        item.reasonType,
-        item.content,
-      ].some((value) => value?.toLowerCase().includes(keyword)),
+      [item.commentId, item.reporterId, item.reportType, item.content].some((value) =>
+        value.toLowerCase().includes(keyword),
+      ),
     );
   }, [data?.items, search]);
 
@@ -336,17 +333,14 @@ export function CommentReport() {
               </TableCell>
             </TableRow>
           )}
-          {filteredItems.map((item) => {
-            const status = item.status ?? item.processed;
-
-            return (
+          {filteredItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.commentId ?? '-'}</TableCell>
-                <TableCell className="text-muted-foreground">{item.postId ?? '-'}</TableCell>
-                <TableCell className="text-muted-foreground">{item.userId ?? '-'}</TableCell>
+                <TableCell className="text-muted-foreground">-</TableCell>
+                <TableCell className="text-muted-foreground">{item.reporterId}</TableCell>
                 <TableCell>
                   <span className="bg-muted inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium">
-                    {getReportTypeLabel(item.reasonType ?? item.reportTypeCode)}
+                    {getReportTypeLabel(item.reportType)}
                   </span>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
@@ -358,10 +352,10 @@ export function CommentReport() {
                 <TableCell>
                   <span
                     className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                      STATUS_STYLES[status as ReportStatus] ?? 'bg-gray-100 text-gray-700'
+                      STATUS_STYLES[item.status as ReportStatus] ?? 'bg-gray-100 text-gray-700'
                     }`}
                   >
-                    {getStatusLabel(status)}
+                    {getStatusLabel(item.status)}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -375,23 +369,22 @@ export function CommentReport() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
                         disabled={updateStatusMutation.isPending}
-                        onClick={() => updateReportStatus(item.id, 'OPEN')}
+                        onClick={() => updateReportStatus(item.id, 'pending')}
                       >
                         대기중으로 변경
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         disabled={updateStatusMutation.isPending}
-                        onClick={() => updateReportStatus(item.id, 'DONE')}
+                        onClick={() => updateReportStatus(item.id, 'resolved_deleted')}
                       >
-                        처리완료
+                        삭제 처리
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            );
-          })}
+          ))}
         </TableBody>
       </Table>
 

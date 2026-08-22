@@ -4,32 +4,33 @@ import dayjs from 'dayjs';
 import { api } from '../api';
 
 export const PostingReportReasonType = {
-  PostError: 'POST_ERROR',
-  LinkError: 'LINK_ERROR',
-  Other: 'OTHER',
+  InvalidContent: 'invalid_content',
+  BrokenLink: 'broken_link',
+  Other: 'other',
 } as const;
 
 export type PostingReportReasonType =
   (typeof PostingReportReasonType)[keyof typeof PostingReportReasonType];
 
 export const CommentReportReasonType = {
-  Politics: 'POLITICS',
-  Adult: 'ADULT',
-  Other: 'OTHER',
+  Political: 'political',
+  Adult: 'adult',
+  Other: 'other',
 } as const;
 
 export type CommentReportReasonType =
   (typeof CommentReportReasonType)[keyof typeof CommentReportReasonType];
 
 export const ReportProcessStatus = {
-  Open: 'OPEN',
-  Done: 'DONE',
+  Pending: 'pending',
+  ResolvedDeleted: 'resolved_deleted',
+  RejectedKeep: 'rejected_keep',
 } as const;
 
 export type ReportProcessStatus = (typeof ReportProcessStatus)[keyof typeof ReportProcessStatus];
 
 export interface CreateReportRequestDto<TReasonType extends string = string> {
-  reason_type: TReasonType;
+  report_type: TReasonType;
   content: string;
 }
 
@@ -46,7 +47,7 @@ export interface CreateReportResponse {
 export interface GetAdminReportsParams {
   page?: number;
   size?: number;
-  reason_type?: PostingReportReasonType | CommentReportReasonType;
+  report_type?: PostingReportReasonType | CommentReportReasonType;
   status?: ReportProcessStatus;
   start_date?: string;
   end_date?: string;
@@ -54,69 +55,73 @@ export interface GetAdminReportsParams {
 
 export interface PostingReportDto {
   id: string;
-  user_id: string;
+  reporter_id: string;
   post_id: string;
-  report_type_code: PostingReportReasonType;
+  report_type: PostingReportReasonType;
   content: string;
   created_at: string | number;
-  processed: ReportProcessStatus;
+  updated_at: string | number;
+  status: ReportProcessStatus;
 }
 
 export interface GetAdminPostingReportsResponseDto {
   total_count: number;
+  page: number;
+  size: number;
   items: PostingReportDto[];
 }
 
 export interface PostingReport {
   id: string;
-  userId: string;
+  reporterId: string;
   postId: string;
-  reportTypeCode: PostingReportReasonType;
+  reportType: PostingReportReasonType;
   content: string;
   createdAt: number;
-  processed: ReportProcessStatus;
+  updatedAt: number;
+  status: ReportProcessStatus;
 }
 
 export interface GetAdminPostingReportsResponse {
   totalCount: number;
+  page: number;
+  size: number;
   items: PostingReport[];
 }
 
 export interface CommentReportDto {
   id: string;
-  user_id: string;
+  reporter_id: string;
   comment_id: string;
-  post_id: string;
-  report_type_code: CommentReportReasonType;
-  reason_type: CommentReportReasonType;
+  report_type: CommentReportReasonType;
   content: string;
   created_at: string | number;
   updated_at: string | number;
-  processed: ReportProcessStatus;
   status: ReportProcessStatus;
 }
 
 export interface GetAdminCommentReportsResponseDto {
   total_count: number;
+  page: number;
+  size: number;
   items: CommentReportDto[];
 }
 
 export interface CommentReport {
   id: string;
-  userId: string;
+  reporterId: string;
   commentId: string;
-  postId: string;
-  reportTypeCode: CommentReportReasonType;
-  reasonType: CommentReportReasonType;
+  reportType: CommentReportReasonType;
   content: string;
   createdAt: number;
   updatedAt: number;
-  processed: ReportProcessStatus;
   status: ReportProcessStatus;
 }
 
 export interface GetAdminCommentReportsResponse {
   totalCount: number;
+  page: number;
+  size: number;
   items: CommentReport[];
 }
 
@@ -126,11 +131,13 @@ export interface UpdateReportStatusRequestDto {
 
 export interface UpdateReportStatusResponseDto {
   id: string;
+  status: ReportProcessStatus;
   updated_at: string | number;
 }
 
 export interface UpdateReportStatusResponse {
   id: string;
+  status: ReportProcessStatus;
   updatedAt: number;
 }
 
@@ -143,32 +150,32 @@ const mapCreateReportResponseDtoToEntity = (
 
 const mapPostingReportDtoToEntity = (dto: PostingReportDto): PostingReport => ({
   id: dto.id,
-  userId: dto.user_id,
+  reporterId: dto.reporter_id,
   postId: dto.post_id,
-  reportTypeCode: dto.report_type_code,
+  reportType: dto.report_type,
   content: dto.content,
   createdAt: dayjs(dto.created_at).valueOf(),
-  processed: dto.processed,
+  updatedAt: dayjs(dto.updated_at).valueOf(),
+  status: dto.status,
 });
 
 const mapGetAdminPostingReportsResponseDtoToEntity = (
   dto: GetAdminPostingReportsResponseDto,
 ): GetAdminPostingReportsResponse => ({
   totalCount: dto.total_count,
+  page: dto.page,
+  size: dto.size,
   items: dto.items.map(mapPostingReportDtoToEntity),
 });
 
 const mapCommentReportDtoToEntity = (dto: CommentReportDto): CommentReport => ({
   id: dto.id,
-  userId: dto.user_id,
+  reporterId: dto.reporter_id,
   commentId: dto.comment_id,
-  postId: dto.post_id,
-  reportTypeCode: dto.report_type_code,
-  reasonType: dto.reason_type,
+  reportType: dto.report_type,
   content: dto.content,
   createdAt: dayjs(dto.created_at).valueOf(),
   updatedAt: dayjs(dto.updated_at).valueOf(),
-  processed: dto.processed,
   status: dto.status,
 });
 
@@ -176,6 +183,8 @@ const mapGetAdminCommentReportsResponseDtoToEntity = (
   dto: GetAdminCommentReportsResponseDto,
 ): GetAdminCommentReportsResponse => ({
   totalCount: dto.total_count,
+  page: dto.page,
+  size: dto.size,
   items: dto.items.map(mapCommentReportDtoToEntity),
 });
 
@@ -183,6 +192,7 @@ const mapUpdateReportStatusResponseDtoToEntity = (
   dto: UpdateReportStatusResponseDto,
 ): UpdateReportStatusResponse => ({
   id: dto.id,
+  status: dto.status,
   updatedAt: dayjs(dto.updated_at).valueOf(),
 });
 

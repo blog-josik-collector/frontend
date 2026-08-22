@@ -184,7 +184,7 @@ const PostDetail = () => {
     await createPostingReportMutation.mutateAsync({
       postingId: postId,
       body: {
-        reason_type: reasonType,
+        report_type: reasonType,
         content,
       },
     });
@@ -198,7 +198,7 @@ const PostDetail = () => {
     await createCommentReportMutation.mutateAsync({
       commentId,
       body: {
-        reason_type: reasonType,
+        report_type: reasonType,
         content,
       },
     });
@@ -206,10 +206,10 @@ const PostDetail = () => {
 
   const handleReport = async (reasonType: PostingReportReasonType) => {
     try {
-      if (reasonType === PostingReportReasonType.PostError) {
+    if (reasonType === PostingReportReasonType.InvalidContent) {
         await createPostingReport(reasonType, '포스트 오류');
         alert('포스트 오류 신고가 접수되었습니다.');
-      } else if (reasonType === PostingReportReasonType.LinkError) {
+    } else if (reasonType === PostingReportReasonType.BrokenLink) {
         await createPostingReport(reasonType, '링크 오류');
         alert('링크 오류 신고가 접수되었습니다.');
       } else {
@@ -244,7 +244,7 @@ const PostDetail = () => {
 
   const handleCommentReport = async (commentId: string, reasonType: CommentReportReasonType) => {
     try {
-      if (reasonType === CommentReportReasonType.Politics) {
+    if (reasonType === CommentReportReasonType.Political) {
         await createCommentReport(commentId, reasonType, '정치');
         alert('정치 신고가 접수되었습니다.');
       } else if (reasonType === CommentReportReasonType.Adult) {
@@ -286,7 +286,7 @@ const PostDetail = () => {
         <DropdownMenuContent align="end" collisionPadding={8} className="w-36 min-w-36">
           <DropdownMenuItem
             disabled={isReportSubmitting}
-            onSelect={() => void handleCommentReport(commentId, CommentReportReasonType.Politics)}
+              onSelect={() => void handleCommentReport(commentId, CommentReportReasonType.Political)}
           >
             정치
           </DropdownMenuItem>
@@ -519,13 +519,13 @@ const PostDetail = () => {
               <DropdownMenuContent align="end" collisionPadding={8}>
                 <DropdownMenuItem
                   disabled={isReportSubmitting}
-                  onSelect={() => void handleReport(PostingReportReasonType.PostError)}
+                    onSelect={() => void handleReport(PostingReportReasonType.InvalidContent)}
                 >
                   포스트 오류
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={isReportSubmitting}
-                  onSelect={() => void handleReport(PostingReportReasonType.LinkError)}
+                    onSelect={() => void handleReport(PostingReportReasonType.BrokenLink)}
                 >
                   링크 오류
                 </DropdownMenuItem>

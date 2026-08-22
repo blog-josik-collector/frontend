@@ -107,7 +107,7 @@ describe('PostDetail report menus', () => {
 
     expect(createPostingReportMock).toHaveBeenCalledWith({
       postingId: 'posting-1',
-      body: { reason_type: 'POST_ERROR', content: '포스트 오류' },
+      body: { report_type: 'invalid_content', content: '포스트 오류' },
     });
   });
 
@@ -132,7 +132,7 @@ describe('PostDetail report menus', () => {
 
     expect(createCommentReportMock).toHaveBeenCalledWith({
       commentId: 'comment-1',
-      body: { reason_type: 'POLITICS', content: '정치' },
+      body: { report_type: 'political', content: '정치' },
     });
   });
 });

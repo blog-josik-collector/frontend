@@ -138,7 +138,7 @@ describe('interaction service endpoint contract', () => {
         run: () =>
           createPostingReport('post-1', {
             content: 'posting report',
-            reason_type: PostingReportReasonType.Other,
+            report_type: PostingReportReasonType.Other,
           }),
       },
       {
@@ -146,7 +146,7 @@ describe('interaction service endpoint contract', () => {
         run: () =>
           createCommentReport('comment-1', {
             content: 'comment report',
-            reason_type: CommentReportReasonType.Other,
+            report_type: CommentReportReasonType.Other,
           }),
       },
       {
@@ -156,7 +156,9 @@ describe('interaction service endpoint contract', () => {
       {
         expected: ['PATCH', '/interaction/v1/admin/reports/postings/report-1'],
         run: () =>
-          updateAdminPostingReportStatus('report-1', { status: ReportProcessStatus.Done }),
+          updateAdminPostingReportStatus('report-1', {
+            status: ReportProcessStatus.ResolvedDeleted,
+          }),
       },
       {
         expected: ['GET', '/interaction/v1/admin/reports/comments'],
@@ -165,7 +167,9 @@ describe('interaction service endpoint contract', () => {
       {
         expected: ['PATCH', '/interaction/v1/admin/reports/comments/report-1'],
         run: () =>
-          updateAdminCommentReportStatus('report-1', { status: ReportProcessStatus.Done }),
+          updateAdminCommentReportStatus('report-1', {
+            status: ReportProcessStatus.ResolvedDeleted,
+          }),
       },
     ];
 
