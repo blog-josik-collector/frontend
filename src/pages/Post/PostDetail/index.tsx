@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router';
 
 import {
@@ -126,7 +126,8 @@ const PostDetail = () => {
   const [newComment, setNewComment] = useState('');
   const [commentPage, setCommentPage] = useState(1);
   const [replyingToId, setReplyingToId] = useState<string | null>(null);
-  const [replyPageByRootId, setReplyPageByRootId] = useState<Record<string, number>>({});
+  const [replyPageByParentId, setReplyPageByParentId] = useState<Record<string, number>>({});
+  const [expandedReplyIds, setExpandedReplyIds] = useState<Record<string, boolean>>({});
 
   const commentPageSize = defaultPagination;
   const replyPageSize = defaultReplyPagination;
@@ -135,16 +136,16 @@ const PostDetail = () => {
     () => postingComments[postId]?.items ?? [],
     [postId, postingComments],
   );
-  const commentRepliesByRootId = useMemo(
+  const commentRepliesByParentId = useMemo(
     () => postingCommentReplies[postId] ?? {},
     [postId, postingCommentReplies],
   );
 
   const allLoadedComments = useMemo(() => {
-    const replies = Object.values(commentRepliesByRootId).flatMap(({ items }) => items);
+    const replies = Object.values(commentRepliesByParentId).flatMap(({ items }) => items);
 
     return [...rootComments, ...replies];
-  }, [commentRepliesByRootId, rootComments]);
+  }, [commentRepliesByParentId, rootComments]);
 
   const commentById = useMemo(
     () =>
@@ -153,25 +154,6 @@ const PostDetail = () => {
         return acc;
       }, {}),
     [allLoadedComments],
-  );
-
-  const getThreadRootId = useCallback(
-    (commentId: string) => {
-      let current = commentById[commentId];
-
-      if (!current) {
-        return commentId;
-      }
-
-      for (const [rootId, replies] of Object.entries(commentRepliesByRootId)) {
-        if (replies.items.some((reply) => reply.id === commentId)) {
-          return rootId;
-        }
-      }
-
-      return current.id;
-    },
-    [commentById, commentRepliesByRootId],
   );
 
   const selectedReplyComment = replyingToId ? commentById[replyingToId] : null;
@@ -349,25 +331,40 @@ const PostDetail = () => {
     </div>
   );
 
-  const handleLoadMoreReplies = async (rootCommentId: string) => {
-    const nextPage = (replyPageByRootId[rootCommentId] ?? 0) + 1;
+  const handleToggleReplies = async (commentId: string) => {
+    if (expandedReplyIds[commentId]) {
+      setExpandedReplyIds((prev) => ({ ...prev, [commentId]: false }));
+      return;
+    }
+
+    if (commentRepliesByParentId[commentId] === undefined) {
+      await fetchPostingCommentReplies(postId, commentId, { page: 0, size: replyPageSize }, false);
+      setReplyPageByParentId((prev) => ({ ...prev, [commentId]: 0 }));
+    }
+
+    setExpandedReplyIds((prev) => ({ ...prev, [commentId]: true }));
+  };
+
+  const handleLoadMoreReplies = async (parentCommentId: string) => {
+    const nextPage = (replyPageByParentId[parentCommentId] ?? 0) + 1;
 
     await fetchPostingCommentReplies(
       postId,
-      rootCommentId,
+      parentCommentId,
       { page: nextPage, size: replyPageSize },
       true,
     );
-    setReplyPageByRootId((prev) => ({ ...prev, [rootCommentId]: nextPage }));
+    setReplyPageByParentId((prev) => ({ ...prev, [parentCommentId]: nextPage }));
   };
 
-  const refreshThreadReplies = async (threadRootId: string) => {
-    const loadedPageCount = (replyPageByRootId[threadRootId] ?? 0) + 1;
+  const refreshCommentReplies = async (parentCommentId: string) => {
+    const loadedPageCount = (replyPageByParentId[parentCommentId] ?? 0) + 1;
 
-    await fetchPostingCommentReplies(postId, threadRootId, {
+    await fetchPostingCommentReplies(postId, parentCommentId, {
       page: 0,
       size: replyPageSize * loadedPageCount,
     });
+    setExpandedReplyIds((prev) => ({ ...prev, [parentCommentId]: true }));
   };
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
@@ -377,7 +374,7 @@ const PostDetail = () => {
         const replyTargetId = replyingToId;
 
         if (replyTargetId) {
-          await createPostingReply(getThreadRootId(replyTargetId), { content: newComment });
+          await createPostingReply(replyTargetId, { content: newComment });
         } else {
           await createPostingComment(postId, { content: newComment });
         }
@@ -385,7 +382,7 @@ const PostDetail = () => {
         setReplyingToId(null);
 
         if (replyTargetId) {
-          await refreshThreadReplies(getThreadRootId(replyTargetId));
+          await refreshCommentReplies(replyTargetId);
           fetchPostingComments(postId, { page: commentPage - 1, size: commentPageSize });
           return;
         }
@@ -412,21 +409,80 @@ const PostDetail = () => {
     }
   }, [commentPage, commentPageSize, fetchPostingComments, postId]);
 
-  useEffect(() => {
-    if (!postId) return;
-
-    rootComments.forEach((comment) => {
-      if (comment.hasChildComment && commentRepliesByRootId[comment.id] === undefined) {
-        fetchPostingCommentReplies(postId, comment.id, { page: 0, size: replyPageSize });
-        setReplyPageByRootId((prev) => ({ ...prev, [comment.id]: 0 }));
-      }
-    });
-  }, [commentRepliesByRootId, fetchPostingCommentReplies, postId, replyPageSize, rootComments]);
-
   const handleRetryPost = () => {
     if (!postId) return;
 
     fetchPostingDetail(postId);
+  };
+
+  const renderCommentThread = (comment: PostingComment, depth = 0): React.ReactNode => {
+    const replyState = commentRepliesByParentId[comment.id];
+    const replies = replyState?.items ?? [];
+    const loadedReplyCount = replies.length;
+    const totalReplyCount = replyState?.totalCount ?? 0;
+    const isExpanded = expandedReplyIds[comment.id] ?? false;
+    const isReplyLoading = replyLoading[`${postId}:${comment.id}`];
+    const canToggleReplies = comment.hasChildComment || totalReplyCount > 0;
+    const hasMoreReplies = isExpanded && loadedReplyCount < totalReplyCount;
+
+    return (
+      <div
+        key={comment.id}
+        className={depth === 0 ? 'space-y-3' : 'border-muted ml-8 space-y-3 border-l pl-3'}
+      >
+        <div className="flex items-start gap-3">
+          <div className="bg-muted flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+            <User className="size-4" />
+          </div>
+
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="truncate text-sm font-medium">{comment.nickname}</span>
+              <span className="text-muted-foreground shrink-0 text-xs">
+                {new Date(comment.createdAt).toLocaleDateString()}
+              </span>
+              <div className="ml-auto shrink-0">{renderCommentActions(comment)}</div>
+            </div>
+
+            <CommentContent content={comment.content} status={comment.status} />
+          </div>
+        </div>
+
+        {canToggleReplies && (
+          <Button
+            variant="ghost"
+            size="xs"
+            className="text-muted-foreground ml-11"
+            aria-label={`${comment.nickname} 답글 ${isExpanded ? '숨기기' : '보기'}`}
+            onClick={() => void handleToggleReplies(comment.id)}
+            disabled={isReplyLoading}
+          >
+            {isReplyLoading ? '불러오는 중...' : isExpanded ? '답글 숨기기' : '답글 보기'}
+          </Button>
+        )}
+
+        {isExpanded && replies.length > 0 && (
+          <div className="space-y-3">
+            {replies.map((reply) => renderCommentThread(reply, depth + 1))}
+          </div>
+        )}
+
+        {hasMoreReplies && (
+          <Button
+            variant="ghost"
+            size="xs"
+            className="text-muted-foreground ml-11"
+            aria-label={`${comment.nickname} 답글 더보기`}
+            onClick={() => void handleLoadMoreReplies(comment.id)}
+            disabled={isReplyLoading}
+          >
+            {isReplyLoading
+              ? '불러오는 중...'
+              : `답글 더보기 (${loadedReplyCount}/${totalReplyCount})`}
+          </Button>
+        )}
+      </div>
+    );
   };
 
   if (postId === '') {
@@ -665,77 +721,10 @@ const PostDetail = () => {
 
           {/* 댓글 목록 */}
           <div className="space-y-4">
-            {rootComments.map((comment) => (
-              <div key={comment.id} className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="bg-muted flex h-8 w-8 items-center justify-center rounded-full">
-                    <User className="size-4" />
-                  </div>
-
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{comment.nickname}</span>
-                      <span className="text-muted-foreground text-xs">
-                        {new Date(comment.createdAt).toLocaleDateString()}
-                      </span>
-                      <div className="ml-auto shrink-0">{renderCommentActions(comment)}</div>
-                    </div>
-
-                    <CommentContent content={comment.content} status={comment.status} />
-                  </div>
-                </div>
-
-                {(commentRepliesByRootId[comment.id]?.items ?? []).map((reply) => {
-                  return (
-                    <div key={reply.id} className="ml-11 flex items-start gap-3 rounded-md py-2">
-                      <div className="bg-muted flex h-7 w-7 items-center justify-center rounded-full">
-                        <User className="size-3.5" />
-                      </div>
-
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">{reply.nickname}</span>
-                          <span className="text-muted-foreground text-xs">
-                            {new Date(reply.createdAt).toLocaleDateString()}
-                          </span>
-                          <div className="ml-auto shrink-0">{renderCommentActions(reply)}</div>
-                        </div>
-
-                        <CommentContent content={reply.content} status={reply.status} />
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {(() => {
-                  const replyState = commentRepliesByRootId[comment.id];
-                  const loadedReplyCount = replyState?.items.length ?? 0;
-                  const totalReplyCount = replyState?.totalCount ?? 0;
-                  const hasMoreReplies = loadedReplyCount < totalReplyCount;
-                  const isReplyLoading = replyLoading[`${postId}:${comment.id}`];
-
-                  if (!hasMoreReplies) {
-                    return null;
-                  }
-
-                  return (
-                    <Button
-                      variant="ghost"
-                      size="xs"
-                      className="text-muted-foreground ml-11"
-                      onClick={() => handleLoadMoreReplies(comment.id)}
-                      disabled={isReplyLoading}
-                    >
-                      {isReplyLoading
-                        ? '불러오는 중...'
-                        : `답글 더보기 (${loadedReplyCount}/${totalReplyCount})`}
-                    </Button>
-                  );
-                })()}
-
-                {comment.id !== rootComments[rootComments.length - 1].id && (
-                  <Separator className="ml-11" />
-                )}
+            {rootComments.map((comment, index) => (
+              <div key={comment.id} className="space-y-4">
+                {renderCommentThread(comment)}
+                {index < rootComments.length - 1 && <Separator className="ml-11" />}
               </div>
             ))}
 

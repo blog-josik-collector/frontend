@@ -7,9 +7,16 @@ import userEvent from '@testing-library/user-event';
 
 import PostDetail from './index';
 
-const { createPostingReportMock, createCommentReportMock, commentItemsMock } = vi.hoisted(() => ({
+const {
+  createPostingReportMock,
+  createCommentReportMock,
+  fetchRepliesMock,
+  commentItemsMock,
+  commentRepliesMock,
+} = vi.hoisted(() => ({
   createPostingReportMock: vi.fn(),
   createCommentReportMock: vi.fn(),
+  fetchRepliesMock: vi.fn(),
   commentItemsMock: [
     {
       id: 'comment-1',
@@ -21,6 +28,24 @@ const { createPostingReportMock, createCommentReportMock, commentItemsMock } = v
       updatedAt: Date.now(),
     },
   ],
+  commentRepliesMock: {} as Record<
+    string,
+    Record<
+      string,
+      {
+        totalCount: number;
+        items: Array<{
+          id: string;
+          nickname: string;
+          hasChildComment: boolean;
+          content: string;
+          status: 'active' | 'blocked' | 'deleted';
+          createdAt: number;
+          updatedAt: number;
+        }>;
+      }
+    >
+  >,
 }));
 
 vi.mock('@/stores/posting/postingStore', () => ({
@@ -56,11 +81,12 @@ vi.mock('@/stores/posting/postingStore', () => ({
         items: commentItemsMock,
       },
     },
-    postingCommentReplies: {},
+    postingCommentReplies: commentRepliesMock,
     replyLoading: {},
     fetchPostingComments: vi.fn(),
-    fetchPostingCommentReplies: vi.fn(),
+    fetchPostingCommentReplies: fetchRepliesMock,
     createPostingComment: vi.fn(),
+    createPostingReply: vi.fn(),
   }),
   usePostingLikeStore: () => ({ loading: false, likePosting: vi.fn(), unlikePosting: vi.fn() }),
   usePostingBookmarkStore: () => ({
@@ -84,6 +110,8 @@ afterEach(() => {
   vi.restoreAllMocks();
   commentItemsMock[0].content = 'Comment content';
   commentItemsMock[0].status = 'active';
+  commentItemsMock[0].hasChildComment = false;
+  delete commentRepliesMock['posting-1'];
 });
 
 describe('PostDetail report menus', () => {
@@ -184,5 +212,67 @@ describe('PostDetail report menus', () => {
 
     expect(screen.getByText('Blocked comment content')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '차단된 댓글 내용 숨기기' })).toBeInTheDocument();
+  });
+
+  it('fetches root replies only after the reply-view button is clicked', async () => {
+    const user = userEvent.setup();
+    commentItemsMock[0].hasChildComment = true;
+
+    render(
+      <MemoryRouter initialEntries={['/post?post-id=posting-1']}>
+        <PostDetail />
+      </MemoryRouter>,
+    );
+
+    expect(fetchRepliesMock).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'commenter 답글 보기' }));
+
+    expect(fetchRepliesMock).toHaveBeenCalledWith(
+      'posting-1',
+      'comment-1',
+      { page: 0, size: 5 },
+      false,
+    );
+  });
+
+  it('keeps nested replies collapsed and fetches them by their own comment id', async () => {
+    const user = userEvent.setup();
+    commentItemsMock[0].hasChildComment = true;
+    commentRepliesMock['posting-1'] = {
+      'comment-1': {
+        totalCount: 1,
+        items: [
+          {
+            id: 'reply-1',
+            nickname: 'reply-user',
+            hasChildComment: true,
+            content: 'Nested reply content',
+            status: 'active',
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          },
+        ],
+      },
+    };
+
+    render(
+      <MemoryRouter initialEntries={['/post?post-id=posting-1']}>
+        <PostDetail />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByText('Nested reply content')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'commenter 답글 보기' }));
+    expect(screen.getByText('Nested reply content')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'reply-user 답글 보기' }));
+    expect(fetchRepliesMock).toHaveBeenCalledWith(
+      'posting-1',
+      'reply-1',
+      { page: 0, size: 5 },
+      false,
+    );
   });
 });
