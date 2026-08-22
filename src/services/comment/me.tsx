@@ -5,30 +5,34 @@ import { api } from '../api';
 export interface MyCommentDto {
   id: string;
   user_id: string;
-  post_id: string;
+  has_child_comment: boolean;
   content: string;
-  status?: string;
-  created_at: string | number;
-  updated_at: string | number;
+  status: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface GetMyCommentsResponseDto {
   total_count: number;
+  page: number;
+  size: number;
   items: MyCommentDto[];
 }
 
 export interface MyComment {
   id: string;
   userId: string;
-  postId: string;
+  hasChildComment: boolean;
   content: string;
-  status?: string;
+  status: string;
   createdAt: number;
   updatedAt: number;
 }
 
 export interface GetMyCommentsResponse {
   totalCount: number;
+  page: number;
+  size: number;
   items: MyComment[];
 }
 
@@ -40,7 +44,7 @@ export interface GetMyCommentsParams {
 const mapMyCommentDtoToEntity = (dto: MyCommentDto): MyComment => ({
   id: dto.id,
   userId: dto.user_id,
-  postId: dto.post_id,
+  hasChildComment: dto.has_child_comment,
   content: dto.content,
   status: dto.status,
   createdAt: dayjs(dto.created_at).valueOf(),
@@ -51,6 +55,8 @@ const mapGetMyCommentsResponseDtoToEntity = (
   dto: GetMyCommentsResponseDto,
 ): GetMyCommentsResponse => ({
   totalCount: dto.total_count,
+  page: dto.page,
+  size: dto.size,
   items: dto.items.map(mapMyCommentDtoToEntity),
 });
 

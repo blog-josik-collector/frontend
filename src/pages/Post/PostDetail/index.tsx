@@ -75,6 +75,7 @@ const PostDetail = () => {
     fetchPostingComments,
     fetchPostingCommentReplies,
     createPostingComment,
+    createPostingReply,
   } = usePostingCommentStore();
   const { loading: postingLikeLoading, likePosting, unlikePosting } = usePostingLikeStore();
   const {
@@ -125,23 +126,19 @@ const PostDetail = () => {
         return commentId;
       }
 
-      while (current.parentCommentId) {
-        const parent = commentById[current.parentCommentId];
-        if (!parent) {
-          break;
+      for (const [rootId, replies] of Object.entries(commentRepliesByRootId)) {
+        if (replies.items.some((reply) => reply.id === commentId)) {
+          return rootId;
         }
-        current = parent;
       }
 
       return current.id;
     },
-    [commentById],
+    [commentById, commentRepliesByRootId],
   );
 
   const selectedReplyComment = replyingToId ? commentById[replyingToId] : null;
-  const commentTotalCount = postingComments[postId]?.totalCount
-    ? parseInt(postingComments[postId].totalCount)
-    : 0;
+  const commentTotalCount = postingComments[postId]?.totalCount ?? 0;
   const commentTotalPages = Math.max(1, Math.ceil(commentTotalCount / commentPageSize));
   const commentCurrentBlockStart =
     Math.floor((commentPage - 1) / pageBlockSize) * pageBlockSize + 1;
@@ -337,10 +334,11 @@ const PostDetail = () => {
       try {
         const replyTargetId = replyingToId;
 
-        await createPostingComment(postId, {
-          content: newComment,
-          ...(replyTargetId && { parent_comment_id: replyTargetId }),
-        });
+        if (replyTargetId) {
+          await createPostingReply(getThreadRootId(replyTargetId), { content: newComment });
+        } else {
+          await createPostingComment(postId, { content: newComment });
+        }
         setNewComment('');
         setReplyingToId(null);
 
@@ -646,8 +644,6 @@ const PostDetail = () => {
                 </div>
 
                 {(commentRepliesByRootId[comment.id]?.items ?? []).map((reply) => {
-                  const parentComment = commentById[reply.parentCommentId];
-
                   return (
                     <div key={reply.id} className="ml-11 flex items-start gap-3 rounded-md py-2">
                       <div className="bg-muted flex h-7 w-7 items-center justify-center rounded-full">
@@ -662,12 +658,7 @@ const PostDetail = () => {
                           </span>
                         </div>
 
-                        <p className="text-sm">
-                          <span className="text-primary font-medium">
-                            @{parentComment?.userId ?? 'unknown'}
-                          </span>{' '}
-                          {reply.content}
-                        </p>
+                        <p className="text-sm">{reply.content}</p>
                         {renderCommentActions(reply.id)}
                       </div>
                     </div>

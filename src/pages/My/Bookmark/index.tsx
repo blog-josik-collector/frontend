@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { usePostingBookmarkStore, usePostingDetailStore } from '@/stores/posting/postingStore';
+import { usePostingBookmarkStore } from '@/stores/posting/postingStore';
 
 const pageSize = 20;
 
@@ -23,19 +23,10 @@ const MyBookmark = () => {
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const { bookmarks, loading, error, fetchBookmarks, deleteBookmark } = usePostingBookmarkStore();
-  const { postingDetailEntity, fetchPostingDetail } = usePostingDetailStore();
 
   useEffect(() => {
     fetchBookmarks({ page, size: pageSize });
   }, [fetchBookmarks, page]);
-
-  useEffect(() => {
-    bookmarks.forEach((bookmark) => {
-      if (!postingDetailEntity[bookmark.postId]) {
-        fetchPostingDetail(bookmark.postId);
-      }
-    });
-  }, [bookmarks, fetchPostingDetail, postingDetailEntity]);
 
   const handleNavigateToPost = (postId: string) => {
     navigate({ pathname: '/post', search: `?post-id=${postId}` });
@@ -94,21 +85,18 @@ const MyBookmark = () => {
             <TableHead className="w-20 text-center">해제</TableHead>
             <TableHead>제목</TableHead>
             <TableHead className="w-36">포스트 등록일</TableHead>
-            <TableHead className="w-36">북마크 등록일</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {bookmarks.map((bookmark) => {
-            const post = postingDetailEntity[bookmark.postId];
-
             return (
-              <TableRow key={bookmark.postId}>
+              <TableRow key={bookmark.id}>
                 <TableCell className="text-center">
                   <Button
                     variant="ghost"
                     size="icon"
                     disabled={loading}
-                    onClick={() => handleDeleteBookmark(bookmark.postId)}
+                    onClick={() => handleDeleteBookmark(bookmark.id)}
                   >
                     <BookmarkIcon className="size-4 fill-amber-400 text-amber-400" />
                   </Button>
@@ -117,16 +105,13 @@ const MyBookmark = () => {
                   <Button
                     variant="link"
                     className="h-auto max-w-xl justify-start p-0 text-left whitespace-normal"
-                    onClick={() => handleNavigateToPost(bookmark.postId)}
+                    onClick={() => handleNavigateToPost(bookmark.id)}
                   >
-                    {post?.title ?? bookmark.postId}
+                    {bookmark.title}
                   </Button>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {post ? formatDate(post.publishedAt) : '-'}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {formatDate(bookmark.createdAt)}
+                  {formatDate(bookmark.publishedAt)}
                 </TableCell>
               </TableRow>
             );

@@ -21,35 +21,34 @@ export interface CreateReplyResponse {
 export interface ReplyDto {
   id: string;
   user_id: string;
-  post_id: string;
-  parent_id?: string;
-  parent_comment_id?: string;
   has_child_comment: boolean;
   content: string;
-  status?: string;
-  created_at: string | number;
-  updated_at: string | number;
+  status: 'active' | 'blocked' | 'deleted';
+  created_at: string;
+  updated_at: string;
 }
 
 export interface GetCommentRepliesResponseDto {
   total_count: number;
+  page: number;
+  size: number;
   items: ReplyDto[];
 }
 
 export interface Reply {
   id: string;
   userId: string;
-  postId: string;
-  parentId?: string;
   hasChildComment: boolean;
   content: string;
-  status?: string;
+  status: 'active' | 'blocked' | 'deleted';
   createdAt: number;
   updatedAt: number;
 }
 
 export interface GetCommentRepliesResponse {
   totalCount: number;
+  page: number;
+  size: number;
   items: Reply[];
 }
 
@@ -81,8 +80,6 @@ const mapCreateReplyResponseDtoToEntity = (dto: CreateReplyResponseDto): CreateR
 const mapReplyDtoToEntity = (dto: ReplyDto): Reply => ({
   id: dto.id,
   userId: dto.user_id,
-  postId: dto.post_id,
-  parentId: dto.parent_id ?? dto.parent_comment_id,
   hasChildComment: dto.has_child_comment,
   content: dto.content,
   status: dto.status,
@@ -94,6 +91,8 @@ const mapGetCommentRepliesResponseDtoToEntity = (
   dto: GetCommentRepliesResponseDto,
 ): GetCommentRepliesResponse => ({
   totalCount: dto.total_count,
+  page: dto.page,
+  size: dto.size,
   items: dto.items.map(mapReplyDtoToEntity),
 });
 

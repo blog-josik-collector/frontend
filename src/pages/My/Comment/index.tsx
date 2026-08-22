@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
 
 import { Trash2 } from 'lucide-react';
 
@@ -26,7 +25,6 @@ const formatDate = (date: number) =>
   });
 
 const MyComment = () => {
-  const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [deleteError, setDeleteError] = useState('');
   const myComments = useMyComments({ page, size: pageSize });
@@ -55,11 +53,6 @@ const MyComment = () => {
         },
       );
     }
-  };
-
-  const handleNavigateToPost = (postId: string) => {
-    // 포스트로 이동하는 로직
-    navigate({ pathname: '/post', search: `?post-id=${postId}` });
   };
 
   return (
@@ -99,7 +92,6 @@ const MyComment = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>포스트</TableHead>
             <TableHead>댓글 내용</TableHead>
             <TableHead className="w-36">작성일</TableHead>
             <TableHead className="w-24 text-center">삭제</TableHead>
@@ -108,15 +100,6 @@ const MyComment = () => {
         <TableBody>
           {comments.map((comment) => (
             <TableRow key={comment.id}>
-              <TableCell>
-                <Button
-                  variant="link"
-                  className="h-auto p-0 text-left"
-                  onClick={() => handleNavigateToPost(comment.postId)}
-                >
-                  {comment.postId}
-                </Button>
-              </TableCell>
               <TableCell className="max-w-md">
                 <p className="truncate text-sm">{comment.content}</p>
               </TableCell>

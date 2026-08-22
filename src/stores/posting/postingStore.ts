@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 
 import {
+  createReply,
+  type CreateReplyRequestDto,
+  getCommentReplies,
+} from '@/services/comment/replies';
+import {
+  type BookmarkedPosting,
   createPostingBookmark,
   createPostingComment,
   type CreatePostingCommentRequestDto,
@@ -16,7 +22,6 @@ import {
   getPostings,
   type GetPostingsParams,
   type GetPostingsResponse,
-  type MyBookmark,
   type PostingDetailEntity,
 } from '@/services/posting';
 
@@ -29,7 +34,7 @@ interface PostingStore {
 }
 
 export const usePostingStore = create<PostingStore>((set) => ({
-  postings: { total: 0, items: [] },
+  postings: { totalCount: 0, page: 0, size: 0, items: [] },
   loading: false,
   error: null,
   fetchPostings: async (params: GetPostingsParams = {}) => {
@@ -84,7 +89,7 @@ export const usePostingLikeStore = create<PostingLikeStore>((set) => ({
 }));
 
 interface PostingBookmarkStore {
-  bookmarks: MyBookmark[];
+  bookmarks: BookmarkedPosting[];
   bookmarkedPostings: string[];
   loading: boolean;
   error: string | null;
@@ -104,7 +109,7 @@ export const usePostingBookmarkStore = create<PostingBookmarkStore>((set) => ({
       const response = await getMyBookmarks(params);
       set({
         bookmarks: response.items,
-        bookmarkedPostings: response.items.map((item) => item.postId),
+        bookmarkedPostings: response.items.map((item) => item.id),
         loading: false,
       });
     } catch {
@@ -116,9 +121,6 @@ export const usePostingBookmarkStore = create<PostingBookmarkStore>((set) => ({
     try {
       await createPostingBookmark(postingId);
       set((state) => ({
-        bookmarks: state.bookmarks.some((bookmark) => bookmark.postId === postingId)
-          ? state.bookmarks
-          : [{ postId: postingId, createdAt: Date.now() }, ...state.bookmarks],
         bookmarkedPostings: state.bookmarkedPostings.includes(postingId)
           ? state.bookmarkedPostings
           : [...state.bookmarkedPostings, postingId],
@@ -133,7 +135,7 @@ export const usePostingBookmarkStore = create<PostingBookmarkStore>((set) => ({
     try {
       await deletePostingBookmark(postingId);
       set((state) => ({
-        bookmarks: state.bookmarks.filter((bookmark) => bookmark.postId !== postingId),
+        bookmarks: state.bookmarks.filter((bookmark) => bookmark.id !== postingId),
         bookmarkedPostings: state.bookmarkedPostings.filter((id) => id !== postingId),
         loading: false,
       }));
@@ -165,6 +167,10 @@ interface PostingCommentStore {
     postingId: string,
     body: CreatePostingCommentRequestDto,
   ) => Promise<CreatePostingCommentResponse | undefined>;
+  createPostingReply: (
+    commentId: string,
+    body: CreateReplyRequestDto,
+  ) => Promise<unknown | undefined>;
 }
 
 export const usePostingCommentStore = create<PostingCommentStore>((set) => ({
@@ -204,11 +210,8 @@ export const usePostingCommentStore = create<PostingCommentStore>((set) => ({
     }));
 
     try {
-      const response = await getPostingComments(postingId, {
-        ...params,
-        parent_comment_id: parentCommentId,
-      });
-      const totalCount = parseInt(response.totalCount, 10);
+      const response = await getCommentReplies(parentCommentId, params);
+      const totalCount = response.totalCount;
 
       set((state) => {
         const postReplies = state.postingCommentReplies[postingId] ?? {};
@@ -242,6 +245,16 @@ export const usePostingCommentStore = create<PostingCommentStore>((set) => ({
       return response;
     } catch {
       set({ error: 'Failed to create posting comment', loading: false });
+    }
+  },
+  createPostingReply: async (commentId: string, body: CreateReplyRequestDto) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await createReply(commentId, body);
+      set({ loading: false });
+      return response;
+    } catch {
+      set({ error: 'Failed to create posting reply', loading: false });
     }
   },
 }));

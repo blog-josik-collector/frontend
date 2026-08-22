@@ -2,49 +2,49 @@ import { http, HttpResponse } from 'msw';
 
 import { faker } from '@faker-js/faker';
 
-import type { PostingDetailDto, PostingListItemDto, SocialStatsDto } from '@/services/posting';
+import type { PostingDetailDto, PostingListItemDto } from '@/services/posting';
 
 interface PostingCommentItem {
   id: string;
   user_id: string;
-  post_id: string;
   parent_comment_id: string;
   has_child_comment: boolean;
   content: string;
-  total_report_count: number;
-  status?: string;
-  created_at: number;
-  updated_at: number;
+  status: 'active' | 'blocked' | 'deleted';
+  created_at: string;
+  updated_at: string;
 }
 
 // Mock 데이터 생성 함수
 const generateMockPostings = (count: number): PostingListItemDto[] => {
   return Array.from({ length: count }, (_, index) => ({
     id: `posting-${index + 1}`,
-    provider_id: `provider-${(index % 3) + 1}`,
+    provider: `provider-${(index % 3) + 1}`,
     title: faker.lorem.sentence({ min: 4, max: 8 }),
     published_at: faker.date.recent({ days: 120 }).toISOString(),
     thumbnail_url: `https://picsum.photos/seed/${faker.string.uuid()}/300/200`,
     summary: faker.lorem.paragraphs({ min: 1, max: 2 }),
-    status: faker.number.int({ min: 0, max: 2 }), // 0: draft, 1: published, 2: archived
-    social: {
-      like_count: faker.number.int({ min: 0, max: 1000 }),
-      view_count: faker.number.int({ min: 0, max: 10000 }),
-      is_liked: faker.datatype.boolean(),
-      is_bookmarked: faker.datatype.boolean(),
-      comment_count: faker.number.int({ min: 0, max: 100 }),
-    } satisfies SocialStatsDto,
+    status: faker.helpers.arrayElement(['active', 'blocked', 'deleted'] as const),
+    like_count: faker.number.int({ min: 0, max: 1000 }),
+    view_count: faker.number.int({ min: 0, max: 10000 }),
+    likes_of_me: faker.datatype.boolean(),
+    bookmarks_of_me: faker.datatype.boolean(),
+    comment_count: faker.number.int({ min: 0, max: 100 }),
+    total_report_count: faker.number.int({ min: 0, max: 5 }),
+    url: `https://example.com/postings/posting-${index + 1}`,
+    created_at: faker.date.past({ years: 1 }).toISOString(),
+    updated_at: faker.date.recent({ days: 30 }).toISOString(),
   }));
 };
 
 // Mock 게시물 데이터 생성
 const mockPostingsData = generateMockPostings(110);
 const likedPostings = new Set<string>(
-  mockPostingsData.filter((post) => post.social.is_liked).map((post) => post.id),
+  mockPostingsData.filter((post) => post.likes_of_me).map((post) => post.id),
 );
 const bookmarkMap = new Map<string, number>(
   mockPostingsData
-    .filter((post) => post.social.is_bookmarked)
+    .filter((post) => post.bookmarks_of_me)
     .map((post, index) => [post.id, Date.now() - index * 60_000]),
 );
 const mockCommentsByPostId = new Map<string, PostingCommentItem[]>();
@@ -78,6 +78,16 @@ const getRootComments = (comments: PostingCommentItem[]) =>
 const getThreadReplies = (comments: PostingCommentItem[], rootCommentId: string) =>
   comments.filter((comment) => isReplyInThread(comment, rootCommentId, comments));
 
+const toPostingCommentResponse = (comment: PostingCommentItem) => ({
+  content: comment.content,
+  created_at: comment.created_at,
+  has_child_comment: comment.has_child_comment,
+  id: comment.id,
+  status: comment.status,
+  updated_at: comment.updated_at,
+  user_id: comment.user_id,
+});
+
 // 게시물 상세 데이터 생성 함수
 const generateMockPostingDetail = (postingId: string): PostingDetailDto => {
   const basePosting = mockPostingsData.find((p) => p.id === postingId);
@@ -86,19 +96,18 @@ const generateMockPostingDetail = (postingId: string): PostingDetailDto => {
     const index = parseInt(postingId.split('-')[1]) || 1;
     return {
       id: postingId,
-      provider_id: `provider-${(index % 3) + 1}`,
+      provider: `provider-${(index % 3) + 1}`,
       title: faker.lorem.sentence({ min: 4, max: 8 }),
       published_at: faker.date.recent({ days: 120 }).toISOString(),
       thumbnail_url: `https://picsum.photos/seed/${faker.string.uuid()}/300/200`,
       summary: faker.lorem.paragraphs({ min: 1, max: 2 }),
-      status: faker.number.int({ min: 0, max: 2 }),
-      social: {
-        like_count: faker.number.int({ min: 0, max: 1000 }),
-        view_count: faker.number.int({ min: 0, max: 10000 }),
-        is_liked: faker.datatype.boolean(),
-        is_bookmarked: faker.datatype.boolean(),
-        comment_count: faker.number.int({ min: 0, max: 100 }),
-      },
+      status: faker.helpers.arrayElement(['active', 'blocked', 'deleted'] as const),
+      like_count: faker.number.int({ min: 0, max: 1000 }),
+      view_count: faker.number.int({ min: 0, max: 10000 }),
+      likes_of_me: faker.datatype.boolean(),
+      bookmarks_of_me: faker.datatype.boolean(),
+      comment_count: faker.number.int({ min: 0, max: 100 }),
+      total_report_count: faker.number.int({ min: 0, max: 5 }),
       url: `https://example.com/postings/${postingId}`,
       created_at: faker.date.past({ years: 1 }).toISOString(),
       updated_at: faker.date.recent({ days: 30 }).toISOString(),
@@ -107,11 +116,8 @@ const generateMockPostingDetail = (postingId: string): PostingDetailDto => {
 
   return {
     ...basePosting,
-    social: {
-      ...basePosting.social,
-      is_liked: likedPostings.has(postingId),
-      is_bookmarked: bookmarkMap.has(postingId),
-    },
+    likes_of_me: likedPostings.has(postingId),
+    bookmarks_of_me: bookmarkMap.has(postingId),
     url: `https://example.com/postings/${postingId}`,
     created_at: basePosting.published_at,
     updated_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -120,22 +126,22 @@ const generateMockPostingDetail = (postingId: string): PostingDetailDto => {
 
 // GET /api/v1/postings 핸들러
 export const postingsHandlers = [
-  http.get('/api/v1/postings', ({ request }) => {
+  http.get('/interaction/v1/postings', ({ request }) => {
     console.log('mocking!!');
     const url = new URL(request.url);
 
     // 쿼리 파라미터 파싱
     const page = parseInt(url.searchParams.get('page') || '0');
     const size = parseInt(url.searchParams.get('size') || '20');
-    const provider_id = url.searchParams.get('provider_id');
+    const provider = url.searchParams.get('provider');
     const title = url.searchParams.get('title');
 
     // Mock 데이터 생성
     let allPostings = mockPostingsData;
 
     // 필터링
-    if (provider_id) {
-      allPostings = allPostings.filter((posting) => posting.provider_id === provider_id);
+    if (provider) {
+      allPostings = allPostings.filter((posting) => posting.provider === provider);
     }
 
     if (title) {
@@ -150,7 +156,9 @@ export const postingsHandlers = [
     const paginatedPostings = allPostings.slice(startIndex, endIndex);
 
     const response = {
-      total: allPostings.length,
+      total_count: allPostings.length,
+      page,
+      size,
       items: paginatedPostings,
     };
 
@@ -158,23 +166,23 @@ export const postingsHandlers = [
   }),
 
   // GET /api/v1/postings/:id 핸들러
-  http.get('/api/v1/postings/:id', ({ params }) => {
+  http.get('/interaction/v1/postings/:id', ({ params }) => {
     const { id } = params;
     const postingDetail = generateMockPostingDetail(id as string);
     return HttpResponse.json(postingDetail);
   }),
 
   // POST /api/v1/postings/:id/likes 핸들러
-  http.post('/api/v1/postings/:id/likes', ({ params }) => {
+  http.post('/interaction/v1/postings/:id/likes', ({ params }) => {
     const { id } = params;
     const postingId = id as string;
     const basePosting = mockPostingsData.find((post) => post.id === postingId);
 
     if (basePosting && !likedPostings.has(postingId)) {
-      basePosting.social.like_count += 1;
+      basePosting.like_count += 1;
     }
     if (basePosting) {
-      basePosting.social.is_liked = true;
+      basePosting.likes_of_me = true;
     }
     likedPostings.add(postingId);
 
@@ -182,16 +190,16 @@ export const postingsHandlers = [
   }),
 
   // DELETE /api/v1/postings/:id/likes 핸들러
-  http.delete('/api/v1/postings/:id/likes', ({ params }) => {
+  http.delete('/interaction/v1/postings/:id/likes', ({ params }) => {
     const { id } = params;
     const postingId = id as string;
     const basePosting = mockPostingsData.find((post) => post.id === postingId);
 
     if (basePosting && likedPostings.has(postingId)) {
-      basePosting.social.like_count = Math.max(0, basePosting.social.like_count - 1);
+      basePosting.like_count = Math.max(0, basePosting.like_count - 1);
     }
     if (basePosting) {
-      basePosting.social.is_liked = false;
+      basePosting.likes_of_me = false;
     }
     likedPostings.delete(postingId);
 
@@ -199,13 +207,13 @@ export const postingsHandlers = [
   }),
 
   // POST /api/v1/postings/:id/bookmarks 핸들러
-  http.post('/api/v1/postings/:id/bookmarks', ({ params }) => {
+  http.post('/interaction/v1/postings/:id/bookmarks', ({ params }) => {
     const { id } = params;
     const postingId = id as string;
     const basePosting = mockPostingsData.find((post) => post.id === postingId);
 
     if (basePosting) {
-      basePosting.social.is_bookmarked = true;
+      basePosting.bookmarks_of_me = true;
     }
     bookmarkMap.set(postingId, Date.now());
 
@@ -213,13 +221,13 @@ export const postingsHandlers = [
   }),
 
   // DELETE /api/v1/postings/:id/bookmarks 핸들러
-  http.delete('/api/v1/postings/:id/bookmarks', ({ params }) => {
+  http.delete('/interaction/v1/postings/:id/bookmarks', ({ params }) => {
     const { id } = params;
     const postingId = id as string;
     const basePosting = mockPostingsData.find((post) => post.id === postingId);
 
     if (basePosting) {
-      basePosting.social.is_bookmarked = false;
+      basePosting.bookmarks_of_me = false;
     }
     bookmarkMap.delete(postingId);
 
@@ -227,84 +235,95 @@ export const postingsHandlers = [
   }),
 
   // GET /api/v1/me/bookmarks 핸들러
-  http.get('/api/v1/me/bookmarks', ({ request }) => {
+  http.get('/interaction/v1/me/bookmarks', ({ request }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '0');
     const size = parseInt(url.searchParams.get('size') || '20');
 
-    const allBookmarks = Array.from(bookmarkMap.entries()).map(([post_id, created_at]) => ({
-      post_id,
-      created_at,
-    }));
+    const allBookmarks = Array.from(bookmarkMap.keys())
+      .map((postingId) => mockPostingsData.find((post) => post.id === postingId))
+      .filter((post): post is PostingListItemDto => Boolean(post));
 
     const startIndex = page * size;
     const endIndex = startIndex + size;
 
     return HttpResponse.json({
       items: allBookmarks.slice(startIndex, endIndex),
+      page,
+      size,
+      total_count: allBookmarks.length,
     });
   }),
 
   // POST /api/v1/postings/:id/comments 핸들러
-  http.post('/api/v1/postings/:id/comments', async ({ request, params }) => {
+  http.post('/interaction/v1/postings/:id/comments', async ({ request, params }) => {
     const { id } = params;
-    const body = (await request.json()) as { content?: string; parent_comment_id?: string };
+    const body = (await request.json()) as { content?: string };
 
     if (!body || typeof body.content !== 'string') {
       return HttpResponse.json({ error: 'content is required' }, { status: 400 });
     }
 
     const postingId = id as string;
-    const createdAt = Date.now();
+    const createdAt = new Date().toISOString();
     const comment: PostingCommentItem = {
       id: faker.string.uuid(),
       user_id: faker.internet.username(),
-      post_id: postingId,
-      parent_comment_id: body.parent_comment_id ?? '',
+      parent_comment_id: '',
       has_child_comment: false,
       content: body.content,
-      total_report_count: faker.number.int({ min: 0, max: 5 }),
+      status: 'active',
       created_at: createdAt,
       updated_at: createdAt,
     };
 
     const comments = mockCommentsByPostId.get(postingId) ?? [];
-    if (comment.parent_comment_id) {
-      const parentComment = comments.find((item) => item.id === comment.parent_comment_id);
-      if (parentComment) {
-        parentComment.has_child_comment = true;
-      }
-    }
     comments.unshift(comment);
     mockCommentsByPostId.set(postingId, comments);
 
     const basePosting = mockPostingsData.find((post) => post.id === postingId);
     if (basePosting) {
-      basePosting.social.comment_count += 1;
+      basePosting.comment_count += 1;
     }
 
     return HttpResponse.json({ id: comment.id, created_at: createdAt }, { status: 201 });
   }),
 
   // GET /api/v1/postings/:id/comments 핸들러
-  http.get('/api/v1/postings/:id/comments', ({ request, params }) => {
+  http.get('/interaction/v1/postings/:id/comments', ({ request, params }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '0');
     const size = parseInt(url.searchParams.get('size') || '20');
-    const parentCommentId = url.searchParams.get('parent_comment_id');
     const { id } = params;
     const comments = mockCommentsByPostId.get(id as string) ?? [];
 
-    const targetComments = parentCommentId
-      ? getThreadReplies(comments, parentCommentId)
-      : getRootComments(comments);
+    const targetComments = getRootComments(comments);
 
     const startIndex = page * size;
     const endIndex = startIndex + size;
 
     return HttpResponse.json({
-      total_count: String(targetComments.length),
-      items: targetComments.slice(startIndex, endIndex),
+      total_count: targetComments.length,
+      page,
+      size,
+      items: targetComments.slice(startIndex, endIndex).map(toPostingCommentResponse),
+    });
+  }),
+
+  http.get('/interaction/v1/comments/:commentId/replies', ({ request, params }) => {
+    const url = new URL(request.url);
+    const page = parseInt(url.searchParams.get('page') || '0');
+    const size = parseInt(url.searchParams.get('size') || '20');
+    const replies = Array.from(mockCommentsByPostId.values()).flatMap((comments) =>
+      getThreadReplies(comments, params.commentId as string),
+    );
+    const startIndex = page * size;
+
+    return HttpResponse.json({
+      total_count: replies.length,
+      page,
+      size,
+      items: replies.slice(startIndex, startIndex + size).map(toPostingCommentResponse),
     });
   }),
 ];

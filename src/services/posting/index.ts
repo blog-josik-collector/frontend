@@ -3,56 +3,68 @@ import dayjs from 'dayjs';
 import { api } from '../api';
 
 // DTO Types (API 응답 형식)
-export interface SocialStatsDto {
-  like_count: number;
-  view_count: number;
-  is_liked: boolean;
-  is_bookmarked: boolean;
-  comment_count: number;
-}
+export type PostingStatus = 'active' | 'blocked' | 'deleted';
 
 export interface PostingListItemDto {
   id: string;
-  provider_id: string;
+  provider: string;
   title: string;
   published_at: string;
   thumbnail_url: string;
   summary: string;
-  status: number;
-  social: SocialStatsDto;
+  status: PostingStatus;
+  likes_of_me: boolean;
+  bookmarks_of_me: boolean;
+  like_count: number;
+  view_count: number;
+  comment_count: number;
+  total_report_count: number;
+  url: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface GetPostingsResponseDto {
-  total: number;
+export interface OffsetPageDto<T> {
+  total_count: number;
+  page: number;
+  size: number;
+  items: T[];
+}
+
+export interface GetPostingsResponseDto extends OffsetPageDto<PostingListItemDto> {
   items: PostingListItemDto[];
 }
 
-export interface MyBookmarkDto {
-  post_id: string;
-  created_at: number;
+export interface BookmarkedPostingDto {
+  id: string;
+  provider: string;
+  title: string;
+  published_at: string;
+  thumbnail_url: string;
+  summary: string;
+  status: PostingStatus;
+  like_count: number;
+  view_count: number;
+  comment_count: number;
+  total_report_count: number;
+  url: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PostingCommentDto {
   id: string;
   user_id: string;
-  post_id: string;
-  parent_comment_id: string;
   has_child_comment: boolean;
   content: string;
-  total_report_count: number;
-  status?: string;
-  created_at: number;
-  updated_at: number;
+  status: PostingStatus;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface GetMyBookmarksResponseDto {
-  items: MyBookmarkDto[];
-}
+export type GetMyBookmarksResponseDto = OffsetPageDto<BookmarkedPostingDto>;
 
-export interface GetPostingCommentsResponseDto {
-  total_count: string;
-  items: PostingCommentDto[];
-}
+export type GetPostingCommentsResponseDto = OffsetPageDto<PostingCommentDto>;
 
 // Entity Types (도메인 모델)
 export interface SocialStats {
@@ -65,44 +77,64 @@ export interface SocialStats {
 
 export interface PostingListItem {
   id: string;
-  providerId: string;
+  provider: string;
   title: string;
   publishedAt: number;
   thumbnailUrl: string;
   summary: string;
-  status: number;
+  status: PostingStatus;
   social: SocialStats;
+  totalReportCount: number;
+  url: string;
+  createdAt: number;
+  updatedAt: number;
 }
 
-export interface MyBookmark {
-  postId: string;
+export interface BookmarkedPosting {
+  id: string;
+  provider: string;
+  title: string;
+  publishedAt: number;
+  thumbnailUrl: string;
+  summary: string;
+  status: PostingStatus;
+  likeCount: number;
+  viewCount: number;
+  commentCount: number;
+  totalReportCount: number;
+  url: string;
   createdAt: number;
+  updatedAt: number;
 }
 
 export interface PostingComment {
   id: string;
   userId: string;
-  postId: string;
-  parentCommentId: string;
   hasChildComment: boolean;
   content: string;
-  totalReportCount: number;
-  status?: string;
+  status: PostingStatus;
   createdAt: number;
   updatedAt: number;
 }
 
 export interface GetMyBookmarksResponse {
-  items: MyBookmark[];
+  totalCount: number;
+  page: number;
+  size: number;
+  items: BookmarkedPosting[];
 }
 
 export interface GetPostingCommentsResponse {
-  totalCount: string;
+  totalCount: number;
+  page: number;
+  size: number;
   items: PostingComment[];
 }
 
 export interface GetPostingsResponse {
-  total: number;
+  totalCount: number;
+  page: number;
+  size: number;
   items: PostingListItem[];
 }
 
@@ -110,65 +142,83 @@ export interface GetPostingsResponse {
 export interface GetPostingsParams {
   page?: number;
   size?: number;
-  provider_id?: string;
+  provider?: string;
   title?: string;
 }
 
 // Mappers
-const mapSocialStatsDtoToEntity = (dto: SocialStatsDto): SocialStats => ({
-  likeCount: dto.like_count,
-  viewCount: dto.view_count,
-  isLiked: dto.is_liked,
-  isBookmarked: dto.is_bookmarked,
-  commentCount: dto.comment_count,
-});
-
 const mapPostingListItemDtoToEntity = (dto: PostingListItemDto): PostingListItem => ({
   id: dto.id,
-  providerId: dto.provider_id,
+  provider: dto.provider,
   title: dto.title,
   publishedAt: dayjs(dto.published_at).valueOf(),
   thumbnailUrl: dto.thumbnail_url,
   summary: dto.summary,
   status: dto.status,
-  social: mapSocialStatsDtoToEntity(dto.social),
+  social: {
+    likeCount: dto.like_count,
+    viewCount: dto.view_count,
+    isLiked: dto.likes_of_me,
+    isBookmarked: dto.bookmarks_of_me,
+    commentCount: dto.comment_count,
+  },
+  totalReportCount: dto.total_report_count,
+  url: dto.url,
+  createdAt: dayjs(dto.created_at).valueOf(),
+  updatedAt: dayjs(dto.updated_at).valueOf(),
 });
 
 const mapGetPostingListResponseDtoToEntity = (
   dto: GetPostingsResponseDto,
 ): GetPostingsResponse => ({
-  total: dto.total,
+  totalCount: dto.total_count,
+  page: dto.page,
+  size: dto.size,
   items: dto.items.map(mapPostingListItemDtoToEntity),
 });
 
-const mapMyBookmarkDtoToEntity = (dto: MyBookmarkDto): MyBookmark => ({
-  postId: dto.post_id,
-  createdAt: dto.created_at,
+const mapBookmarkedPostingDtoToEntity = (dto: BookmarkedPostingDto): BookmarkedPosting => ({
+  id: dto.id,
+  provider: dto.provider,
+  title: dto.title,
+  publishedAt: dayjs(dto.published_at).valueOf(),
+  thumbnailUrl: dto.thumbnail_url,
+  summary: dto.summary,
+  status: dto.status,
+  likeCount: dto.like_count,
+  viewCount: dto.view_count,
+  commentCount: dto.comment_count,
+  totalReportCount: dto.total_report_count,
+  url: dto.url,
+  createdAt: dayjs(dto.created_at).valueOf(),
+  updatedAt: dayjs(dto.updated_at).valueOf(),
 });
 
 const mapGetMyBookmarksResponseDtoToEntity = (
   dto: GetMyBookmarksResponseDto,
 ): GetMyBookmarksResponse => ({
-  items: dto.items.map(mapMyBookmarkDtoToEntity),
+  totalCount: dto.total_count,
+  page: dto.page,
+  size: dto.size,
+  items: dto.items.map(mapBookmarkedPostingDtoToEntity),
 });
 
 const mapPostingCommentDtoToEntity = (dto: PostingCommentDto): PostingComment => ({
   id: dto.id,
   userId: dto.user_id,
-  postId: dto.post_id,
-  parentCommentId: dto.parent_comment_id,
   hasChildComment: dto.has_child_comment,
   content: dto.content,
-  totalReportCount: dto.total_report_count,
   status: dto.status,
-  createdAt: dto.created_at,
-  updatedAt: dto.updated_at,
+  createdAt: dayjs(dto.created_at).valueOf(),
+  updatedAt: dayjs(dto.updated_at).valueOf(),
 });
 
 const mapGetPostingCommentsResponseDtoToEntity = (
   dto: GetPostingCommentsResponseDto,
 ): GetPostingCommentsResponse => ({
   totalCount: dto.total_count,
+  page: dto.page,
+  size: dto.size,
   items: dto.items.map(mapPostingCommentDtoToEntity),
 });
 
@@ -180,7 +230,7 @@ export const getPostings = async (
   params: GetPostingsParams = {
     page: 0,
     size: 10,
-    provider_id: undefined,
+    provider: undefined,
     title: undefined,
   },
 ): Promise<GetPostingsResponse> => {
@@ -230,12 +280,11 @@ export const getMyBookmarks = async (
 
 export interface CreatePostingCommentRequestDto {
   content: string;
-  parent_comment_id?: string;
 }
 
 export interface CreatePostingCommentResponseDto {
   id: string;
-  created_at: number;
+  created_at: string;
 }
 
 export interface CreatePostingCommentResponse {
@@ -247,7 +296,7 @@ const mapCreatePostingCommentResponseDtoToEntity = (
   dto: CreatePostingCommentResponseDto,
 ): CreatePostingCommentResponse => ({
   id: dto.id,
-  createdAt: dto.created_at,
+  createdAt: dayjs(dto.created_at).valueOf(),
 });
 
 /**
@@ -267,7 +316,6 @@ export const createPostingComment = async (
 export interface GetPostingCommentsParams {
   page?: number;
   size?: number;
-  parent_comment_id?: string;
 }
 
 /**
@@ -284,11 +332,7 @@ export const getPostingComments = async (
   return mapGetPostingCommentsResponseDtoToEntity(response.data);
 };
 
-export interface PostingDetailDto extends PostingListItemDto {
-  url: string;
-  created_at: string;
-  updated_at: string;
-}
+export type PostingDetailDto = PostingListItemDto;
 
 export interface PostingDetailEntity extends PostingListItem {
   url: string;
@@ -298,9 +342,6 @@ export interface PostingDetailEntity extends PostingListItem {
 
 const mapGetPostingDetailResponseDtoToEntity = (dto: PostingDetailDto): PostingDetailEntity => ({
   ...mapPostingListItemDtoToEntity(dto),
-  url: dto.url,
-  createdAt: dayjs(dto.created_at).valueOf(),
-  updatedAt: dayjs(dto.updated_at).valueOf(),
 });
 
 /**

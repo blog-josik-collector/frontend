@@ -79,7 +79,7 @@ const PostList = () => {
   const selectedProviderId = isFilterOption(providerIdParam) ? providerIdParam : undefined;
   const selected = selectedProviderId ? [selectedProviderId] : [];
 
-  const totalPages = Math.max(1, Math.ceil(postings.total / pageSize));
+  const totalPages = Math.max(1, Math.ceil(postings.totalCount / pageSize));
   const currentBlockStart = Math.floor((page - 1) / pageBlockSize) * pageBlockSize + 1;
   const pageNumbers = Array.from(
     { length: Math.min(pageBlockSize, totalPages - currentBlockStart + 1) },
@@ -91,7 +91,7 @@ const PostList = () => {
       page: page - 1,
       size: pageSize,
       title: search || undefined,
-      ...(selectedProviderId ? { provider_id: selectedProviderId } : {}),
+      ...(selectedProviderId ? { provider: selectedProviderId } : {}),
     });
   }, [fetchPostings, page, pageSize, search, selectedProviderId]);
 
@@ -122,7 +122,7 @@ const PostList = () => {
         }}
       />
       <div className="text-muted-foreground text-sm">
-        총 {postings.total.toLocaleString()}개 · {totalPages} 페이지
+        총 {postings.totalCount.toLocaleString()}개 · {totalPages} 페이지
       </div>
       <div className="flex flex-wrap gap-2">
         {postings.items.map((post) => (

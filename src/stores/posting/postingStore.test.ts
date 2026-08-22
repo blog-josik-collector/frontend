@@ -1,0 +1,41 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { usePostingCommentStore } from './postingStore';
+
+const { getCommentRepliesMock, getPostingCommentsMock } = vi.hoisted(() => ({
+  getCommentRepliesMock: vi.fn(),
+  getPostingCommentsMock: vi.fn(),
+}));
+
+vi.mock('@/services/comment/replies', () => ({
+  getCommentReplies: getCommentRepliesMock,
+}));
+
+vi.mock('@/services/posting', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/services/posting')>()),
+  getPostingComments: getPostingCommentsMock,
+}));
+
+afterEach(() => {
+  vi.clearAllMocks();
+  usePostingCommentStore.setState({
+    error: null,
+    loading: false,
+    postingCommentReplies: {},
+    postingComments: {},
+    replyLoading: {},
+  });
+});
+
+describe('posting comment reply loading', () => {
+  it('uses the dedicated replies endpoint instead of a removed parent query', async () => {
+    getCommentRepliesMock.mockResolvedValue({ items: [], page: 0, size: 5, totalCount: 0 });
+
+    await usePostingCommentStore
+      .getState()
+      .fetchPostingCommentReplies('post-1', 'comment-1', { page: 0, size: 5 });
+
+    expect(getCommentRepliesMock).toHaveBeenCalledWith('comment-1', { page: 0, size: 5 });
+    expect(getPostingCommentsMock).not.toHaveBeenCalled();
+  });
+});
