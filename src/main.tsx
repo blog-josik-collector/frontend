@@ -8,7 +8,7 @@ import './i18n';
 import './index.css';
 
 const enableMocking = async () => {
-  if (!import.meta.env.DEV) {
+  if (!import.meta.env.DEV || import.meta.env.VITE_DISABLE_MOCKING === 'true') {
     return;
   }
 
