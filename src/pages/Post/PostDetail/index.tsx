@@ -280,18 +280,20 @@ const PostDetail = () => {
 
   const renderCommentActions = (comment: PostingComment) => (
     <div className="flex items-center gap-2">
-      <ButtonGroup>
-        <Button
-          variant={replyingToId === comment.id ? 'secondary' : 'ghost'}
-          size="xs"
-          aria-label="답글 작성"
-          onClick={() => setReplyingToId(replyingToId === comment.id ? null : comment.id)}
-          className="flex items-center gap-1"
-        >
-          <MessageCircle className="size-3" />
-          <span className="text-xs">답글</span>
-        </Button>
-      </ButtonGroup>
+      {comment.status !== 'deleted' && (
+        <ButtonGroup>
+          <Button
+            variant={replyingToId === comment.id ? 'secondary' : 'ghost'}
+            size="xs"
+            aria-label="답글 작성"
+            onClick={() => setReplyingToId(replyingToId === comment.id ? null : comment.id)}
+            className="flex items-center gap-1"
+          >
+            <MessageCircle className="size-3" />
+            <span className="text-xs">답글</span>
+          </Button>
+        </ButtonGroup>
+      )}
       {comment.status !== 'deleted' && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

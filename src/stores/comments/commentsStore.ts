@@ -14,7 +14,7 @@ export const commentMutationKeys = {
   delete: ['comments', 'delete'] as const,
 };
 
-const invalidateCommentQueries = (
+export const invalidateCommentQueries = (
   queryClient: QueryClient,
   commentId: string,
   options: { includeMyComments?: boolean } = {},
@@ -27,7 +27,7 @@ const invalidateCommentQueries = (
   queryClient.invalidateQueries({ queryKey: commentRepliesQueryKey.list(commentId) });
 };
 
-const removeCommentFromMyCommentsCache = (queryClient: QueryClient, commentId: string) => {
+export const removeCommentFromMyCommentsCache = (queryClient: QueryClient, commentId: string) => {
   queryClient.setQueriesData<GetMyCommentsResponse>({ queryKey: ['me', 'comments'] }, (data) => {
     if (!data) return data;
 

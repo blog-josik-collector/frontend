@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { invalidateCommentQueries, removeCommentFromMyCommentsCache } from './commentsStore';
+
 import {
   createReply,
   type CreateReplyRequestDto,
@@ -67,9 +69,11 @@ export const useDeleteReply = () => {
   return useMutation({
     mutationKey: replyMutationKeys.delete,
     mutationFn: ({ replyId }: { replyId: string }) => deleteReply(replyId),
-    onSuccess: () => {
+    onSuccess: (_, { replyId }) => {
       queryClient.invalidateQueries({ queryKey: ['comments'] });
       queryClient.invalidateQueries({ queryKey: ['postings'] });
+      removeCommentFromMyCommentsCache(queryClient, replyId);
+      invalidateCommentQueries(queryClient, replyId);
     },
   });
 };
