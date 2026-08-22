@@ -24,19 +24,22 @@ const mapUpdateCommentResponseDtoToEntity = (
 });
 
 /**
- * PATCH /api/v1/comments/{comment_id} - 댓글 수정
+ * PATCH /interaction/v1/comments/{comment_id} - 댓글 수정
  */
 export const updateComment = async (
   commentId: string,
   body: UpdateCommentRequestDto,
 ): Promise<UpdateCommentResponse> => {
-  const response = await api.patch<UpdateCommentResponseDto>(`/api/v1/comments/${commentId}`, body);
+  const response = await api.patch<UpdateCommentResponseDto>(
+    `/interaction/v1/comments/${commentId}`,
+    body,
+  );
   return mapUpdateCommentResponseDtoToEntity(response.data);
 };
 
 /**
- * DELETE /api/v1/comments/{comment_id} - 댓글 삭제
+ * DELETE /interaction/v1/comments/{comment_id} - 댓글 삭제
  */
 export const deleteComment = async (commentId: string): Promise<void> => {
-  await api.delete<void>(`/api/v1/comments/${commentId}`);
+  await api.delete<void>(`/interaction/v1/comments/${commentId}`);
 };

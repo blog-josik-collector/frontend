@@ -103,47 +103,50 @@ const mapUpdateReplyResponseDtoToEntity = (dto: UpdateReplyResponseDto): UpdateR
 });
 
 /**
- * POST /api/v1/comments/{comment_id}/replies - 답글 생성
+ * POST /interaction/v1/comments/{comment_id}/replies - 답글 생성
  */
 export const createReply = async (
   commentId: string,
   body: CreateReplyRequestDto,
 ): Promise<CreateReplyResponse> => {
   const response = await api.post<CreateReplyResponseDto>(
-    `/api/v1/comments/${commentId}/replies`,
+    `/interaction/v1/comments/${commentId}/replies`,
     body,
   );
   return mapCreateReplyResponseDtoToEntity(response.data);
 };
 
 /**
- * GET /api/v1/comments/{comment_id}/replies - 답글 목록 조회
+ * GET /interaction/v1/comments/{comment_id}/replies - 답글 목록 조회
  */
 export const getCommentReplies = async (
   commentId: string,
   params: GetCommentRepliesParams = { page: 0, size: 20 },
 ): Promise<GetCommentRepliesResponse> => {
   const response = await api.get<GetCommentRepliesResponseDto>(
-    `/api/v1/comments/${commentId}/replies`,
+    `/interaction/v1/comments/${commentId}/replies`,
     { params },
   );
   return mapGetCommentRepliesResponseDtoToEntity(response.data);
 };
 
 /**
- * PATCH /api/v1/replies/{reply_id} - 답글 수정
+ * PATCH /interaction/v1/replies/{reply_id} - 답글 수정
  */
 export const updateReply = async (
   replyId: string,
   body: UpdateReplyRequestDto,
 ): Promise<UpdateReplyResponse> => {
-  const response = await api.patch<UpdateReplyResponseDto>(`/api/v1/replies/${replyId}`, body);
+  const response = await api.patch<UpdateReplyResponseDto>(
+    `/interaction/v1/replies/${replyId}`,
+    body,
+  );
   return mapUpdateReplyResponseDtoToEntity(response.data);
 };
 
 /**
- * DELETE /api/v1/replies/{reply_id} - 답글 삭제
+ * DELETE /interaction/v1/replies/{reply_id} - 답글 삭제
  */
 export const deleteReply = async (replyId: string): Promise<void> => {
-  await api.delete<void>(`/api/v1/replies/${replyId}`);
+  await api.delete<void>(`/interaction/v1/replies/${replyId}`);
 };

@@ -55,11 +55,13 @@ const mapGetMyCommentsResponseDtoToEntity = (
 });
 
 /**
- * GET /api/v1/me/comments - 내가 작성한 댓글 목록 조회
+ * GET /interaction/v1/me/comments - 내가 작성한 댓글 목록 조회
  */
 export const getMyComments = async (
   params: GetMyCommentsParams = { page: 0, size: 20 },
 ): Promise<GetMyCommentsResponse> => {
-  const response = await api.get<GetMyCommentsResponseDto>('/api/v1/me/comments', { params });
+  const response = await api.get<GetMyCommentsResponseDto>('/interaction/v1/me/comments', {
+    params,
+  });
   return mapGetMyCommentsResponseDtoToEntity(response.data);
 };

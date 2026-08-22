@@ -187,82 +187,82 @@ const mapUpdateReportStatusResponseDtoToEntity = (
 });
 
 /**
- * POST /api/v1/postings/{posting_id}/reports - 포스팅 신고 생성
+ * POST /interaction/v1/postings/{posting_id}/reports - 포스팅 신고 생성
  */
 export const createPostingReport = async (
   postingId: string,
   body: CreateReportRequestDto<PostingReportReasonType>,
 ): Promise<CreateReportResponse> => {
   const response = await api.post<CreateReportResponseDto>(
-    `/api/v1/postings/${postingId}/reports`,
+    `/interaction/v1/postings/${postingId}/reports`,
     body,
   );
   return mapCreateReportResponseDtoToEntity(response.data);
 };
 
 /**
- * POST /api/v1/comments/{comment_id}/reports - 댓글 신고 생성
+ * POST /interaction/v1/comments/{comment_id}/reports - 댓글 신고 생성
  */
 export const createCommentReport = async (
   commentId: string,
   body: CreateReportRequestDto<CommentReportReasonType>,
 ): Promise<CreateReportResponse> => {
   const response = await api.post<CreateReportResponseDto>(
-    `/api/v1/comments/${commentId}/reports`,
+    `/interaction/v1/comments/${commentId}/reports`,
     body,
   );
   return mapCreateReportResponseDtoToEntity(response.data);
 };
 
 /**
- * GET /api/v1/admin/reports/postings - 관리자 포스팅 신고 목록 조회
+ * GET /interaction/v1/admin/reports/postings - 관리자 포스팅 신고 목록 조회
  */
 export const getAdminPostingReports = async (
   params: GetAdminReportsParams = { page: 0, size: 20 },
 ): Promise<GetAdminPostingReportsResponse> => {
   const response = await api.get<GetAdminPostingReportsResponseDto>(
-    '/api/v1/admin/reports/postings',
+    '/interaction/v1/admin/reports/postings',
     { params },
   );
   return mapGetAdminPostingReportsResponseDtoToEntity(response.data);
 };
 
 /**
- * PATCH /api/v1/admin/reports/postings/{report_id} - 관리자 포스팅 신고 상태 변경
+ * PATCH /interaction/v1/admin/reports/postings/{report_id} - 관리자 포스팅 신고 상태 변경
  */
 export const updateAdminPostingReportStatus = async (
   reportId: string,
   body: UpdateReportStatusRequestDto,
 ): Promise<UpdateReportStatusResponse> => {
   const response = await api.patch<UpdateReportStatusResponseDto>(
-    `/api/v1/admin/reports/postings/${reportId}`,
+    `/interaction/v1/admin/reports/postings/${reportId}`,
     body,
   );
   return mapUpdateReportStatusResponseDtoToEntity(response.data);
 };
 
 /**
- * GET /api/v1/admin/reports/comments - 관리자 댓글 신고 목록 조회
+ * GET /interaction/v1/admin/reports/comments - 관리자 댓글 신고 목록 조회
  */
 export const getAdminCommentReports = async (
   params: GetAdminReportsParams = { page: 0, size: 20 },
 ): Promise<GetAdminCommentReportsResponse> => {
   const response = await api.get<GetAdminCommentReportsResponseDto>(
-    '/api/v1/admin/reports/comments',
+    '/interaction/v1/admin/reports/comments',
     { params },
   );
   return mapGetAdminCommentReportsResponseDtoToEntity(response.data);
 };
 
 /**
- * PATCH /api/v1/admin/reports/comments/{report_id} - 관리자 댓글 신고 상태 변경
+ * PATCH /interaction/v1/admin/reports/comments/{report_id} - 관리자 댓글 신고 상태 변경
  */
 export const updateAdminCommentReportStatus = async (
   reportId: string,
   body: UpdateReportStatusRequestDto,
 ): Promise<UpdateReportStatusResponse> => {
   const response = await api.patch<UpdateReportStatusResponseDto>(
-    `/api/v1/admin/reports/comments/${reportId}`,
+    `/interaction/v1/admin/reports/comments/${reportId}`,
     body,
   );
   return mapUpdateReportStatusResponseDtoToEntity(response.data);
