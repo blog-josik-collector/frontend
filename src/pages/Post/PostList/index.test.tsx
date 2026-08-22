@@ -14,7 +14,7 @@ const { fetchPostingsMock } = vi.hoisted(() => ({
 vi.mock('@/stores/posting/postingStore', () => ({
   usePostingStore: () => ({
     fetchPostings: fetchPostingsMock,
-    postings: { items: [], total: 0 },
+    postings: { items: [], page: 0, size: 20, totalCount: 0 },
   }),
 }));
 
@@ -34,7 +34,7 @@ it('uses URL search parameters for the initial request and filter highlight', as
   await waitFor(() =>
     expect(fetchPostingsMock).toHaveBeenCalledWith({
       page: 0,
-      provider_id: 'provider-2',
+      provider: 'provider-2',
       size: 20,
       title: 'react',
     }),
@@ -63,7 +63,7 @@ it('applies the title and provider to the request together', async () => {
   await waitFor(() =>
     expect(fetchPostingsMock).toHaveBeenLastCalledWith({
       page: 0,
-      provider_id: 'provider-2',
+      provider: 'provider-2',
       size: 20,
       title: 'react',
     }),
