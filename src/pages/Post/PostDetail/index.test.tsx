@@ -7,9 +7,20 @@ import userEvent from '@testing-library/user-event';
 
 import PostDetail from './index';
 
-const { createPostingReportMock, createCommentReportMock } = vi.hoisted(() => ({
+const { createPostingReportMock, createCommentReportMock, commentItemsMock } = vi.hoisted(() => ({
   createPostingReportMock: vi.fn(),
   createCommentReportMock: vi.fn(),
+  commentItemsMock: [
+    {
+      id: 'comment-1',
+      nickname: 'commenter',
+      hasChildComment: false,
+      content: 'Comment content',
+      status: 'active' as 'active' | 'blocked' | 'deleted',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    },
+  ],
 }));
 
 vi.mock('@/stores/posting/postingStore', () => ({
@@ -42,19 +53,7 @@ vi.mock('@/stores/posting/postingStore', () => ({
     postingComments: {
       'posting-1': {
         totalCount: '1',
-        items: [
-          {
-            id: 'comment-1',
-            userId: 'user-1',
-            postId: 'posting-1',
-            parentCommentId: '',
-            hasChildComment: false,
-            content: 'Comment content',
-            totalReportCount: 0,
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-          },
-        ],
+        items: commentItemsMock,
       },
     },
     postingCommentReplies: {},
@@ -83,6 +82,8 @@ afterEach(() => {
   cleanup();
   vi.clearAllMocks();
   vi.restoreAllMocks();
+  commentItemsMock[0].content = 'Comment content';
+  commentItemsMock[0].status = 'active';
 });
 
 describe('PostDetail report menus', () => {
@@ -134,5 +135,41 @@ describe('PostDetail report menus', () => {
       commentId: 'comment-1',
       body: { report_type: 'political', content: '정치' },
     });
+  });
+
+  it('shows deleted comment content as deleted and removes only its report action', () => {
+    commentItemsMock[0].content = 'Deleted comment content';
+    commentItemsMock[0].status = 'deleted';
+
+    render(
+      <MemoryRouter initialEntries={['/post?post-id=posting-1']}>
+        <PostDetail />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('삭제된 댓글')).toBeInTheDocument();
+    expect(screen.getByText('Deleted comment content')).toHaveClass('text-muted-foreground');
+    expect(screen.getByRole('button', { name: '답글 작성' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '댓글 신고' })).not.toBeInTheDocument();
+  });
+
+  it('hides blocked comment content until requested and keeps its report action', async () => {
+    const user = userEvent.setup();
+    commentItemsMock[0].content = 'Blocked comment content';
+    commentItemsMock[0].status = 'blocked';
+
+    render(
+      <MemoryRouter initialEntries={['/post?post-id=posting-1']}>
+        <PostDetail />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByText('Blocked comment content')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '댓글 신고' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '차단된 댓글 내용 보기' }));
+
+    expect(screen.getByText('Blocked comment content')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '차단된 댓글 내용 숨기기' })).toBeInTheDocument();
   });
 });

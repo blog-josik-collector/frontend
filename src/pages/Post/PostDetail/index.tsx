@@ -59,6 +59,43 @@ type PendingReport =
   | { target: 'posting'; reasonType: PostingReportReasonType }
   | { target: 'comment'; commentId: string; reasonType: CommentReportReasonType };
 
+interface CommentContentProps {
+  content: string;
+  status: PostingComment['status'];
+}
+
+const CommentContent = ({ content, status }: CommentContentProps) => {
+  const [isBlockedContentVisible, setIsBlockedContentVisible] = useState(false);
+
+  if (status === 'deleted') {
+    return (
+      <div className="bg-muted/50 rounded-md px-3 py-2">
+        <p className="text-muted-foreground text-xs font-medium">{content}</p>
+      </div>
+    );
+  }
+
+  if (status === 'blocked') {
+    return (
+      <div className="bg-muted/50 rounded-md px-3 py-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="xs"
+          className="text-muted-foreground h-auto px-0"
+          aria-label={`차단된 댓글 내용 ${isBlockedContentVisible ? '숨기기' : '보기'}`}
+          onClick={() => setIsBlockedContentVisible((visible) => !visible)}
+        >
+          차단된 댓글입니다 · 내용 {isBlockedContentVisible ? '숨기기' : '보기'}
+        </Button>
+        {isBlockedContentVisible && <p className="mt-2 text-sm">{content}</p>}
+      </div>
+    );
+  }
+
+  return <p className="text-sm">{content}</p>;
+};
+
 const PostDetail = () => {
   const location = useLocation();
   const postId = new URLSearchParams(location.search).get('post-id') ?? '';
@@ -259,51 +296,56 @@ const PostDetail = () => {
     }
   };
 
-  const renderCommentActions = (commentId: string) => (
+  const renderCommentActions = (comment: PostingComment) => (
     <ButtonGroup>
       <ButtonGroup>
         <Button
-          variant={replyingToId === commentId ? 'secondary' : 'ghost'}
+          variant={replyingToId === comment.id ? 'secondary' : 'ghost'}
           size="xs"
-          onClick={() => setReplyingToId(replyingToId === commentId ? null : commentId)}
+          aria-label="답글 작성"
+          onClick={() => setReplyingToId(replyingToId === comment.id ? null : comment.id)}
           className="flex items-center gap-1"
         >
           <MessageCircle className="size-3" />
           <span className="text-xs">답글</span>
         </Button>
       </ButtonGroup>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            aria-label="댓글 신고"
-            variant="ghost"
-            size="xs"
-            className="flex items-center gap-1"
-          >
-            <Siren className="size-3" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" collisionPadding={8} className="w-36 min-w-36">
-          <DropdownMenuItem
-            disabled={isReportSubmitting}
-            onSelect={() => void handleCommentReport(commentId, CommentReportReasonType.Political)}
-          >
-            정치
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            disabled={isReportSubmitting}
-            onSelect={() => void handleCommentReport(commentId, CommentReportReasonType.Adult)}
-          >
-            성인
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            disabled={isReportSubmitting}
-            onSelect={() => void handleCommentReport(commentId, CommentReportReasonType.Other)}
-          >
-            기타
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {comment.status !== 'deleted' && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              aria-label="댓글 신고"
+              variant="ghost"
+              size="xs"
+              className="flex items-center gap-1"
+            >
+              <Siren className="size-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" collisionPadding={8} className="w-36 min-w-36">
+            <DropdownMenuItem
+              disabled={isReportSubmitting}
+              onSelect={() =>
+                void handleCommentReport(comment.id, CommentReportReasonType.Political)
+              }
+            >
+              정치
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={isReportSubmitting}
+              onSelect={() => void handleCommentReport(comment.id, CommentReportReasonType.Adult)}
+            >
+              성인
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={isReportSubmitting}
+              onSelect={() => void handleCommentReport(comment.id, CommentReportReasonType.Other)}
+            >
+              기타
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </ButtonGroup>
   );
 
@@ -638,8 +680,8 @@ const PostDetail = () => {
                       </span>
                     </div>
 
-                    <p className="text-sm">{comment.content}</p>
-                    {renderCommentActions(comment.id)}
+                    <CommentContent content={comment.content} status={comment.status} />
+                    {renderCommentActions(comment)}
                   </div>
                 </div>
 
@@ -658,8 +700,8 @@ const PostDetail = () => {
                           </span>
                         </div>
 
-                        <p className="text-sm">{reply.content}</p>
-                        {renderCommentActions(reply.id)}
+                        <CommentContent content={reply.content} status={reply.status} />
+                        {renderCommentActions(reply)}
                       </div>
                     </div>
                   );
