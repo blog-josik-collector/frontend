@@ -20,6 +20,7 @@ import {
 import { getAccessibleNavRoutes, type NavRoute, navRoutes } from '@/routes';
 import { getStoredRoles } from '@/services/auth';
 import { useLogout } from '@/stores/auth';
+import { useMe } from '@/stores/users';
 
 const renderMenuItem = (route: NavRoute, currentPath: string, t: (key: string) => string) => {
   if (route.children && route.children.length > 0) {
@@ -89,9 +90,10 @@ const MenuList = () => {
 const AppBar: React.FC = () => {
   const navigate = useNavigate();
   const logout = useLogout();
+  const me = useMe();
   const { t } = useTranslation('nav');
   const { t: tCommon } = useTranslation('common');
-  const isAuthenticated = Boolean(localStorage.getItem('accessToken'));
+  const isAuthenticated = Boolean(localStorage.getItem('accessToken')) || Boolean(me.data);
   return (
     <Sidebar>
       <SidebarHeader>

@@ -1,6 +1,6 @@
 import { MemoryRouter, RouterProvider } from 'react-router';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
@@ -12,6 +12,18 @@ import AppBar from '@/components/layout/AppBar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import type { AuthRole } from '@/services/auth';
 import { renderWithI18n } from '@/test/i18n';
+
+const { useMeMock } = vi.hoisted(() => ({
+  useMeMock: vi.fn(),
+}));
+
+vi.mock('@/stores/users', () => ({
+  useMe: () => useMeMock(),
+}));
+
+beforeEach(() => {
+  useMeMock.mockReturnValue({ data: undefined });
+});
 
 afterEach(() => {
   cleanup();
@@ -95,6 +107,26 @@ describe('AppBar authorization', () => {
 
   it('shows sign out instead of sign in and sign up when authenticated', () => {
     renderAppBar(['USER']);
+
+    expect(screen.getByRole('button', { name: '로그아웃' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '로그인' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '회원가입' })).not.toBeInTheDocument();
+  });
+
+  it('uses the stored user as an authentication fallback when the access token is unavailable', () => {
+    useMeMock.mockReturnValue({
+      data: {
+        createdAt: Date.parse('2026-08-22T00:00:00Z'),
+        lastLoginAt: Date.parse('2026-08-22T01:00:00Z'),
+        loginId: 'tester@example.com',
+        nickname: 'tester',
+        updatedAt: Date.parse('2026-08-22T00:00:00Z'),
+        userId: 'user-1',
+        userType: 'USER',
+      },
+    });
+
+    renderAppBar();
 
     expect(screen.getByRole('button', { name: '로그아웃' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '로그인' })).not.toBeInTheDocument();
