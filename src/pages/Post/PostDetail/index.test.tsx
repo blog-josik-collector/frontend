@@ -179,7 +179,7 @@ describe('PostDetail report menus', () => {
     });
   });
 
-  it('shows deleted comment content as deleted and removes only its report action', () => {
+  it('shows deleted comment content as deleted and hides reply and report actions', () => {
     commentItemsMock[0].content = 'Deleted comment content';
     commentItemsMock[0].status = 'deleted';
 
@@ -190,7 +190,7 @@ describe('PostDetail report menus', () => {
     );
 
     expect(screen.getByText('Deleted comment content')).toHaveClass('text-muted-foreground');
-    expect(screen.getByRole('button', { name: '답글 작성' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '답글 작성' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '댓글 신고' })).not.toBeInTheDocument();
   });
 

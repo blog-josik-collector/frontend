@@ -19,7 +19,7 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
-it('submits the current signup DTO without an introduction field', async () => {
+it('submits Base64-encoded passwords without an introduction field', async () => {
   const user = userEvent.setup();
   render(
     <MemoryRouter>
@@ -39,8 +39,8 @@ it('submits the current signup DTO without an introduction field', async () => {
     {
       login_id: 'tester@example.com',
       nickname: 'tester',
-      password: 'password',
-      password_confirm: 'password',
+      password: 'cGFzc3dvcmQ=',
+      password_confirm: 'cGFzc3dvcmQ=',
     },
     expect.any(Object),
   );

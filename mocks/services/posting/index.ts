@@ -2,6 +2,8 @@ import { http, HttpResponse } from 'msw';
 
 import { faker } from '@faker-js/faker';
 
+import { mockApiUrl } from '../../api-url';
+
 import type { PostingCommentDto, PostingDetailDto, PostingListItemDto } from '@/services/posting';
 
 interface PostingCommentItem extends PostingCommentDto {
@@ -119,7 +121,7 @@ const generateMockPostingDetail = (postingId: string): PostingDetailDto => {
 
 // GET /api/v1/postings 핸들러
 export const postingsHandlers = [
-  http.get('/interaction/v1/postings', ({ request }) => {
+  http.get(mockApiUrl('/interaction/v1/postings'), ({ request }) => {
     console.log('mocking!!');
     const url = new URL(request.url);
 
@@ -159,14 +161,14 @@ export const postingsHandlers = [
   }),
 
   // GET /api/v1/postings/:id 핸들러
-  http.get('/interaction/v1/postings/:id', ({ params }) => {
+  http.get(mockApiUrl('/interaction/v1/postings/:id'), ({ params }) => {
     const { id } = params;
     const postingDetail = generateMockPostingDetail(id as string);
     return HttpResponse.json(postingDetail);
   }),
 
   // POST /api/v1/postings/:id/likes 핸들러
-  http.post('/interaction/v1/postings/:id/likes', ({ params }) => {
+  http.post(mockApiUrl('/interaction/v1/postings/:id/likes'), ({ params }) => {
     const { id } = params;
     const postingId = id as string;
     const basePosting = mockPostingsData.find((post) => post.id === postingId);
@@ -183,7 +185,7 @@ export const postingsHandlers = [
   }),
 
   // DELETE /api/v1/postings/:id/likes 핸들러
-  http.delete('/interaction/v1/postings/:id/likes', ({ params }) => {
+  http.delete(mockApiUrl('/interaction/v1/postings/:id/likes'), ({ params }) => {
     const { id } = params;
     const postingId = id as string;
     const basePosting = mockPostingsData.find((post) => post.id === postingId);
@@ -200,7 +202,7 @@ export const postingsHandlers = [
   }),
 
   // POST /api/v1/postings/:id/bookmarks 핸들러
-  http.post('/interaction/v1/postings/:id/bookmarks', ({ params }) => {
+  http.post(mockApiUrl('/interaction/v1/postings/:id/bookmarks'), ({ params }) => {
     const { id } = params;
     const postingId = id as string;
     const basePosting = mockPostingsData.find((post) => post.id === postingId);
@@ -214,7 +216,7 @@ export const postingsHandlers = [
   }),
 
   // DELETE /api/v1/postings/:id/bookmarks 핸들러
-  http.delete('/interaction/v1/postings/:id/bookmarks', ({ params }) => {
+  http.delete(mockApiUrl('/interaction/v1/postings/:id/bookmarks'), ({ params }) => {
     const { id } = params;
     const postingId = id as string;
     const basePosting = mockPostingsData.find((post) => post.id === postingId);
@@ -228,7 +230,7 @@ export const postingsHandlers = [
   }),
 
   // GET /api/v1/me/bookmarks 핸들러
-  http.get('/interaction/v1/me/bookmarks', ({ request }) => {
+  http.get(mockApiUrl('/interaction/v1/me/bookmarks'), ({ request }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '0');
     const size = parseInt(url.searchParams.get('size') || '20');
@@ -249,7 +251,7 @@ export const postingsHandlers = [
   }),
 
   // POST /api/v1/postings/:id/comments 핸들러
-  http.post('/interaction/v1/postings/:id/comments', async ({ request, params }) => {
+  http.post(mockApiUrl('/interaction/v1/postings/:id/comments'), async ({ request, params }) => {
     const { id } = params;
     const body = (await request.json()) as { content?: string };
 
@@ -283,7 +285,7 @@ export const postingsHandlers = [
   }),
 
   // GET /api/v1/postings/:id/comments 핸들러
-  http.get('/interaction/v1/postings/:id/comments', ({ request, params }) => {
+  http.get(mockApiUrl('/interaction/v1/postings/:id/comments'), ({ request, params }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '0');
     const size = parseInt(url.searchParams.get('size') || '20');
@@ -303,7 +305,7 @@ export const postingsHandlers = [
     });
   }),
 
-  http.get('/interaction/v1/comments/:commentId/replies', ({ request, params }) => {
+  http.get(mockApiUrl('/interaction/v1/comments/:commentId/replies'), ({ request, params }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '0');
     const size = parseInt(url.searchParams.get('size') || '20');

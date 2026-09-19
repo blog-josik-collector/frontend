@@ -2,6 +2,8 @@ import { http, HttpResponse } from 'msw';
 
 import { faker } from '@faker-js/faker';
 
+import { mockApiUrl } from '../../api-url';
+
 import type { MyCommentDto } from '@/services/comment/me';
 import type { ReplyDto } from '@/services/comment/replies';
 
@@ -38,7 +40,7 @@ const getReplies = (commentId: string) => {
 };
 
 export const commentHandlers = [
-  http.patch('/interaction/v1/comments/:commentId', async ({ request, params }) => {
+  http.patch(mockApiUrl('/interaction/v1/comments/:commentId'), async ({ request, params }) => {
     const body = (await request.json()) as { content?: string };
     const updatedAt = new Date().toISOString();
     const comment = myComments.find((item) => item.id === params.commentId);
@@ -54,35 +56,41 @@ export const commentHandlers = [
     });
   }),
 
-  http.delete('/interaction/v1/comments/:commentId', () => new HttpResponse(null, { status: 202 })),
+  http.delete(
+    mockApiUrl('/interaction/v1/comments/:commentId'),
+    () => new HttpResponse(null, { status: 202 }),
+  ),
 
-  http.post('/interaction/v1/comments/:commentId/replies', async ({ request, params }) => {
-    const body = (await request.json()) as { content?: string };
-    const createdAt = new Date().toISOString();
-    const commentId = params.commentId as string;
-    const reply = {
-      id: faker.string.uuid(),
-      nickname: 'mock-user',
-      has_child_comment: false as const,
-      content: body.content ?? '',
-      status: 'active' as const,
-      created_at: createdAt,
-      updated_at: createdAt,
-    };
-
-    repliesByCommentId.set(commentId, [reply, ...getReplies(commentId)]);
-
-    return HttpResponse.json(
-      {
-        id: reply.id,
-        parent_id: commentId,
+  http.post(
+    mockApiUrl('/interaction/v1/comments/:commentId/replies'),
+    async ({ request, params }) => {
+      const body = (await request.json()) as { content?: string };
+      const createdAt = new Date().toISOString();
+      const commentId = params.commentId as string;
+      const reply = {
+        id: faker.string.uuid(),
+        nickname: 'mock-user',
+        has_child_comment: false as const,
+        content: body.content ?? '',
+        status: 'active' as const,
         created_at: createdAt,
-      },
-      { status: 201 },
-    );
-  }),
+        updated_at: createdAt,
+      };
 
-  http.get('/interaction/v1/comments/:commentId/replies', ({ request, params }) => {
+      repliesByCommentId.set(commentId, [reply, ...getReplies(commentId)]);
+
+      return HttpResponse.json(
+        {
+          id: reply.id,
+          parent_id: commentId,
+          created_at: createdAt,
+        },
+        { status: 201 },
+      );
+    },
+  ),
+
+  http.get(mockApiUrl('/interaction/v1/comments/:commentId/replies'), ({ request, params }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '0');
     const size = parseInt(url.searchParams.get('size') || '20');
@@ -97,7 +105,7 @@ export const commentHandlers = [
     });
   }),
 
-  http.patch('/interaction/v1/replies/:replyId', async ({ request, params }) => {
+  http.patch(mockApiUrl('/interaction/v1/replies/:replyId'), async ({ request, params }) => {
     const body = (await request.json()) as { content?: string };
     const updatedAt = new Date().toISOString();
 
@@ -116,9 +124,12 @@ export const commentHandlers = [
     });
   }),
 
-  http.delete('/interaction/v1/replies/:replyId', () => new HttpResponse(null, { status: 202 })),
+  http.delete(
+    mockApiUrl('/interaction/v1/replies/:replyId'),
+    () => new HttpResponse(null, { status: 202 }),
+  ),
 
-  http.get('/interaction/v1/me/comments', ({ request }) => {
+  http.get(mockApiUrl('/interaction/v1/me/comments'), ({ request }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '0');
     const size = parseInt(url.searchParams.get('size') || '20');

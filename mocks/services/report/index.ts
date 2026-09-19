@@ -2,6 +2,8 @@ import { http, HttpResponse } from 'msw';
 
 import { faker } from '@faker-js/faker';
 
+import { mockApiUrl } from '../../api-url';
+
 import type {
   CommentReportDto,
   CommentReportReasonType,
@@ -43,57 +45,63 @@ const paginate = <T>(items: T[], request: Request) => {
 };
 
 export const reportHandlers = [
-  http.post('/interaction/v1/postings/:postingId/reports', async ({ request, params }) => {
-    const body = (await request.json()) as CreateReportRequestDto<PostingReportReasonType>;
-    const createdAt = new Date().toISOString();
-    const report: PostingReportDto = {
-      id: faker.string.uuid(),
-      nickname: 'mock-user',
-      title: `Mock posting ${params.postingId as string}`,
-      report_type: body.report_type ?? 'other',
-      content: body.content ?? '',
-      created_at: createdAt,
-      updated_at: createdAt,
-      status: 'pending',
-    };
-
-    postingReports.unshift(report);
-
-    return HttpResponse.json(
-      {
-        id: report.id,
+  http.post(
+    mockApiUrl('/interaction/v1/postings/:postingId/reports'),
+    async ({ request, params }) => {
+      const body = (await request.json()) as CreateReportRequestDto<PostingReportReasonType>;
+      const createdAt = new Date().toISOString();
+      const report: PostingReportDto = {
+        id: faker.string.uuid(),
+        nickname: 'mock-user',
+        title: `Mock posting ${params.postingId as string}`,
+        report_type: body.report_type ?? 'other',
+        content: body.content ?? '',
         created_at: createdAt,
-      },
-      { status: 201 },
-    );
-  }),
+        updated_at: createdAt,
+        status: 'pending',
+      };
 
-  http.post('/interaction/v1/comments/:commentId/reports', async ({ request, params }) => {
-    const body = (await request.json()) as CreateReportRequestDto<CommentReportReasonType>;
-    const createdAt = new Date().toISOString();
-    const report: CommentReportDto = {
-      id: faker.string.uuid(),
-      nickname: 'mock-user',
-      comment_content: `Mock comment ${params.commentId as string}`,
-      report_type: body.report_type ?? 'other',
-      content: body.content ?? '',
-      created_at: createdAt,
-      updated_at: createdAt,
-      status: 'pending',
-    };
+      postingReports.unshift(report);
 
-    commentReports.unshift(report);
+      return HttpResponse.json(
+        {
+          id: report.id,
+          created_at: createdAt,
+        },
+        { status: 201 },
+      );
+    },
+  ),
 
-    return HttpResponse.json(
-      {
-        id: report.id,
+  http.post(
+    mockApiUrl('/interaction/v1/comments/:commentId/reports'),
+    async ({ request, params }) => {
+      const body = (await request.json()) as CreateReportRequestDto<CommentReportReasonType>;
+      const createdAt = new Date().toISOString();
+      const report: CommentReportDto = {
+        id: faker.string.uuid(),
+        nickname: 'mock-user',
+        comment_content: `Mock comment ${params.commentId as string}`,
+        report_type: body.report_type ?? 'other',
+        content: body.content ?? '',
         created_at: createdAt,
-      },
-      { status: 201 },
-    );
-  }),
+        updated_at: createdAt,
+        status: 'pending',
+      };
 
-  http.get('/interaction/v1/admin/reports/postings', ({ request }) =>
+      commentReports.unshift(report);
+
+      return HttpResponse.json(
+        {
+          id: report.id,
+          created_at: createdAt,
+        },
+        { status: 201 },
+      );
+    },
+  ),
+
+  http.get(mockApiUrl('/interaction/v1/admin/reports/postings'), ({ request }) =>
     HttpResponse.json(
       (() => {
         const url = new URL(request.url);
@@ -109,24 +117,27 @@ export const reportHandlers = [
     ),
   ),
 
-  http.patch('/interaction/v1/admin/reports/postings/:reportId', async ({ request, params }) => {
-    const body = (await request.json()) as Partial<UpdateReportStatusRequestDto>;
-    const updatedAt = new Date().toISOString();
-    const report = postingReports.find((item) => item.id === params.reportId);
+  http.patch(
+    mockApiUrl('/interaction/v1/admin/reports/postings/:reportId'),
+    async ({ request, params }) => {
+      const body = (await request.json()) as Partial<UpdateReportStatusRequestDto>;
+      const updatedAt = new Date().toISOString();
+      const report = postingReports.find((item) => item.id === params.reportId);
 
-    if (report && body.status) {
-      report.status = body.status;
-      report.updated_at = updatedAt;
-    }
+      if (report && body.status) {
+        report.status = body.status;
+        report.updated_at = updatedAt;
+      }
 
-    return HttpResponse.json({
-      id: params.reportId,
-      status: body.status ?? report?.status ?? 'pending',
-      updated_at: updatedAt,
-    });
-  }),
+      return HttpResponse.json({
+        id: params.reportId,
+        status: body.status ?? report?.status ?? 'pending',
+        updated_at: updatedAt,
+      });
+    },
+  ),
 
-  http.get('/interaction/v1/admin/reports/comments', ({ request }) =>
+  http.get(mockApiUrl('/interaction/v1/admin/reports/comments'), ({ request }) =>
     HttpResponse.json(
       (() => {
         const url = new URL(request.url);
@@ -142,20 +153,23 @@ export const reportHandlers = [
     ),
   ),
 
-  http.patch('/interaction/v1/admin/reports/comments/:reportId', async ({ request, params }) => {
-    const body = (await request.json()) as Partial<UpdateReportStatusRequestDto>;
-    const updatedAt = new Date().toISOString();
-    const report = commentReports.find((item) => item.id === params.reportId);
+  http.patch(
+    mockApiUrl('/interaction/v1/admin/reports/comments/:reportId'),
+    async ({ request, params }) => {
+      const body = (await request.json()) as Partial<UpdateReportStatusRequestDto>;
+      const updatedAt = new Date().toISOString();
+      const report = commentReports.find((item) => item.id === params.reportId);
 
-    if (report && body.status) {
-      report.status = body.status;
-      report.updated_at = updatedAt;
-    }
+      if (report && body.status) {
+        report.status = body.status;
+        report.updated_at = updatedAt;
+      }
 
-    return HttpResponse.json({
-      id: params.reportId,
-      status: body.status ?? report?.status ?? 'pending',
-      updated_at: updatedAt,
-    });
-  }),
+      return HttpResponse.json({
+        id: params.reportId,
+        status: body.status ?? report?.status ?? 'pending',
+        updated_at: updatedAt,
+      });
+    },
+  ),
 ];

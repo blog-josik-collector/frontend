@@ -2,6 +2,8 @@ import { http, HttpResponse } from 'msw';
 
 import { faker } from '@faker-js/faker';
 
+import { mockApiUrl } from '../../api-url';
+
 import type { UserMeDto } from '@/services/user';
 
 const me: UserMeDto = {
@@ -15,7 +17,7 @@ const me: UserMeDto = {
 };
 
 export const userHandlers = [
-  http.post('/user/v1/users', async ({ request }) => {
+  http.post(mockApiUrl('/user/v1/users'), async ({ request }) => {
     const body = (await request.json()) as { nickname?: string };
     const createdAt = new Date().toISOString();
 
@@ -34,9 +36,9 @@ export const userHandlers = [
     );
   }),
 
-  http.get('/user/v1/users/me', () => HttpResponse.json(me)),
+  http.get(mockApiUrl('/user/v1/users/me'), () => HttpResponse.json(me)),
 
-  http.patch('/user/v1/users/me', async ({ request }) => {
+  http.patch(mockApiUrl('/user/v1/users/me'), async ({ request }) => {
     const body = (await request.json()) as { nickname?: string };
     const updatedAt = new Date().toISOString();
 
@@ -51,14 +53,17 @@ export const userHandlers = [
     });
   }),
 
-  http.patch('/user/v1/users/me/password', () =>
+  http.patch(mockApiUrl('/user/v1/users/me/password'), () =>
     HttpResponse.json({
       user_id: me.user_id,
       updated_at: new Date().toISOString(),
     }),
   ),
 
-  http.post('/user/v1/users/me/merge-oauth', () => new HttpResponse(null, { status: 202 })),
+  http.post(
+    mockApiUrl('/user/v1/users/me/merge-oauth'),
+    () => new HttpResponse(null, { status: 202 }),
+  ),
 
-  http.delete('/user/v1/users/me', () => new HttpResponse(null, { status: 202 })),
+  http.delete(mockApiUrl('/user/v1/users/me'), () => new HttpResponse(null, { status: 202 })),
 ];

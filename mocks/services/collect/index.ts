@@ -2,6 +2,8 @@ import { http, HttpResponse } from 'msw';
 
 import { faker } from '@faker-js/faker';
 
+import { mockApiUrl } from '../../api-url';
+
 const providers = Array.from({ length: 18 }, (_, index) => ({
   provider_id: `provider-${index + 1}`,
   name: `Provider ${index + 1}`,
@@ -77,7 +79,7 @@ const paginate = <T>(items: T[], request: Request) => {
 };
 
 export const collectHandlers = [
-  http.post('/collect/v1/providers', async ({ request }) => {
+  http.post(mockApiUrl('/collect/v1/providers'), async ({ request }) => {
     const body = (await request.json()) as {
       name?: string;
       base_url?: string;
@@ -107,16 +109,18 @@ export const collectHandlers = [
     );
   }),
 
-  http.get('/collect/v1/providers', ({ request }) => HttpResponse.json(paginate(providers, request))),
+  http.get(mockApiUrl('/collect/v1/providers'), ({ request }) =>
+    HttpResponse.json(paginate(providers, request)),
+  ),
 
-  http.get('/collect/v1/providers/:providerId', ({ params }) => {
+  http.get(mockApiUrl('/collect/v1/providers/:providerId'), ({ params }) => {
     const provider =
       providers.find((item) => item.provider_id === params.providerId) ?? providers[0];
 
     return HttpResponse.json(provider);
   }),
 
-  http.patch('/collect/v1/providers/:providerId', async ({ request, params }) => {
+  http.patch(mockApiUrl('/collect/v1/providers/:providerId'), async ({ request, params }) => {
     const body = (await request.json()) as {
       base_url?: string;
       description?: string;
@@ -138,9 +142,12 @@ export const collectHandlers = [
     });
   }),
 
-  http.delete('/collect/v1/providers/:providerId', () => new HttpResponse(null, { status: 202 })),
+  http.delete(
+    mockApiUrl('/collect/v1/providers/:providerId'),
+    () => new HttpResponse(null, { status: 202 }),
+  ),
 
-  http.post('/collect/v1/sources', async ({ request }) => {
+  http.post(mockApiUrl('/collect/v1/sources'), async ({ request }) => {
     const body = (await request.json()) as {
       provider_id?: string;
       url?: string;
@@ -174,15 +181,17 @@ export const collectHandlers = [
     );
   }),
 
-  http.get('/collect/v1/sources', ({ request }) => HttpResponse.json(paginate(sources, request))),
+  http.get(mockApiUrl('/collect/v1/sources'), ({ request }) =>
+    HttpResponse.json(paginate(sources, request)),
+  ),
 
-  http.get('/collect/v1/sources/:sourceId', ({ params }) => {
+  http.get(mockApiUrl('/collect/v1/sources/:sourceId'), ({ params }) => {
     const source = sources.find((item) => item.source_id === params.sourceId) ?? sources[0];
 
     return HttpResponse.json(source);
   }),
 
-  http.patch('/collect/v1/sources/:sourceId', async ({ request, params }) => {
+  http.patch(mockApiUrl('/collect/v1/sources/:sourceId'), async ({ request, params }) => {
     const body = (await request.json()) as {
       url?: string;
       collect_schedule_type?: 'manual' | 'cron';
@@ -210,9 +219,12 @@ export const collectHandlers = [
     });
   }),
 
-  http.delete('/collect/v1/sources/:sourceId', () => new HttpResponse(null, { status: 202 })),
+  http.delete(
+    mockApiUrl('/collect/v1/sources/:sourceId'),
+    () => new HttpResponse(null, { status: 202 }),
+  ),
 
-  http.post('/collect/v1/sources/:sourceId/_start', ({ request }) => {
+  http.post(mockApiUrl('/collect/v1/sources/:sourceId/_start'), ({ request }) => {
     const url = new URL(request.url);
     const job = {
       job_id: faker.string.uuid(),
@@ -238,17 +250,22 @@ export const collectHandlers = [
     });
   }),
 
-  http.post('/collect/v1/sources/:sourceId/_stop', () => new HttpResponse(null, { status: 202 })),
+  http.post(
+    mockApiUrl('/collect/v1/sources/:sourceId/_stop'),
+    () => new HttpResponse(null, { status: 202 }),
+  ),
 
-  http.get('/collect/v1/jobs', ({ request }) => HttpResponse.json(paginate(jobs, request))),
+  http.get(mockApiUrl('/collect/v1/jobs'), ({ request }) =>
+    HttpResponse.json(paginate(jobs, request)),
+  ),
 
-  http.get('/collect/v1/jobs/:jobId', ({ params }) => {
+  http.get(mockApiUrl('/collect/v1/jobs/:jobId'), ({ params }) => {
     const job = jobs.find((item) => item.job_id === params.jobId) ?? jobs[0];
 
     return HttpResponse.json(job);
   }),
 
-  http.get('/collect/v1/postings/:postingId', ({ params }) => {
+  http.get(mockApiUrl('/collect/v1/postings/:postingId'), ({ params }) => {
     const posting =
       collectPostings.find((item) => item.posting_id === params.postingId) ?? collectPostings[0];
 
