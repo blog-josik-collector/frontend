@@ -75,11 +75,12 @@ it('applies the title and provider to the request together', async () => {
 
   await user.type(screen.getByRole('textbox', { name: '제목 검색' }), 'react');
   await user.click(screen.getByRole('button', { name: '필터' }));
-  expect(screen.getByRole('option', { name: '테크 뉴스' })).toBeInTheDocument();
-  expect(screen.getByRole('option', { name: '디자인 소식' })).toBeInTheDocument();
-  expect(screen.queryByRole('option', { name: 'Provider 1' })).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: '원본 출처' }));
+  expect(screen.getByRole('menuitemradio', { name: '테크 뉴스' })).toBeInTheDocument();
+  expect(screen.getByRole('menuitemradio', { name: '디자인 소식' })).toBeInTheDocument();
+  expect(screen.queryByRole('menuitemradio', { name: 'Provider 1' })).not.toBeInTheDocument();
 
-  await user.selectOptions(screen.getByRole('combobox', { name: '원본 출처' }), '디자인 소식');
+  await user.click(screen.getByRole('menuitemradio', { name: '디자인 소식' }));
   await user.click(screen.getByRole('button', { name: '검색' }));
 
   await waitFor(() =>

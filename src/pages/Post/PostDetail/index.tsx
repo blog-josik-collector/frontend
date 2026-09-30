@@ -18,6 +18,9 @@ import {
   User,
 } from 'lucide-react';
 
+import { getProviderBadgeColor } from '../provider-colors';
+
+import { StatusBadge } from '@/components/patterns/status-badge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,6 +43,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { capitalizeFirst } from '@/lib/string';
 import { type PostingComment } from '@/services/posting';
 import { CommentReportReasonType, PostingReportReasonType } from '@/services/report';
 import {
@@ -555,12 +559,21 @@ const PostDetail = () => {
       <Card>
         <CardHeader>
           <div className="space-y-4">
-            <CardTitle className="text-2xl font-bold">{post.title}</CardTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              {post.provider && (
+                <StatusBadge
+                  className={`shrink-0 whitespace-nowrap ${getProviderBadgeColor(post.provider)}`}
+                >
+                  {capitalizeFirst(post.provider)}
+                </StatusBadge>
+              )}
+              <CardTitle className="text-2xl font-bold">{post.title}</CardTitle>
+            </div>
 
             <div className="text-muted-foreground flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <Calendar className="size-4" />
-                <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                <span>{new Date(post.publishedAt).toLocaleDateString()}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Eye className="size-4" />
