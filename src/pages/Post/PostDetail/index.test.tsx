@@ -54,6 +54,7 @@ vi.mock('@/stores/posting/postingStore', () => ({
       'posting-1': {
         id: 'posting-1',
         providerId: 'provider-1',
+        provider: 'Provider 1',
         title: 'Posting title',
         publishedAt: Date.now(),
         thumbnailUrl: '',

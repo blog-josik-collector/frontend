@@ -27,16 +27,16 @@ describe('PostingFilter', () => {
 
     const filterButton = screen.getByRole('button', { name: '필터' });
 
-    expect(screen.queryByRole('combobox', { name: '원본 출처' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '원본 출처' })).not.toBeInTheDocument();
 
     await user.click(filterButton);
 
-    expect(screen.getByRole('combobox', { name: '원본 출처' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '원본 출처' })).toBeInTheDocument();
     expect(filterButton).toHaveAttribute('aria-expanded', 'true');
 
     await user.click(filterButton);
 
-    expect(screen.queryByRole('combobox', { name: '원본 출처' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '원본 출처' })).not.toBeInTheDocument();
     expect(filterButton).toHaveAttribute('aria-expanded', 'false');
   });
 
@@ -55,7 +55,9 @@ describe('PostingFilter', () => {
 
     await user.type(screen.getByRole('textbox', { name: '제목 검색' }), ' react ');
     await user.click(screen.getByRole('button', { name: '필터' }));
-    await user.selectOptions(screen.getByRole('combobox', { name: '원본 출처' }), '디자인 소식');
+    await user.click(screen.getByRole('button', { name: '원본 출처' }));
+    await user.click(screen.getByRole('menuitemradio', { name: '디자인 소식' }));
+    expect(screen.getByRole('button', { name: '원본 출처' })).toHaveTextContent('디자인 소식');
 
     expect(onSubmit).not.toHaveBeenCalled();
 
@@ -63,7 +65,7 @@ describe('PostingFilter', () => {
 
     expect(onSubmit).toHaveBeenCalledOnce();
     expect(onSubmit).toHaveBeenCalledWith({ search: 'react', provider: '디자인 소식' });
-    expect(screen.queryByRole('combobox', { name: '원본 출처' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '원본 출처' })).not.toBeInTheDocument();
   });
 
   it('highlights the filter button when an applied provider exists', () => {

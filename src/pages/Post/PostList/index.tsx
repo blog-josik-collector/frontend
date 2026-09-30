@@ -2,10 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 
 import dayjs from 'dayjs';
-import { ArrowLeftIcon, ArrowRightIcon, BadgeCheckIcon, EyeIcon, HeartIcon } from 'lucide-react';
+import { ArrowLeftIcon, ArrowRightIcon, EyeIcon, HeartIcon } from 'lucide-react';
 
 import PostingFilter from './PostingFilter';
 
+import { getProviderBadgeColor } from '../provider-colors';
+
+import { StatusBadge } from '@/components/patterns/status-badge';
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
 import {
@@ -33,6 +36,7 @@ const pageBlockSize = 10;
 
 interface ItemCardProps {
   title: string;
+  provider: string;
   publishedAt: number;
   likeCount: number;
   viewCount: number;
@@ -41,6 +45,7 @@ interface ItemCardProps {
 
 const ItemCard: React.FC<ItemCardProps> = ({
   title,
+  provider,
   publishedAt,
   likeCount,
   viewCount,
@@ -48,8 +53,10 @@ const ItemCard: React.FC<ItemCardProps> = ({
 }) => {
   return (
     <Item className="border-black-2 hover:cursor-pointer" onClick={onClick}>
-      <ItemMedia variant="icon">
-        <BadgeCheckIcon />
+      <ItemMedia className="group-has-data-[slot=item-description]/item:translate-y-0 group-has-data-[slot=item-description]/item:self-center">
+        <StatusBadge className={`whitespace-nowrap ${getProviderBadgeColor(provider)}`}>
+          {provider}
+        </StatusBadge>
       </ItemMedia>
       <ItemContent>
         <ItemTitle>{title}</ItemTitle>
@@ -177,6 +184,7 @@ const PostList = () => {
             publishedAt={post.publishedAt}
             likeCount={post.social.likeCount}
             viewCount={post.social.viewCount}
+            provider={post.provider}
             onClick={() => {
               navigate({ pathname: '/post', search: `?post-id=${post.id}` });
             }}

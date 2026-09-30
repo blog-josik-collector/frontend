@@ -1,9 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { FilterIcon, SearchIcon, XIcon } from 'lucide-react';
+import { ChevronDownIcon, FilterIcon, SearchIcon, XIcon } from 'lucide-react';
 
+import { getProviderBadgeColor } from '../provider-colors';
+
+import { StatusBadge } from '@/components/patterns/status-badge';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -115,20 +125,46 @@ const PostingFilter: React.FC<PostingFilterProps> = ({
             <label htmlFor="posting-provider-filter" className="text-sm font-medium">
               {t('providerSource')}
             </label>
-            <select
-              id="posting-provider-filter"
-              value={draftProvider}
-              onChange={(event) => setDraftProvider(event.target.value)}
-              disabled={isProviderLoading}
-              className="border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-9 w-full rounded-xl border px-3 text-sm outline-none focus-visible:ring-2"
-            >
-              <option value="">{t('all')}</option>
-              {providerOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  id="posting-provider-filter"
+                  type="button"
+                  variant="outline"
+                  disabled={isProviderLoading}
+                  aria-label={t('providerSource')}
+                  className="h-9 w-full justify-between rounded-xl"
+                >
+                  {draftProvider ? (
+                    <StatusBadge className={getProviderBadgeColor(draftProvider)}>
+                      {providerOptions.find((option) => option.value === draftProvider)?.label ??
+                        draftProvider}
+                    </StatusBadge>
+                  ) : (
+                    t('all')
+                  )}
+                  <ChevronDownIcon className="text-muted-foreground size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="max-h-80 p-1.5">
+                <DropdownMenuRadioGroup
+                  value={draftProvider}
+                  onValueChange={setDraftProvider}
+                  className="space-y-1"
+                >
+                  <DropdownMenuRadioItem value="" className="py-2">
+                    {t('all')}
+                  </DropdownMenuRadioItem>
+                  {providerOptions.map((option) => (
+                    <DropdownMenuRadioItem key={option.value} value={option.value} className="py-2">
+                      <StatusBadge className={getProviderBadgeColor(option.value)}>
+                        {option.label}
+                      </StatusBadge>
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <button
             type="button"
