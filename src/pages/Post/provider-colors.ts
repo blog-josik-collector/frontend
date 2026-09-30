@@ -9,7 +9,9 @@ const providerBadgeColors = [
   'bg-fuchsia-100 text-fuchsia-900 dark:bg-fuchsia-950 dark:text-fuchsia-200',
 ];
 
-export function getProviderBadgeColor(provider: string) {
+export function getProviderBadgeColor(provider?: string | null) {
+  if (!provider) return 'bg-muted text-muted-foreground';
+
   let hash = 0;
 
   for (const character of provider.normalize('NFC')) {

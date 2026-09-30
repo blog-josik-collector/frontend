@@ -43,6 +43,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { capitalizeFirst } from '@/lib/string';
 import { type PostingComment } from '@/services/posting';
 import { CommentReportReasonType, PostingReportReasonType } from '@/services/report';
 import {
@@ -563,7 +564,7 @@ const PostDetail = () => {
                 <StatusBadge
                   className={`shrink-0 whitespace-nowrap ${getProviderBadgeColor(post.provider)}`}
                 >
-                  {post.provider}
+                  {capitalizeFirst(post.provider)}
                 </StatusBadge>
               )}
               <CardTitle className="text-2xl font-bold">{post.title}</CardTitle>

@@ -27,6 +27,7 @@ import {
   ItemMedia,
   ItemTitle,
 } from '@/components/ui/item';
+import { capitalizeFirst } from '@/lib/string';
 import { useProviders } from '@/stores/collect';
 import { usePostingStore } from '@/stores/posting/postingStore';
 
@@ -53,11 +54,13 @@ const ItemCard: React.FC<ItemCardProps> = ({
 }) => {
   return (
     <Item className="border-black-2 hover:cursor-pointer" onClick={onClick}>
-      <ItemMedia className="group-has-data-[slot=item-description]/item:translate-y-0 group-has-data-[slot=item-description]/item:self-center">
-        <StatusBadge className={`whitespace-nowrap ${getProviderBadgeColor(provider)}`}>
-          {provider}
-        </StatusBadge>
-      </ItemMedia>
+      {provider && (
+        <ItemMedia className="group-has-data-[slot=item-description]/item:translate-y-0 group-has-data-[slot=item-description]/item:self-center">
+          <StatusBadge className={`whitespace-nowrap ${getProviderBadgeColor(provider)}`}>
+            {capitalizeFirst(provider)}
+          </StatusBadge>
+        </ItemMedia>
+      )}
       <ItemContent>
         <ItemTitle>{title}</ItemTitle>
         <ItemDescription>{dayjs(publishedAt).format('YYYY-MM-DD')}</ItemDescription>

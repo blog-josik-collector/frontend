@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { capitalizeFirst } from '@/lib/string';
 import { cn } from '@/lib/utils';
 
 export interface ProviderFilterOption {
@@ -137,8 +138,10 @@ const PostingFilter: React.FC<PostingFilterProps> = ({
                 >
                   {draftProvider ? (
                     <StatusBadge className={getProviderBadgeColor(draftProvider)}>
-                      {providerOptions.find((option) => option.value === draftProvider)?.label ??
-                        draftProvider}
+                      {capitalizeFirst(
+                        providerOptions.find((option) => option.value === draftProvider)?.label ??
+                          draftProvider,
+                      )}
                     </StatusBadge>
                   ) : (
                     t('all')
@@ -158,7 +161,7 @@ const PostingFilter: React.FC<PostingFilterProps> = ({
                   {providerOptions.map((option) => (
                     <DropdownMenuRadioItem key={option.value} value={option.value} className="py-2">
                       <StatusBadge className={getProviderBadgeColor(option.value)}>
-                        {option.label}
+                        {capitalizeFirst(option.label)}
                       </StatusBadge>
                     </DropdownMenuRadioItem>
                   ))}
